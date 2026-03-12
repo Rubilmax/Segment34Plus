@@ -196,6 +196,8 @@
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM ALTER</string>
+    <string id="LABEL_HRS_NEXT_SUN_EVENT_1">H SONNE</string>
+    <string id="LABEL_HRS_NEXT_SUN_EVENT_3">STD SONNE</string>
     <string id="LABEL_RHR_1">RHF</string>
     <string id="LABEL_RHR_2">RUHE HF</string>
     <string id="LABEL_RHR_3">RUHE HF</string>

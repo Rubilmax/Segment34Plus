@@ -12,8 +12,8 @@
             <listEntry value="18">@Strings.settings_green_and_orange</listEntry>
             <listEntry value="11">@Strings.settings_orange</listEntry>
             <listEntry value="23">@Strings.settings_amber</listEntry>
-            <listEntry value="24">@Strings.settings_peachy_orange_on_turquoise</listEntry>
             <listEntry value="5">@Strings.settings_peachy_orange</listEntry>
+            <listEntry value="24">@Strings.settings_peachy_orange_on_turquoise</listEntry>
             <listEntry value="20">@Strings.settings_red</listEntry>
             <listEntry value="22">@Strings.settings_purple</listEntry>
             <listEntry value="4">@Strings.settings_white_on_turquoise</listEntry>
@@ -34,7 +34,6 @@
     <setting propertyKey="@Properties.nightColorTheme" title="@Strings.settings_night_color_theme">
         <settingConfig type="list">
             <listEntry value="-1">@Strings.settings_no_change</listEntry>
-            <listEntry value="24">@Strings.settings_peachy_orange_on_turquoise</listEntry>
             <listEntry value="0">@Strings.settings_yellow_on_turquoise</listEntry>
             <listEntry value="8">@Strings.settings_yellow_on_blue</listEntry>
             <listEntry value="1">@Strings.settings_hot_pink</listEntry>
@@ -46,6 +45,7 @@
             <listEntry value="11">@Strings.settings_orange</listEntry>
             <listEntry value="23">@Strings.settings_amber</listEntry>
             <listEntry value="5">@Strings.settings_peachy_orange</listEntry>
+            <listEntry value="24">@Strings.settings_peachy_orange_on_turquoise</listEntry>
             <listEntry value="20">@Strings.settings_red</listEntry>
             <listEntry value="22">@Strings.settings_purple</listEntry>
             <listEntry value="4">@Strings.settings_white_on_turquoise</listEntry>
@@ -391,6 +391,8 @@
             <listEntry value="64">@Strings.settings_weather_uv_index</listEntry>
             <listEntry value="59">@Strings.settings_pulse_ox</listEntry>
             <listEntry value="4">@Strings.settings_floors_climbed_day</listEntry>
+            <listEntry value="10">@Strings.settings_heart_rate</listEntry>
+            <listEntry value="76">@Strings.settings_resting_heart_rate</listEntry>
         </settingConfig>
     </setting>
 

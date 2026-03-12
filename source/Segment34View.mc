@@ -681,6 +681,13 @@ class Segment34View extends WatchUi.WatchFace {
         values[:dataAboveLine2] = getValueByTypeWithUnit(propWeatherLine2Shows, 10, now, actInfo, sysStats);
         values[:dataBelow] = getValueByTypeWithUnit(propDateFieldShows, 10, now, actInfo, sysStats);
         values[:dataNotifications] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
+        if (values[:dataNotifications].length() > 0) {
+            if (propNotificationCountShows == 14) {
+                values[:dataNotifications] = values[:dataNotifications] + "\u2665  ";
+            } else if (propNotificationCountShows == 10 or propNotificationCountShows == 76) {
+                values[:dataNotifications] = values[:dataNotifications] + "\u2764  ";
+            }
+        }
         values[:dataBottomLeft] = getValueByType(propLeftValueShows, fieldWidths[0], now, actInfo, sysStats);
         values[:dataBottomMiddle] = getValueByType(propMiddleValueShows, fieldWidths[1], now, actInfo, sysStats);
         values[:dataBottomRight] = getValueByType(propRightValueShows, fieldWidths[2], now, actInfo, sysStats);
@@ -1428,8 +1435,9 @@ class Segment34View extends WatchUi.WatchFace {
 
         if(ret.size() != 13) {
             return setColorTheme(-1);
+        } else {
+            return ret;
         }
-        return ret;
     }
 
     hidden function updateColorTheme() {
@@ -3163,7 +3171,6 @@ class Segment34View extends WatchUi.WatchFace {
         if (!hasComplications) { return null; }
         try {
             var iter = Complications.getComplications();
-            if (iter == null) { return null; }
             var comp = iter.next();
             while (comp != null) {
                 var compType = comp.getType();
