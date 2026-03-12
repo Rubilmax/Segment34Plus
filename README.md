@@ -1,6 +1,6 @@
 # Segment34Plus
 
-A watchface for Garmin watches with a 34-segment display, forked from [Segment34 MkII](https://github.com/ludw/Segment34mkII).
+A watchface for Garmin watches with a 34-segment display, forked from [Segment34 MkII](https://github.com/ludw/Segment34mkII) after [PR #76](https://github.com/ludw/Segment34mkII/pull/76) was rejected.
 
 ![Screenshot of the watchface](screenshot.png "Screenshot")
 
