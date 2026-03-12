@@ -193,6 +193,7 @@
     <string id="LABEL_UV_2">INDICE UV</string>
     <string id="LABEL_HUM_1">UMID</string>
     <string id="LABEL_HUM_2">UMIDITÀ</string>
+    <string id="LABEL_FL_3">PERCEPITA</string>
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM ETÀ</string>

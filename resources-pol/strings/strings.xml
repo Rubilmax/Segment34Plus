@@ -193,6 +193,7 @@
     <string id="LABEL_UV_2">INDEKS UV</string>
     <string id="LABEL_HUM_1">WILG</string>
     <string id="LABEL_HUM_2">WILG</string>
+    <string id="LABEL_FL_3">ODCZUW</string>
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM WIEK</string>
