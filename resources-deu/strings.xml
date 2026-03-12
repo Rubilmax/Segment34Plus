@@ -193,6 +193,7 @@
     <string id="LABEL_UV_2">UV INDEX</string>
     <string id="LABEL_HUM_1">FEUCHT</string>
     <string id="LABEL_HUM_2">LUFTFEUCHTIGKEIT</string>
+    <string id="LABEL_FL_3">FÜHLT SICH AN</string>
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM ALTER</string>
