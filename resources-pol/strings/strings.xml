@@ -193,11 +193,15 @@
     <string id="LABEL_UV_2">INDEKS UV</string>
     <string id="LABEL_HUM_1">WILG</string>
     <string id="LABEL_HUM_2">WILG</string>
+    <string id="LABEL_FL_3">ODCZUW</string>
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM WIEK</string>
     <string id="LABEL_HRS_NEXT_SUN_EVENT_1">G SŁ</string>
     <string id="LABEL_HRS_NEXT_SUN_EVENT_3">GODZ SŁ</string>
+    <string id="LABEL_RHR_1">SPOCZ</string>
+    <string id="LABEL_RHR_2">SPOCZ HR</string>
+    <string id="LABEL_RHR_3">TĘTNO SPOCZ</string>
 
     <string id="settings_color_theme" scope="settings">Motyw kolorystyczny</string>
     <string id="settings_yellow_on_turquoise" scope="settings">Żółty na turkusowym</string>
@@ -211,6 +215,7 @@
     <string id="settings_orange" scope="settings">Pomarańczowy</string>
     <string id="settings_amber" scope="settings">Bursztynowy</string>
     <string id="settings_peachy_orange" scope="settings">Brzoskwiniowy pomarańczowy</string>
+    <string id="settings_peachy_orange_on_turquoise" scope="settings">Brzoskwiniowy na turkusowym</string>
     <string id="settings_red" scope="settings">Czerwony</string>
     <string id="settings_purple" scope="settings">Fioletowy</string>
     <string id="settings_white_on_turquoise" scope="settings">Biały na turkusowym</string>
@@ -279,6 +284,7 @@
     <string id="settings_sunset_time" scope="settings">Czas zachodu słońca</string>
     <string id="settings_next_sun_event" scope="settings">Czas następnego zdarzenia słonecznego (wschód/zachód)</string>
     <string id="settings_hrs_next_sun_event" scope="settings">Godziny do następnego zdarzenia słonecznego (wschód/zachód)</string>
+    <string id="settings_resting_heart_rate" scope="settings">Tętno spoczynkowe</string>
     <string id="settings_alternative_timezone_1" scope="settings">Alternatywna strefa czasowa 1</string>
     <string id="settings_alternative_timezone_2" scope="settings">Alternatywna strefa czasowa 2</string>
     <string id="settings_barometric_pressure_raw" scope="settings">Ciśnienie barometryczne, surowe</string>

@@ -193,9 +193,15 @@
     <string id="LABEL_UV_2">UV INDEX</string>
     <string id="LABEL_HUM_1">FEUCHT</string>
     <string id="LABEL_HUM_2">LUFTFEUCHTIGKEIT</string>
+    <string id="LABEL_FL_3">FÜHLT SICH AN</string>
 
     <string id="LABEL_CGM">CGM</string>
     <string id="LABEL_CGMAGE">CGM ALTER</string>
+    <string id="LABEL_HRS_NEXT_SUN_EVENT_1">H SONNE</string>
+    <string id="LABEL_HRS_NEXT_SUN_EVENT_3">STD SONNE</string>
+    <string id="LABEL_RHR_1">RHF</string>
+    <string id="LABEL_RHR_2">RUHE HF</string>
+    <string id="LABEL_RHR_3">RUHE HF</string>
 
     <!-- Settings strings with scope="settings" -->
     <string id="settings_color_theme" scope="settings">Farbschema</string>
@@ -210,6 +216,7 @@
     <string id="settings_orange" scope="settings">Orange</string>
     <string id="settings_amber" scope="settings">Bernstein</string>
     <string id="settings_peachy_orange" scope="settings">Pfirsich Orange</string>
+    <string id="settings_peachy_orange_on_turquoise" scope="settings">Pfirsichorange auf Türkis</string>
     <string id="settings_red" scope="settings">Rot</string>
     <string id="settings_purple" scope="settings">Lila</string>
     <string id="settings_white_on_turquoise" scope="settings">Weiß auf Türkis</string>
@@ -267,6 +274,7 @@
     <string id="settings_vo2_max_cycling" scope="settings">VO2 Max Radfahren</string>
     <string id="settings_respiration_rate" scope="settings">Atemfrequenz</string>
     <string id="settings_heart_rate" scope="settings">Herzfrequenz</string>
+    <string id="settings_resting_heart_rate" scope="settings">Ruheherzfrequenz</string>
     <string id="settings_pulse_ox" scope="settings">Pulse Ox</string>
     <string id="settings_calories_kcal_day" scope="settings">Kalorien (kcal) / Tag</string>
     <string id="settings_active_calories_kcal_day" scope="settings">Aktive Kalorien (kcal) / Tag</string>
