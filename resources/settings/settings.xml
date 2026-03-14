@@ -412,6 +412,7 @@
             <listEntry value="10">3, 3, 3, 4</listEntry>
             <listEntry value="11">4, 3, 3, 3</listEntry>
             <listEntry value="13">5, 3, 3</listEntry>
+            <listEntry value="14">4, 4, 2, 3</listEntry>
         </settingConfig>
     </setting>
 
@@ -888,6 +889,7 @@
             <settingConfig type="list">
                 <listEntry value="0">@Strings.settings_left</listEntry>
                 <listEntry value="1">@Strings.settings_center</listEntry>
+                <listEntry value="2">@Strings.settings_right</listEntry>
             </settingConfig>
     </setting>
 

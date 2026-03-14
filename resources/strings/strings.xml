@@ -101,8 +101,8 @@
     <string id="LABEL_CLIMB_1">CLIMB</string>
     <string id="LABEL_CLIMB_2">M CLIMBED</string>
     <string id="LABEL_RECOV_1">RECOV</string>
-    <string id="LABEL_RECOV_2">RECOV HRS</string>
-    <string id="LABEL_RECOV_3">RECOVERY HRS</string>
+    <string id="LABEL_RECOV_2">RECOV</string>
+    <string id="LABEL_RECOV_3">RECOVERY</string>
     <string id="LABEL_VO2_1">VO2</string>
     <string id="LABEL_VO2_2">VO2 MAX</string>
     <string id="LABEL_VO2RUN_3">RUN VO2 MAX</string>

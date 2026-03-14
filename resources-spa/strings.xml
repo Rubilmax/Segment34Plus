@@ -100,8 +100,8 @@
     <string id="LABEL_CLIMB_1">SUBIDA</string>
     <string id="LABEL_CLIMB_2">M SUBIDOS</string>
     <string id="LABEL_RECOV_1">RECUP</string>
-    <string id="LABEL_RECOV_2">HRS RECUP</string>
-    <string id="LABEL_RECOV_3">HORAS RECUP</string>
+    <string id="LABEL_RECOV_2">RECUP</string>
+    <string id="LABEL_RECOV_3">RECUP</string>
     <string id="LABEL_VO2_1">VO2</string>
     <string id="LABEL_VO2_2">VO2 MAX</string>
     <string id="LABEL_VO2RUN_3">VO2 MAX CARR</string>
