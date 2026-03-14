@@ -823,15 +823,15 @@ class Segment34View extends WatchUi.WatchFace {
         var y1 = baseY + halfClockHeight + marginY;
         var y2 = y1 + smallDataHeight + marginY;
         var y3 = y2 + labelHeight + labelMargin + largeDataHeight;
-        
-        fieldY = y2;
-        
+
+        fieldY = y2 - 3;
+
         var data_width = Math.sqrt(centerY*centerY - (y3 - centerY)*(y3 - centerY)) * 2 + fieldSpaceingAdj;
         var left_edge = Math.round((screenWidth - data_width) / 2);
-        
+
         calculateFieldXCoords(data_width, left_edge);
 
-        bottomFiveY = y3 + halfMarginY + bottomFiveAdj;
+        bottomFiveY = y3 + halfMarginY + bottomFiveAdj - 2;
         if((propLabelVisibility == 1 or propLabelVisibility == 3)) { bottomFiveY = bottomFiveY - labelHeight; }
         calculateSquareLayout();
     }
@@ -840,15 +840,15 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function calculateLayout() as Void {
         var y1 = baseY + halfClockHeight + marginY;
         var y2 = y1 + labelHeight + labelMargin + largeDataHeight;
-        
-        fieldY = y1;
-        
+
+        fieldY = y1 - 3;
+
         var data_width = Math.sqrt(centerY*centerY - (y2 - centerY)*(y2 - centerY)) * 2 + fieldSpaceingAdj;
         var left_edge = Math.round((screenWidth - data_width) / 2);
-        
+
         calculateFieldXCoords(data_width, left_edge);
 
-        bottomFiveY = y2 + halfMarginY + bottomFiveAdj;
+        bottomFiveY = y2 + halfMarginY + bottomFiveAdj - 2;
         if((propLabelVisibility == 1 or propLabelVisibility == 3)) { bottomFiveY = bottomFiveY - labelHeight; }
     }
     
@@ -1210,9 +1210,11 @@ class Segment34View extends WatchUi.WatchFace {
             return [4, 3, 3, 3];
         } else if(propFieldLayout == 12) {
             return [4, 4, 0, 0];
+        } else if(propFieldLayout == 14) {
+            return [4, 4, 2, 3];
         } else {
             return [5, 3, 3, 0];
-        } 
+        }
     }
 
     hidden function drawDataField(dc as Dc, x as Number, y as Number, adjX as Number, label as String?, value as String, width as Number, font as FontResource, bgwidth as Number) as Number {
@@ -1233,6 +1235,8 @@ class Segment34View extends WatchUi.WatchFace {
             dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
             if(propBottomFieldLabelAlignment == 0) {
                 dc.drawText(x - half_bg_width + adjX, y, fontLabel, label, Graphics.TEXT_JUSTIFY_LEFT);
+            } else if(propBottomFieldLabelAlignment == 2) {
+                dc.drawText(x + half_bg_width - 1 + adjX, y, fontLabel, label, Graphics.TEXT_JUSTIFY_RIGHT);
             } else {
                 dc.drawText(x, y, fontLabel, label, Graphics.TEXT_JUSTIFY_CENTER);
             }
@@ -1333,7 +1337,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
         if(propBatteryVariant == 2) { return; }
         if(x == null) { x = centerX; }
-        if(y == null) { y =  screenHeight - 25; }
+        if(y == null) { y =  screenHeight - 23; }
 
         dc.setColor(0x555555, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, fontIcons, "C", Graphics.TEXT_JUSTIFY_CENTER);
@@ -1353,7 +1357,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
         if(propBatteryVariant == 2) { return; }
         if(x == null) { x = centerX; }
-        if(y == null) { y =  screenHeight - 18; }
+        if(y == null) { y =  screenHeight - 20; }
 
         dc.setColor(0x555555, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, fontIcons, "B", Graphics.TEXT_JUSTIFY_CENTER);
@@ -2140,13 +2144,20 @@ class Segment34View extends WatchUi.WatchFace {
                     var complication = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_RECOVERY_TIME));
                     if (complication != null && complication.value != null) {
                         var recovery_h = complication.value / 60.0;
-                        if(recovery_h < 9.9 and recovery_h != 0) { val = recovery_h.format("%.1f"); } else { val = Math.round(recovery_h).format(numberFormat); }
+                        if(recovery_h > 60) {
+                            val = Math.round(recovery_h / 24.0).format(numberFormat) + "d";
+                        } else { val = Math.round(recovery_h).format(numberFormat); }
                     }
                 } catch(e) {}
             } else {
                     if(activityInfo has :timeToRecovery) {
                     if(activityInfo.timeToRecovery != null) {
-                        val = activityInfo.timeToRecovery.format(numberFormat);
+                        var recovery_h = activityInfo.timeToRecovery;
+                        if(recovery_h > 60) {
+                            val = Math.round(recovery_h / 24.0).format(numberFormat) + "d";
+                        } else {
+                            val = Math.round(recovery_h).format(numberFormat);
+                        }
                     }
                 }
             }

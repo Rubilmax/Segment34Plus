@@ -101,8 +101,8 @@
     <string id="LABEL_CLIMB_1">ANSTIEG</string>
     <string id="LABEL_CLIMB_2">M GESTIEGEN</string>
     <string id="LABEL_RECOV_1">ERHOL</string>
-    <string id="LABEL_RECOV_2">ERHOL STD</string>
-    <string id="LABEL_RECOV_3">ERHOLUNG STD</string>
+    <string id="LABEL_RECOV_2">ERHOL</string>
+    <string id="LABEL_RECOV_3">ERHOLUNG</string>
     <string id="LABEL_VO2_1">V02</string>
     <string id="LABEL_VO2_2">V02 MAX</string>
     <string id="LABEL_VO2RUN_3">LAUF V02 MAX</string>

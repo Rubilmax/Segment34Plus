@@ -26,7 +26,7 @@
     <property id="batteryVariant" type="number">1</property>
     <property id="weatherLine1Shows" type="number">78</property>
     <property id="weatherLine2Shows" type="number">73</property>
-    <property id="fieldLayout" type="number">11</property>
+    <property id="fieldLayout" type="number">14</property>
     <property id="leftValueShows" type="number">11</property>
     <property id="middleValueShows" type="number">29</property>
     <property id="rightValueShows" type="number">6</property>
@@ -42,7 +42,7 @@
     <property id="aodAlignment" type="number">0</property>
     <property id="dateAlignment" type="number">0</property>
     <property id="bottomFieldAlignment" type="number">2</property>
-    <property id="bottomFieldLabelAlignment" type="number">0</property>
+    <property id="bottomFieldLabelAlignment" type="number">2</property>
     <property id="dateFormat" type="number">0</property>
     <property id="smallFontVariant" type="number">2</property>
     <property id="hemisphere" type="number">0</property>

@@ -101,8 +101,8 @@
     <string id="LABEL_CLIMB_1">WSPIN</string>
     <string id="LABEL_CLIMB_2">M WSPIN</string>
     <string id="LABEL_RECOV_1">REKOW</string>
-    <string id="LABEL_RECOV_2">GODZ. REK</string>
-    <string id="LABEL_RECOV_3">GODZ. REKOW</string>
+    <string id="LABEL_RECOV_2">REK</string>
+    <string id="LABEL_RECOV_3">REKOW</string>
     <string id="LABEL_VO2_1">VO2</string>
     <string id="LABEL_VO2_2">VO2 MAX</string>
     <string id="LABEL_VO2RUN_3">BIEG VO2 MAX</string>

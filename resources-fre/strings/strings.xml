@@ -101,8 +101,8 @@
     <string id="LABEL_CLIMB_1">MONTÉE</string>
     <string id="LABEL_CLIMB_2">M MONTÉE</string>
     <string id="LABEL_RECOV_1">RÉCUP</string>
-    <string id="LABEL_RECOV_2">H RÉCUP</string>
-    <string id="LABEL_RECOV_3">H RÉCUP</string>
+    <string id="LABEL_RECOV_2">RÉCUP</string>
+    <string id="LABEL_RECOV_3">RÉCUP</string>
     <string id="LABEL_VO2_1">VO2</string>
     <string id="LABEL_VO2_2">VO2 MAX</string>
     <string id="LABEL_VO2RUN_3">VO2 M. COURSE</string>
@@ -110,7 +110,7 @@
     <string id="LABEL_RESP_1">RESP</string>
     <string id="LABEL_RESP_2">FRÉQ. RESP</string>
     <string id="LABEL_RESP_3">FRÉQ. RESP.</string>
-    <string id="LABEL_HR">FC:</string>
+    <string id="LABEL_HR">FRÉQ. C.:</string>
     <string id="LABEL_CAL_1">CAL</string>
     <string id="LABEL_CAL_2">CALORIES</string>
     <string id="LABEL_CAL_3">CAL. JOUR</string>
