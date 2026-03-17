@@ -337,6 +337,7 @@
     <string id="settings_weather_conditions" scope="settings">Väderförhållanden</string>
     <string id="settings_weather_conditions_temperature" scope="settings">Väderförhållanden, Temperatur</string>
     <string id="settings_weather_conditions_feelslike" scope="settings">Väderförhållanden, Känns som</string>
+    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Väderförhållanden, Känns som, Prognos</string>
     <string id="settings_daily_high_temperature" scope="settings">Dagens högsta temperatur</string>
     <string id="settings_daily_low_temperature" scope="settings">Dagens lägsta temperatur</string>
     <string id="settings_temperature" scope="settings">Temperatur</string>

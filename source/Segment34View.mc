@@ -145,7 +145,10 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var propSunriseFieldShows as Number = 39;
     hidden var propSunsetFieldShows as Number = 40;
     hidden var propWeatherLine1Shows as Number = 49;
-    hidden var propWeatherLine2Shows as Number = 50;
+    hidden var propWeatherLine2Shows as Number = 79;
+    hidden var cachedForecastChange as Array? = null;
+    hidden var cachedForecastWorse as Array? = null;
+    hidden var cachedForecastBetterHours as Number = -1;
     hidden var propDateFormat as Number = 0;
     hidden var propNotificationCountShows as Number = 36;
     hidden var propTzOffset1 as Number = 0;
@@ -758,6 +761,17 @@ class Segment34View extends WatchUi.WatchFace {
                 cachedValues[:dataSeconds] = "";
             } else {
                 cachedValues[:dataSeconds] = now.sec.format("%02d");
+            }
+            // Refresh weather lines every second for forecast cycling
+            if (propWeatherLine1Shows == 79) {
+                var actInfo = ActivityMonitor.getInfo();
+                var sysStats = System.getSystemStats();
+                cachedValues[:dataAboveLine1] = getValueByTypeWithUnit(79, 10, now, actInfo, sysStats);
+            }
+            if (propWeatherLine2Shows == 79) {
+                var actInfo2 = ActivityMonitor.getInfo();
+                var sysStats2 = System.getSystemStats();
+                cachedValues[:dataAboveLine2] = getValueByTypeWithUnit(79, 10, now, actInfo2, sysStats2);
             }
         }
 
@@ -1527,7 +1541,7 @@ class Segment34View extends WatchUi.WatchFace {
         propSunriseFieldShows = getValueOrDefault("sunriseFieldShows", 39) as Number;
         propSunsetFieldShows = getValueOrDefault("sunsetFieldShows", 40) as Number;
         propWeatherLine1Shows = getValueOrDefault("weatherLine1Shows", 49) as Number;
-        propWeatherLine2Shows = getValueOrDefault("weatherLine2Shows", 50) as Number;
+        propWeatherLine2Shows = getValueOrDefault("weatherLine2Shows", 79) as Number;
         propDateFieldShows = getValueOrDefault("dateFieldShows", -1) as Number;
         propShowSeconds = getValueOrDefault("showSeconds", true) as Boolean;
         propAlwaysShowSeconds = getValueOrDefault("alwaysShowSeconds", false) as Boolean;
@@ -1908,24 +1922,41 @@ class Segment34View extends WatchUi.WatchFace {
 
         var cc = Weather.getCurrentConditions();
         if(cc != null) {
+            var pcCc = cc.precipitationChance;
+            System.println("DEBUG precip: cc.precipitationChance=" + (pcCc != null ? pcCc.toString() : "null"));
+            var hf = Weather.getHourlyForecast();
+            if (hf != null && hf.size() > 0) {
+                var pcHf = hf[0].precipitationChance;
+                System.println("DEBUG precip: hf[0].precipitationChance=" + (pcHf != null ? pcHf.toString() : "null"));
+            } else {
+                System.println("DEBUG precip: hf is null or empty");
+            }
             weatherCondition = cc;
             try { storeWeatherData(); } catch(e) {}
         } else {
+            System.println("DEBUG precip: cc is null");
             try { weatherCondition = readWeatherData(); } catch(e) {}
         }
         cachedTempUnit = getTempUnit();
+        updateForecastChanges();
     }
 
     (:NoWeatherCache)
     hidden function updateWeather() as Void {
         if (!isWeatherRequired) { return; }
         if(!(Toybox has :Weather) or !(Weather has :getCurrentConditions)) { return; }
-        weatherCondition = Weather.getCurrentConditions();
+        var cc = Weather.getCurrentConditions();
+        if(cc != null) {
+            var pcCc2 = cc.precipitationChance;
+            System.println("DEBUG precip: cc.precipitationChance=" + (pcCc2 != null ? pcCc2.toString() : "null"));
+        }
+        weatherCondition = cc;
         cachedTempUnit = getTempUnit();
+        updateForecastChanges();
     }
 
     hidden function isWeatherSource(id as Number) as Boolean {
-        if (id == 20 || id == 39 || id == 40 || (id >= 43 && id <= 55) || (id >= 63 && id <= 70) || id == 76 || id == 77) {
+        if (id == 20 || id == 39 || id == 40 || (id >= 43 && id <= 55) || (id >= 63 && id <= 79) || id == 76 || id == 77) {
             return true;
         }
         return false;
@@ -2008,11 +2039,11 @@ class Segment34View extends WatchUi.WatchFace {
                 var tmp = {
                     "forecastTime" => hf[i].forecastTime.value(),
                     "condition" => hf[i].condition,
-                    "precipitationChance" => hf[i].precipitationChance,
                     "temperature" => hf[i].temperature,
                     "windBearing" => hf[i].windBearing,
                     "windSpeed" => hf[i].windSpeed
                 };
+                if(hf[i].precipitationChance != null) { tmp["precipitationChance"] = hf[i].precipitationChance; }
                 if(hf[i] has :uvIndex && hf[i].uvIndex != null) { 
                     tmp["uvIndex"] = hf[i].uvIndex; 
                 } else {
@@ -2577,6 +2608,43 @@ class Segment34View extends WatchUi.WatchFace {
             var condition = getWeatherCondition(false);
             var fl = getFeelsLike(false);
             val = join([condition, fl]);
+        } else if(complicationType == 79) { // Weather condition, Feels like, Until when
+            if (weatherCondition == null || weatherCondition.condition == null) {
+                val = "";
+            } else {
+                var cycleLen = (cachedForecastWorse != null) ? 9 : 6;
+                var phase = (Time.now().value() % cycleLen);
+
+                if (phase < 3 || cachedForecastChange == null) {
+                    var cond = getWeatherCondition(false);
+                    var fl = getFeelsLike(false);
+                    var pointer = "";
+                    if (cachedForecastChange != null) {
+                        pointer = " c" + cachedForecastChange[1] + "h";
+                    }
+                    val = join([cond, fl]) + pointer;
+                } else if (phase < 6) {
+                    var idx = (cachedForecastChange[0] as Number);
+                    if (idx < 0 || idx >= cachedWeatherResIds.size()) { idx = 53; }
+                    var condStr = Application.loadResource(cachedWeatherResIds[idx]);
+                    var fTemp = formatTemperature(convertTemperature(cachedForecastChange[2] as Number, cachedTempUnit));
+                    var pointer = "";
+                    if (cachedForecastWorse != null) {
+                        pointer = " c" + cachedForecastWorse[1] + "h";
+                    }
+                    val = join([condStr, fTemp]) + pointer;
+                } else {
+                    var idx = (cachedForecastWorse[0] as Number);
+                    if (idx < 0 || idx >= cachedWeatherResIds.size()) { idx = 53; }
+                    var condStr = Application.loadResource(cachedWeatherResIds[idx]);
+                    var fTemp = formatTemperature(convertTemperature(cachedForecastWorse[2] as Number, cachedTempUnit));
+                    var pointer = "";
+                    if (cachedForecastBetterHours >= 0) {
+                        pointer = " c" + cachedForecastBetterHours + "h";
+                    }
+                    val = join([condStr, fTemp]) + pointer;
+                }
+            }
         } else if(complicationType == 74) { // Feels like
             val = getFeelsLike(false);
         } else if(complicationType == 75) { // Hours to next sun event
@@ -2893,6 +2961,70 @@ class Segment34View extends WatchUi.WatchFace {
         }
     }
 
+    hidden function getWeatherSeverity(condition as Number) as Number {
+        if (condition == 0 || condition == 22 || condition == 23 || condition == 40) { return 0; }
+        if (condition == 1 || condition == 52) { return 1; }
+        if (condition == 2 || condition == 20) { return 2; }
+        if (condition == 8 || condition == 9 || condition == 29 || condition == 30 || condition == 33 || condition == 35 || condition == 39) { return 3; }
+        if (condition == 5) { return 4; }
+        if (condition == 14 || condition == 16 || condition == 18 || condition == 24 || condition == 27 || condition == 28 || condition == 31 || condition == 43 || condition == 44 || condition == 45 || condition == 46 || condition == 47 || condition == 48) { return 5; }
+        if (condition == 3 || condition == 4 || condition == 7 || condition == 11 || condition == 13 || condition == 21 || condition == 25 || condition == 49 || condition == 50 || condition == 51) { return 6; }
+        if (condition == 15 || condition == 17 || condition == 19 || condition == 26 || condition == 34) { return 7; }
+        if (condition == 6 || condition == 10 || condition == 12 || condition == 36) { return 8; }
+        if (condition == 32 || condition == 37 || condition == 38 || condition == 41 || condition == 42) { return 9; }
+        return 3;
+    }
+
+    hidden function updateForecastChanges() as Void {
+        cachedForecastChange = null;
+        cachedForecastWorse = null;
+        cachedForecastBetterHours = -1;
+        if (weatherCondition == null || weatherCondition.condition == null) { return; }
+        if (!(Toybox has :Weather) || !(Weather has :getHourlyForecast)) { return; }
+        var hf = Weather.getHourlyForecast();
+        if (hf == null || hf.size() == 0) { return; }
+
+        var currentCond = weatherCondition.condition.toNumber();
+        var now = Time.now().value();
+        var changeIdx = -1;
+        var worseIdx = -1;
+
+        for (var i = 0; i < hf.size(); i++) {
+            if (hf[i].condition != null && hf[i].condition != currentCond) {
+                var h = ((hf[i].forecastTime.value() - now + 1800) / 3600).toNumber();
+                if (h < 1) { h = 1; }
+                var t = hf[i].temperature != null ? hf[i].temperature : 0;
+                cachedForecastChange = [hf[i].condition, h, t];
+                changeIdx = i;
+                break;
+            }
+        }
+        if (changeIdx < 0) { return; }
+
+        var changeSev = getWeatherSeverity(cachedForecastChange[0] as Number);
+        for (var i = changeIdx + 1; i < hf.size(); i++) {
+            if (hf[i].condition != null && getWeatherSeverity(hf[i].condition) > changeSev) {
+                var h = ((hf[i].forecastTime.value() - now + 1800) / 3600).toNumber();
+                if (h < 1) { h = 1; }
+                var t = hf[i].temperature != null ? hf[i].temperature : 0;
+                cachedForecastWorse = [hf[i].condition, h, t];
+                worseIdx = i;
+                break;
+            }
+        }
+        if (worseIdx < 0) { return; }
+
+        var worseSev = getWeatherSeverity(cachedForecastWorse[0] as Number);
+        for (var i = worseIdx + 1; i < hf.size(); i++) {
+            if (hf[i].condition != null && getWeatherSeverity(hf[i].condition) < worseSev) {
+                var h = ((hf[i].forecastTime.value() - now + 1800) / 3600).toNumber();
+                if (h < 1) { h = 1; }
+                cachedForecastBetterHours = h;
+                break;
+            }
+        }
+    }
+
     hidden function getWeatherCondition(includePrecipitation as Boolean) as String {
         // Early return if no weather data
         if (weatherCondition == null || weatherCondition.condition == null) {
@@ -3012,6 +3144,9 @@ class Segment34View extends WatchUi.WatchFace {
             bearing = ((Math.round((weatherCondition.windBearing.toFloat() + 180) / 45.0).toNumber() % 8) + 97).toChar().toString();
         }
 
+        if (windspeed.equals("0")) {
+            bearing = "\u2248"; // ≈ double wave when calm
+        }
         return bearing + windspeed;
     }
 

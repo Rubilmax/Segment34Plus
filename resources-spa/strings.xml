@@ -335,6 +335,7 @@
     <string id="settings_weather_conditions" scope="settings">Predicción meteo</string>
     <string id="settings_weather_conditions_temperature" scope="settings">Predicción meteo, Temperatura</string>
     <string id="settings_weather_conditions_feelslike" scope="settings">Predicción meteo, Sensación térmica</string>
+    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Predicción meteo, Sensación térmica, Previsión</string>
     <string id="settings_daily_high_temperature" scope="settings">Temperatura máxima diaria</string>
     <string id="settings_daily_low_temperature" scope="settings">Temperatura mínima diaria</string>
     <string id="settings_temperature" scope="settings">Temperatura</string>
