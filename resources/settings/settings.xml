@@ -114,7 +114,6 @@
             <settingConfig type="list">
                 <listEntry value="0">@Strings.settings_two_small_data</listEntry>
                 <listEntry value="1">@Strings.settings_two_small_data_fields</listEntry>
-                <listEntry value="2">@Strings.settings_histogram_graph</listEntry>
             </settingConfig>
     </setting>
 
@@ -152,8 +151,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -212,8 +209,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -236,19 +231,6 @@
             <listEntry value="71">@Strings.settings_cgm_glucose_trend</listEntry>
             <listEntry value="72">@Strings.settings_cgm_age</listEntry>
         </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.histogramData" title="@Strings.settings_histogram_shows">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.settings_body_battery_history</listEntry>
-                <listEntry value="1">@Strings.settings_elevation_history</listEntry>
-                <listEntry value="2">@Strings.settings_heart_rate_history</listEntry>
-                <listEntry value="3">@Strings.settings_oxygen_saturation_history</listEntry>
-                <listEntry value="4">@Strings.settings_pressure_history</listEntry>
-                <listEntry value="5">@Strings.settings_stress_history</listEntry>
-                <listEntry value="7">@Strings.settings_stress_rest_orange_blue</listEntry>
-                <listEntry value="6">@Strings.settings_temperature_sensor_history</listEntry>
-            </settingConfig>
     </setting>
 
     <setting propertyKey="@Properties.smallFontVariant" title="@Strings.settings_small_font_variant">
@@ -451,8 +433,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -511,8 +491,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -571,8 +549,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -631,8 +607,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -680,8 +654,6 @@
             <listEntry value="15">@Strings.settings_altitude_ft</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="62">@Strings.settings_current_location_accuracy</listEntry>
             <listEntry value="57">@Strings.settings_next_calendar_event_time</listEntry>
             <listEntry value="71">@Strings.settings_cgm_glucose_trend</listEntry>
@@ -710,8 +682,6 @@
             <listEntry value="15">@Strings.settings_altitude_ft</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="62">@Strings.settings_current_location_accuracy</listEntry>
             <listEntry value="57">@Strings.settings_next_calendar_event_time</listEntry>
             <listEntry value="71">@Strings.settings_cgm_glucose_trend</listEntry>
@@ -767,8 +737,6 @@
             <listEntry value="29">@Strings.settings_active_calories_kcal_day</listEntry>
             <listEntry value="19">@Strings.settings_wheelchair_pushes_day</listEntry>
             <listEntry value="25">@Strings.settings_training_status</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="56">@Strings.settings_military_date_time</listEntry>
             <listEntry value="60">@Strings.settings_current_location_lat_long</listEntry>
             <listEntry value="61">@Strings.settings_current_location_military</listEntry>
@@ -809,8 +777,6 @@
             <listEntry value="40">@Strings.settings_sunset_time</listEntry>
             <listEntry value="55">@Strings.settings_next_sun_event</listEntry>
             <listEntry value="75">@Strings.settings_hrs_next_sun_event</listEntry>
-            <listEntry value="16">@Strings.settings_alternative_timezone_1</listEntry>
-            <listEntry value="41">@Strings.settings_alternative_timezone_2</listEntry>
             <listEntry value="26">@Strings.settings_barometric_pressure_raw</listEntry>
             <listEntry value="30">@Strings.settings_barometric_pressure_sea</listEntry>
             <listEntry value="27">@Strings.settings_weight_kg</listEntry>
@@ -1062,100 +1028,6 @@
             <listEntry value="9">@Strings.settings_weekday_dd_mm_yyyy</listEntry>
             <listEntry value="4">@Strings.settings_weekday_dd_month_week</listEntry>
             <listEntry value="5">@Strings.settings_weekday_dd_month_yyyy_week</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.tzName1" title="@Strings.settings_alternative_timezone_1_label">
-        <settingConfig type="alphaNumeric" />
-    </setting>
-
-    <setting propertyKey="@Properties.tzOffset1" title="@Strings.settings_alternative_timezone_1_offset">
-        <settingConfig type="list">
-            <listEntry value="-720">UTC-12:00</listEntry>
-            <listEntry value="-660">UTC-11:00</listEntry>
-            <listEntry value="-600">UTC-10:00</listEntry>
-            <listEntry value="-570">UTC-09:30</listEntry>
-            <listEntry value="-540">UTC-09:00</listEntry>
-            <listEntry value="-480">UTC-08:00</listEntry>
-            <listEntry value="-420">UTC-07:00</listEntry>
-            <listEntry value="-360">UTC-06:00</listEntry>
-            <listEntry value="-300">UTC-05:00</listEntry>
-            <listEntry value="-240">UTC-04:00</listEntry>
-            <listEntry value="-210">UTC-03:30</listEntry>
-            <listEntry value="-180">UTC-03:00</listEntry>
-            <listEntry value="-120">UTC-02:00</listEntry>
-            <listEntry value="-60">UTC-01:00</listEntry>
-            <listEntry value="0">UTC+0</listEntry>
-            <listEntry value="60">UTC+01:00</listEntry>
-            <listEntry value="120">UTC+02:00</listEntry>
-            <listEntry value="180">UTC+03:00</listEntry>
-            <listEntry value="210">UTC+03:30</listEntry>
-            <listEntry value="240">UTC+04:00</listEntry>
-            <listEntry value="270">UTC+04:30</listEntry>
-            <listEntry value="300">UTC+05:00</listEntry>
-            <listEntry value="330">UTC+05:30</listEntry>
-            <listEntry value="345">UTC+05:45</listEntry>
-            <listEntry value="360">UTC+06:00</listEntry>
-            <listEntry value="390">UTC+06:30</listEntry>
-            <listEntry value="420">UTC+07:00</listEntry>
-            <listEntry value="480">UTC+08:00</listEntry>
-            <listEntry value="525">UTC+08:45</listEntry>
-            <listEntry value="540">UTC+09:00</listEntry>
-            <listEntry value="570">UTC+09:30</listEntry>
-            <listEntry value="600">UTC+10:00</listEntry>
-            <listEntry value="630">UTC+10:30</listEntry>
-            <listEntry value="660">UTC+11:00</listEntry>
-            <listEntry value="720">UTC+12:00</listEntry>
-            <listEntry value="765">UTC+12:45</listEntry>
-            <listEntry value="780">UTC+13:00</listEntry>
-            <listEntry value="840">UTC+14:00</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.tzName2" title="@Strings.settings_alternative_timezone_2_label">
-        <settingConfig type="alphaNumeric" />
-    </setting>
-
-   <setting propertyKey="@Properties.tzOffset2" title="@Strings.settings_alternative_timezone_2_offset">
-        <settingConfig type="list">
-            <listEntry value="-720">UTC-12:00</listEntry>
-            <listEntry value="-660">UTC-11:00</listEntry>
-            <listEntry value="-600">UTC-10:00</listEntry>
-            <listEntry value="-570">UTC-09:30</listEntry>
-            <listEntry value="-540">UTC-09:00</listEntry>
-            <listEntry value="-480">UTC-08:00</listEntry>
-            <listEntry value="-420">UTC-07:00</listEntry>
-            <listEntry value="-360">UTC-06:00</listEntry>
-            <listEntry value="-300">UTC-05:00</listEntry>
-            <listEntry value="-240">UTC-04:00</listEntry>
-            <listEntry value="-210">UTC-03:30</listEntry>
-            <listEntry value="-180">UTC-03:00</listEntry>
-            <listEntry value="-120">UTC-02:00</listEntry>
-            <listEntry value="-60">UTC-01:00</listEntry>
-            <listEntry value="0">UTC+0</listEntry>
-            <listEntry value="60">UTC+01:00</listEntry>
-            <listEntry value="120">UTC+02:00</listEntry>
-            <listEntry value="180">UTC+03:00</listEntry>
-            <listEntry value="210">UTC+03:30</listEntry>
-            <listEntry value="240">UTC+04:00</listEntry>
-            <listEntry value="270">UTC+04:30</listEntry>
-            <listEntry value="300">UTC+05:00</listEntry>
-            <listEntry value="330">UTC+05:30</listEntry>
-            <listEntry value="345">UTC+05:45</listEntry>
-            <listEntry value="360">UTC+06:00</listEntry>
-            <listEntry value="390">UTC+06:30</listEntry>
-            <listEntry value="420">UTC+07:00</listEntry>
-            <listEntry value="480">UTC+08:00</listEntry>
-            <listEntry value="525">UTC+08:45</listEntry>
-            <listEntry value="540">UTC+09:00</listEntry>
-            <listEntry value="570">UTC+09:30</listEntry>
-            <listEntry value="600">UTC+10:00</listEntry>
-            <listEntry value="630">UTC+10:30</listEntry>
-            <listEntry value="660">UTC+11:00</listEntry>
-            <listEntry value="720">UTC+12:00</listEntry>
-            <listEntry value="765">UTC+12:45</listEntry>
-            <listEntry value="780">UTC+13:00</listEntry>
-            <listEntry value="840">UTC+14:00</listEntry>
         </settingConfig>
     </setting>
 

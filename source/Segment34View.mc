@@ -36,10 +36,6 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var fieldSpaceingAdj as Number = 0;
     hidden var textSideAdj as Number = 0;
     hidden var iconYAdj as Number = 0;
-    hidden var histogramBarWidth as Number = 2;
-    hidden var histogramBarSpacing as Number = 2;
-    hidden var histogramHeight as Number = 20;
-    hidden var histogramTargetWidth as Number = 40;
 
     hidden var fontMoon as WatchUi.FontResource;
     hidden var fontIcons as WatchUi.FontResource;
@@ -80,7 +76,6 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var nightMode as Boolean?;
     (:WeatherCache) hidden var weatherCondition as CurrentConditions or StoredWeather or Null;
     (:NoWeatherCache) hidden var weatherCondition as CurrentConditions or Null;
-    hidden var hrHistoryData as Array<Number>?;
     hidden var canBurnIn as Boolean = false;
     hidden var isSleeping as Boolean = false;
     hidden var lastUpdate as Number? = null;
@@ -142,7 +137,6 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var propWindUnit as Number = 0;
     hidden var propPressureUnit as Number = 0;
     hidden var propTopPartShows as Number = 0;
-    hidden var propHistogramData as Number = 0;
     hidden var propSunriseFieldShows as Number = 39;
     hidden var propSunsetFieldShows as Number = 40;
     hidden var propWeatherLine1Shows as Number = 49;
@@ -151,10 +145,6 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var cachedForecastWorse as Array? = null;
     hidden var propDateFormat as Number = 0;
     hidden var propNotificationCountShows as Number = 36;
-    hidden var propTzOffset1 as Number = 0;
-    hidden var propTzOffset2 as Number = 0;
-    hidden var propTzName1 as String = "";
-    hidden var propTzName2 as String = "";
     hidden var propWeekOffset as Number = 0;
     hidden var propLabelVisibility as Number = 0;
     hidden var propSmallFontVariant as Number = 0;
@@ -347,10 +337,6 @@ class Segment34View extends WatchUi.WatchFace {
         marginY = Math.round(screenHeight / 35);
         fieldSpaceingAdj = 10;
         barBottomAdj = 1;
-        histogramBarWidth = 1;
-        histogramBarSpacing = 1;
-        histogramHeight = 15;
-        histogramTargetWidth = 30;
     }
 
     (:Round260)
@@ -382,9 +368,6 @@ class Segment34View extends WatchUi.WatchFace {
         fieldSpaceingAdj = 15;
         bottomFiveAdj = 2;
         barBottomAdj = 1;
-        histogramBarWidth = 1;
-        histogramBarSpacing = 1;
-        histogramHeight = 18;
     }
 
     (:Round280)
@@ -415,9 +398,6 @@ class Segment34View extends WatchUi.WatchFace {
         baseY = centerY - smallDataHeight - 4;
         bottomFiveAdj = 5;
         barBottomAdj = 1;
-        histogramBarWidth = 1;
-        histogramBarSpacing = 1;
-        histogramHeight = 20;
     }
 
     (:Round360)
@@ -456,8 +436,6 @@ class Segment34View extends WatchUi.WatchFace {
         textSideAdj = 10;
         iconYAdj = -4;
         marginY = 10;
-        histogramHeight = 20;
-        histogramTargetWidth = 30;
     }
 
     (:Round390)
@@ -494,7 +472,6 @@ class Segment34View extends WatchUi.WatchFace {
         barBottomAdj = 2;
         bottomFiveAdj = 6;
         marginY = 10;
-        histogramHeight = 25;
     }
 
     (:InstinctCrossover)
@@ -531,7 +508,6 @@ class Segment34View extends WatchUi.WatchFace {
         barBottomAdj = 2;
         bottomFiveAdj = 10;
         marginY = 9;
-        histogramHeight = 25;
     }
 
     (:Round416)
@@ -567,7 +543,6 @@ class Segment34View extends WatchUi.WatchFace {
         baseY = centerY - smallDataHeight - 5;
         barBottomAdj = 2;
         bottomFiveAdj = 8;
-        histogramHeight = 25;
     }
 
     (:Round454)
@@ -606,8 +581,6 @@ class Segment34View extends WatchUi.WatchFace {
         bottomFiveAdj = 4;
         barBottomAdj = 2;
         marginY = 17;
-        histogramHeight = 30;
-        histogramTargetWidth = 45;
     }
 
     (:Square)
@@ -646,10 +619,6 @@ class Segment34View extends WatchUi.WatchFace {
         bottomFiveAdj = 4;
         barBottomAdj = 2;
         marginY = 17;
-        histogramHeight = 30;
-        histogramTargetWidth = 55;
-        histogramBarWidth = 3;
-        histogramBarSpacing = 3;
     }
 
     hidden function computeDisplayValues(now as Gregorian.Info) as Dictionary {
@@ -663,12 +632,6 @@ class Segment34View extends WatchUi.WatchFace {
         // From updateSlowData logic
         values[:dataClock] = getClockData(now);
         values[:dataMoon] = moonPhase(now);
-        if(propTopPartShows == 2) {
-            values[:dataGraph1] = getDataArrayByType(propHistogramData);
-        } else {
-            values[:dataGraph1] = null;
-        }
-
         values[:dataLabelTopLeft] = strLabelTopLeft;
         values[:dataLabelTopRight] = strLabelTopRight;
         values[:dataLabelBottomLeft] = strLabelBottomLeft;
@@ -892,37 +855,32 @@ class Segment34View extends WatchUi.WatchFace {
         dc.clear();
         var yn1 = baseY - halfClockHeight - marginY - smallDataHeight;
         var yn2 = yn1 - marginY - smallDataHeight;
-        var yn3 = yn2 - marginY - histogramHeight;
 
-        // Draw Top data fields or histogram
-        if(propTopPartShows == 2) {
-            drawHistogram(dc, values[:dataGraph1], centerX, yn3, histogramHeight);
+        // Draw Top data fields
+        var top_data_height = halfMarginY;
+        var top_field_font = fontTinyData;
+        var top_field_center_offset = 20;
+        if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
+        if(propLabelVisibility == 0 or propLabelVisibility == 3) {
+            dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
+
+            top_data_height = labelHeight + halfMarginY;
+        }
+
+        dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
+        if(propTopPartShows == 0) {
+            dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
+
+            // Draw Moon
+            dc.setColor(themeColors[moon], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, marginY + ((top_data_height + tinyDataHeight) / 2), fontMoon, values[:dataMoon], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         } else {
-            var top_data_height = halfMarginY;
-            var top_field_font = fontTinyData;
-            var top_field_center_offset = 20;
-            if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
-            if(propLabelVisibility == 0 or propLabelVisibility == 3) {
-                dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
-                dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-                top_data_height = labelHeight + halfMarginY;
-            }
-
-            dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
-            if(propTopPartShows == 0) {
-                dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-                // Draw Moon
-                dc.setColor(themeColors[moon], Graphics.COLOR_TRANSPARENT);
-                dc.drawText(centerX, marginY + ((top_data_height + tinyDataHeight) / 2), fontMoon, values[:dataMoon], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            } else {
-                if(top_data_height == halfMarginY) { top_field_font = fontSmallData; }
-                dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-            }
+            if(top_data_height == halfMarginY) { top_field_font = fontSmallData; }
+            dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
         }
 
         // Draw Lines above clock
@@ -1017,37 +975,32 @@ class Segment34View extends WatchUi.WatchFace {
         var yn0 = baseY - halfClockHeight - marginY - smallDataHeight;  // date line (above clock)
         var yn1 = yn0 - marginY - smallDataHeight;  // weather line 2
         var yn2 = yn1 - marginY - smallDataHeight;  // weather line 1
-        var yn3 = yn2 - marginY - histogramHeight;
 
-        // Draw Top data fields or histogram
-        if(propTopPartShows == 2) {
-            drawHistogram(dc, values[:dataGraph1], centerX, yn3, histogramHeight);
+        // Draw Top data fields
+        var top_data_height = halfMarginY;
+        var top_field_font = fontTinyData;
+        var top_field_center_offset = 20;
+        if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
+        if(propLabelVisibility == 0 or propLabelVisibility == 3) {
+            dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
+
+            top_data_height = labelHeight + halfMarginY + 2;
+        }
+
+        dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
+        if(propTopPartShows == 0) {
+            dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
+
+            // Draw Moon
+            dc.setColor(themeColors[moon], Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, marginY + ((top_data_height + tinyDataHeight) / 2), fontMoon, values[:dataMoon], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         } else {
-            var top_data_height = halfMarginY;
-            var top_field_font = fontTinyData;
-            var top_field_center_offset = 20;
-            if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
-            if(propLabelVisibility == 0 or propLabelVisibility == 3) {
-                dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
-                dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-                top_data_height = labelHeight + halfMarginY + 2;
-            }
-
-            dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
-            if(propTopPartShows == 0) {
-                dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-                // Draw Moon
-                dc.setColor(themeColors[moon], Graphics.COLOR_TRANSPARENT);
-                dc.drawText(centerX, marginY + ((top_data_height + tinyDataHeight) / 2), fontMoon, values[:dataMoon], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            } else {
-                if(top_data_height == halfMarginY) { top_field_font = fontSmallData; }
-                dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-                dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-            }
+            if(top_data_height == halfMarginY) { top_field_font = fontSmallData; }
+            dc.drawText(centerX - top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+            dc.drawText(centerX + top_field_center_offset, marginY + top_data_height, top_field_font, values[:dataTopRight], Graphics.TEXT_JUSTIFY_LEFT);
         }
 
         // Draw Lines above clock (shifted up by one row)
@@ -1334,23 +1287,6 @@ class Segment34View extends WatchUi.WatchFace {
         dc.setPenWidth(1);
     }
 
-    hidden function drawHistogram(dc as Dc, data as Array<Number>?, x as Number, y as Number, h as Number) as Void {
-        if(data == null) { return; }
-        var scale = 100.0 / h;
-        var half_width = Math.round((data.size() * (histogramBarWidth + histogramBarSpacing)) / 2);
-        var bar_height = 0;
-
-        dc.setColor(themeColors[clock], Graphics.COLOR_TRANSPARENT);
-        for(var i=0; i<data.size(); i++) {
-            if(data[i] == null) { break; }
-            if(propHistogramData == 7) {
-                dc.setColor(getStressColor(data[i]), Graphics.COLOR_TRANSPARENT);
-            }
-            bar_height = Math.round(data[i] / scale);
-            dc.fillRectangle(x - half_width + i * (histogramBarWidth + histogramBarSpacing), y + (h - bar_height), histogramBarWidth, bar_height);
-        }
-    }
-
     (:AMOLED)
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
         if(propBatteryVariant == 2) { return; }
@@ -1541,7 +1477,6 @@ class Segment34View extends WatchUi.WatchFace {
         propClockFont = getValueOrDefault("clockFont", 0) as Number;
 
         propTopPartShows = getValueOrDefault("topPartShows", 0) as Number;
-        propHistogramData = getValueOrDefault("histogramData", 0) as Number;
         propSunriseFieldShows = getValueOrDefault("sunriseFieldShows", 39) as Number;
         propSunsetFieldShows = getValueOrDefault("sunsetFieldShows", 40) as Number;
         propWeatherLine1Shows = getValueOrDefault("weatherLine1Shows", 49) as Number;
@@ -1583,10 +1518,6 @@ class Segment34View extends WatchUi.WatchFace {
         propLabelVisibility = getValueOrDefault("labelVisibility", 0) as Number;
         propDateFormat = getValueOrDefault("dateFormat", 0) as Number;
         propNotificationCountShows = getValueOrDefault("notificationCountShows", 14) as Number;
-        propTzOffset1 = getValueOrDefault("tzOffset1", 0) as Number;
-        propTzOffset2 = getValueOrDefault("tzOffset2", 0) as Number;
-        propTzName1 = getValueOrDefault("tzName1", "UTC TIME") as String;
-        propTzName2 = getValueOrDefault("tzName2", "TZ2") as String;
         propWeekOffset = getValueOrDefault("weekOffset", 0) as Number;
         propSmallFontVariant = getValueOrDefault("smallFontVariant", 2) as Number;
         propIs24H = System.getDeviceSettings().is24Hour;
@@ -2260,8 +2191,6 @@ class Segment34View extends WatchUi.WatchFace {
             if (alt != null) {
                 val = (alt * 3.28084).format(numberFormat);
             }
-        } else if(complicationType == 16) { // Alt TZ 1
-            val = secondaryTimezone(propTzOffset1, width);
         } else if(complicationType == 17) { // Steps / day
             if(activityInfo.steps != null) {
                 if(width >= 5) {
@@ -2425,8 +2354,6 @@ class Segment34View extends WatchUi.WatchFace {
                     }
                 }
             }
-        } else if(complicationType == 41) { // Alt TZ 2
-            val = secondaryTimezone(propTzOffset2, width);
         } else if(complicationType == 42) { // Alarms
             val = System.getDeviceSettings().alarmCount.format(numberFormat);
         } else if(complicationType == 43) { // High temp
@@ -2668,92 +2595,9 @@ class Segment34View extends WatchUi.WatchFace {
         return val;
     }
 
-    hidden function getDataArrayByType(dataSource as Number) as Array<Number> {
-        var ret = [];
-        var iterator = null;
-        var max = null;
-        var twoHours = new Time.Duration(7200);
-        
-        if(dataSource == 0 and Toybox.SensorHistory has :getBodyBatteryHistory) {
-            iterator = Toybox.SensorHistory.getBodyBatteryHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-            max = 100;
-        } else if(dataSource == 1 and Toybox.SensorHistory has :getElevationHistory) {
-            iterator = Toybox.SensorHistory.getElevationHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-        } else if(dataSource == 2 and Toybox.SensorHistory has :getHeartRateHistory) {
-            iterator = Toybox.SensorHistory.getHeartRateHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-        } else if(dataSource == 3 and Toybox.SensorHistory has :getOxygenSaturationHistory) {
-            iterator = Toybox.SensorHistory.getOxygenSaturationHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-            max = 100;
-        } else if(dataSource == 4 and Toybox.SensorHistory has :getPressureHistory) {
-            iterator = Toybox.SensorHistory.getPressureHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-        } else if((dataSource == 5 or dataSource == 7) and Toybox.SensorHistory has :getStressHistory) {
-            iterator = Toybox.SensorHistory.getStressHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-            max = 100;
-        } else if(dataSource == 6 and Toybox.SensorHistory has :getTemperatureHistory) {
-            iterator = Toybox.SensorHistory.getTemperatureHistory({:period => twoHours, :order => Toybox.SensorHistory.ORDER_OLDEST_FIRST});
-        }
-
-        if(iterator == null) { return ret; }
-        if(max == null) {
-            max = iterator.getMax();
-        }
-        var min = iterator.getMin();
-        if(min == null or max == null) {
-            return ret;
-        }
-        var diff = max - (min * 0.9);
-        var sample = iterator.next();
-        var count = 0;
-        while(sample != null) {
-            if(dataSource == 2) {
-                if(sample.data != null and sample.data != 0 and sample.data < 255) {
-                    ret.add(Math.round(sample.data.toFloat() / max * 100).toNumber());
-                }
-            } else if(dataSource == 1 or dataSource == 4) {
-                if(sample.data != null) {
-                    ret.add(Math.round((sample.data.toFloat() - Math.round(min * 0.9)) / diff * 100).toNumber());
-                }
-            } else if(dataSource == 3) {
-                if(sample.data != null) {
-                    ret.add(Math.round((sample.data.toFloat() - 50.0) / 50.0 * 100).toNumber());
-                }
-            } else {
-                if(sample.data != null) {
-                    ret.add(Math.round(sample.data.toFloat() / max * 100).toNumber());
-                }
-            }
-            
-            sample = iterator.next();
-            count++;
-        }
-
-        if(ret.size() > histogramTargetWidth) {
-            var reduced_ret = [];
-            var step = (ret.size() as Float) / histogramTargetWidth.toFloat();
-            var closest_index = 0;
-            for(var i=0; i<histogramTargetWidth; i++) {
-                closest_index = Math.round(i * step).toNumber();
-                if (closest_index >= ret.size()) {
-                    closest_index = ret.size() - 1;
-                }
-                reduced_ret.add(ret[closest_index]);
-            }
-            return reduced_ret;
-        }
-        return ret;
-    } 
-
     hidden function getLabelByType(complicationType as Number, labelSize as Number) as String {
         // labelSize 1 = short, 2 = mid, 3 = long
 
-        if(complicationType == 16) {
-            return propTzName1.toUpper() + ":";
-        }
-
-        if(complicationType == 41) {
-            return propTzName2.toUpper() + ":";
-        }
-        
         switch(complicationType) {
             case 0: return formatLabel(Rez.Strings.LABEL_WMIN_1, Rez.Strings.LABEL_WMIN_2, Rez.Strings.LABEL_WMIN_3, labelSize);
             case 1: return formatLabel(Rez.Strings.LABEL_DMIN_1, Rez.Strings.LABEL_DMIN_2, Rez.Strings.LABEL_DMIN_3, labelSize);
@@ -3385,37 +3229,6 @@ class Segment34View extends WatchUi.WatchFace {
         return "";
     }
 
-    hidden function secondaryTimezone(offset, width) as String {
-        var val = "";
-        var now = Time.now();
-        var utc = Time.Gregorian.utcInfo(now, Time.FORMAT_MEDIUM);
-        var min = utc.min + (offset % 60);
-        var hour = (utc.hour + Math.floor(offset / 60)) % 24;
-
-        if(min > 59) {
-            min -= 60;
-            hour += 1;
-        }
-
-        if(min < 0) {
-            min += 60;
-            hour -= 1;
-        }
-
-        if(hour < 0) {
-            hour += 24;
-        }
-        if(hour > 23) {
-            hour -= 24;
-        }
-        hour = formatHour(hour);
-        if(width < 5) {
-            val = hour.format("%02d") + min.format("%02d");
-        } else {
-            val = hour.format("%02d") + ":" + min.format("%02d");
-        }
-        return val;
-    }
 
     hidden function dayName(day_of_week as Number) as String {
         if(weekNames == null) { init_week_month_names(); }

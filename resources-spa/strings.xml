@@ -252,7 +252,6 @@
     <string id="settings_top_part_shows" scope="settings">La parte superior muestra</string>
     <string id="settings_two_small_data" scope="settings">Dos pequeños campos de datos y fase lunar</string>
     <string id="settings_two_small_data_fields" scope="settings">Dos pequeños campos de datos</string>
-    <string id="settings_histogram_graph" scope="settings">Un gráfico de histogramma (últimas 2 horas de datos)</string>
     <string id="settings_top_left_small" scope="settings">Campo datos pequeño arriba izquierda:</string>
     <string id="settings_hidden" scope="settings">Oculto</string>
     <string id="settings_active_min_week" scope="settings">Minutos activo / semana</string>
@@ -284,8 +283,6 @@
     <string id="settings_next_sun_event" scope="settings">Hora próximo evento solar (amanecer/anochecer)</string>
     <string id="settings_hrs_next_sun_event" scope="settings">Horas hasta próximo evento solar (amanecer/anochecer)</string>
     <string id="settings_resting_heart_rate" scope="settings">Frecuencia cardíaca en reposo</string>
-    <string id="settings_alternative_timezone_1" scope="settings">Huso horario alternativo 1</string>
-    <string id="settings_alternative_timezone_2" scope="settings">Huso horario alternativo 2</string>
     <string id="settings_barometric_pressure_raw" scope="settings">Presión barométrica bruta</string>
     <string id="settings_barometric_pressure_sea" scope="settings">Presión barométrica, nivel del mar</string>
     <string id="settings_weight_kg" scope="settings">Peso (kg)</string>
@@ -306,15 +303,6 @@
     <string id="settings_next_calendar_event" scope="settings">Próximo evento del calendario</string>
     <string id="settings_next_calendar_event_time" scope="settings">Hora del próximo evento del calendario</string>
     <string id="settings_top_right_small" scope="settings">Campo datos pequeño arriba a la derecha:</string>
-    <string id="settings_histogram_shows" scope="settings">El histograma muestra (debe estar habilitado en la parte superior)</string>
-    <string id="settings_body_battery_history" scope="settings">Cronología batería corporal</string>
-    <string id="settings_elevation_history" scope="settings">Cronología altitud</string>
-    <string id="settings_heart_rate_history" scope="settings">Cronología frecuencia cardíaca</string>
-    <string id="settings_oxygen_saturation_history" scope="settings">Cronología saturación oxígeno</string>
-    <string id="settings_pressure_history" scope="settings">Cronología presión</string>
-    <string id="settings_stress_history" scope="settings">Cronología estrés</string>
-    <string id="settings_stress_rest_orange_blue" scope="settings">Estrés/reposo (naranja/azul)</string>
-    <string id="settings_temperature_sensor_history" scope="settings">Cronología temperatura sensor</string>
     <string id="settings_small_font_variant" scope="settings">Variante fuente matriz puntos pequeños:</string>
     <string id="settings_dots" scope="settings">Puntos</string>
     <string id="settings_blended" scope="settings">Mezclado</string>
@@ -430,10 +418,6 @@
     <string id="settings_weekday_dd_mm_yyyy" scope="settings">DÍA, DD.MM.AAAA</string>
     <string id="settings_weekday_dd_month_week" scope="settings">DÍA, DD MES (Semana)</string>
     <string id="settings_weekday_dd_month_yyyy_week" scope="settings">DÍA, DD MES AAAA (Semana)</string>
-    <string id="settings_alternative_timezone_1_label" scope="settings">Etiqueta huso horario alternativo 1</string>
-    <string id="settings_alternative_timezone_1_offset" scope="settings">Offset huso horario alternativo 1</string>
-    <string id="settings_alternative_timezone_2_label" scope="settings">Etiqueta huso horario alternativo 2</string>
-    <string id="settings_alternative_timezone_2_offset" scope="settings">Offset huso horario alternativo 2</string>
     <string id="settings_temperature_unit" scope="settings">Unidad de temperatura</string>
     <string id="settings_c" scope="settings">C</string>
     <string id="settings_f" scope="settings">F</string>

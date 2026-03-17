@@ -289,7 +289,6 @@
     <string id="settings_top_part_shows" scope="settings">Top Part shows</string>
     <string id="settings_two_small_data" scope="settings">Two small data fields and Moon phase</string>
     <string id="settings_two_small_data_fields" scope="settings">Two small data fields</string>
-    <string id="settings_histogram_graph" scope="settings">A histogram graph (last 2 hours of data)</string>
     <string id="settings_top_left_small" scope="settings">Top left small data field:</string>
     <string id="settings_hidden" scope="settings">Hidden</string>
     <string id="settings_active_min_week" scope="settings">Active min / week</string>
@@ -321,8 +320,6 @@
     <string id="settings_next_sun_event" scope="settings">Next sun event (sunset/sunrise) time</string>
     <string id="settings_hrs_next_sun_event" scope="settings">Hours to next sun event (sunset/sunrise)</string>
     <string id="settings_resting_heart_rate" scope="settings">Resting Heart Rate</string>
-    <string id="settings_alternative_timezone_1" scope="settings">Alternative Timezone 1</string>
-    <string id="settings_alternative_timezone_2" scope="settings">Alternative Timezone 2</string>
     <string id="settings_barometric_pressure_raw" scope="settings">Barometric Pressure, raw</string>
     <string id="settings_barometric_pressure_sea" scope="settings">Barometric Pressure, sea level</string>
     <string id="settings_weight_kg" scope="settings">Weight (kg)</string>
@@ -344,15 +341,6 @@
     <string id="settings_next_calendar_event" scope="settings">Next calendar event time</string>
     <string id="settings_next_calendar_event_time" scope="settings">Next calendar event time</string>
     <string id="settings_top_right_small" scope="settings">Top right small data field:</string>
-    <string id="settings_histogram_shows" scope="settings">Histogram shows (must be enabled in Top Part shows)</string>
-    <string id="settings_body_battery_history" scope="settings">Body battery history</string>
-    <string id="settings_elevation_history" scope="settings">Elevation history</string>
-    <string id="settings_heart_rate_history" scope="settings">Heart rate history</string>
-    <string id="settings_oxygen_saturation_history" scope="settings">Oxygen saturation history</string>
-    <string id="settings_pressure_history" scope="settings">Pressure history</string>
-    <string id="settings_stress_history" scope="settings">Stress history</string>
-    <string id="settings_stress_rest_orange_blue" scope="settings">Stress/rest (orange/blue)</string>
-    <string id="settings_temperature_sensor_history" scope="settings">Temperature sensor history</string>
     <string id="settings_small_font_variant" scope="settings">Small dot matrix font variant:</string>
     <string id="settings_dots" scope="settings">Dots</string>
     <string id="settings_blended" scope="settings">Blended</string>
@@ -468,10 +456,6 @@
     <string id="settings_weekday_dd_mm_yyyy" scope="settings">WEEKDAY, DD.MM.YYYY</string>
     <string id="settings_weekday_dd_month_week" scope="settings">WEEKDAY, DD MONTH (Week)</string>
     <string id="settings_weekday_dd_month_yyyy_week" scope="settings">WEEKDAY, DD MONTH YYYY (Week)</string>
-    <string id="settings_alternative_timezone_1_label" scope="settings">Alternative Timezone 1 label</string>
-    <string id="settings_alternative_timezone_1_offset" scope="settings">Alternative Timezone 1 offset</string>
-    <string id="settings_alternative_timezone_2_label" scope="settings">Alternative Timezone 2 label</string>
-    <string id="settings_alternative_timezone_2_offset" scope="settings">Alternative Timezone 2 offset</string>
     <string id="settings_temperature_unit" scope="settings">Temperature unit</string>
     <string id="settings_show_temp_unit" scope="settings">Show temperature unit</string>
     <string id="settings_c" scope="settings">C</string>
