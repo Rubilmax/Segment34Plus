@@ -58,6 +58,8 @@ class Segment34View extends WatchUi.WatchFace {
     // Layout Caching
     hidden var cachedFieldWidths as Array<Number> = [0, 0, 0, 0];
     hidden var cachedSysStats as System.Stats?;
+    hidden var wakeTimestamp as Number = 0;
+    hidden var lastWeatherPhase as Number = -1;
     hidden var cachedStressData as Number? = null;
     hidden var cachedStressDataValid as Boolean = false;
     hidden var cachedBBData as Number? = null;
@@ -731,6 +733,8 @@ class Segment34View extends WatchUi.WatchFace {
         visible = true;
         lastUpdate = null;
         lastSlowUpdate = null;
+        wakeTimestamp = Time.now().value();
+        lastWeatherPhase = -1;
     }
 
     // Update the view
@@ -762,16 +766,18 @@ class Segment34View extends WatchUi.WatchFace {
             } else {
                 cachedValues[:dataSeconds] = now.sec.format("%02d");
             }
-            // Refresh weather lines every second for forecast cycling
-            if (propWeatherLine1Shows == 79) {
-                var actInfo = ActivityMonitor.getInfo();
-                var sysStats = System.getSystemStats();
-                cachedValues[:dataAboveLine1] = getValueByTypeWithUnit(79, 10, now, actInfo, sysStats);
-            }
-            if (propWeatherLine2Shows == 79) {
-                var actInfo2 = ActivityMonitor.getInfo();
-                var sysStats2 = System.getSystemStats();
-                cachedValues[:dataAboveLine2] = getValueByTypeWithUnit(79, 10, now, actInfo2, sysStats2);
+            // Refresh weather lines every 3 seconds for forecast cycling
+            if (propWeatherLine1Shows == 79 || propWeatherLine2Shows == 79) {
+                var phase = getWeatherPhase();
+                if (phase / 3 != lastWeatherPhase / 3) {
+                    lastWeatherPhase = phase;
+                    if (propWeatherLine1Shows == 79) {
+                        cachedValues[:dataAboveLine1] = getValueByTypeWithUnit(79, 10, now, null, cachedSysStats);
+                    }
+                    if (propWeatherLine2Shows == 79) {
+                        cachedValues[:dataAboveLine2] = getValueByTypeWithUnit(79, 10, now, null, cachedSysStats);
+                    }
+                }
             }
         }
 
@@ -791,6 +797,8 @@ class Segment34View extends WatchUi.WatchFace {
 
     // The user has just looked at their watch. Timers and animations may be started here.
     function onExitSleep() as Void {
+        wakeTimestamp = Time.now().value();
+        lastWeatherPhase = -1;
         lastUpdate = null;
         lastSlowUpdate = null;
         isSleeping = false;
@@ -2612,8 +2620,7 @@ class Segment34View extends WatchUi.WatchFace {
             if (weatherCondition == null || weatherCondition.condition == null) {
                 val = "";
             } else {
-                var cycleLen = (cachedForecastWorse != null) ? 9 : 6;
-                var phase = (Time.now().value() % cycleLen);
+                var phase = getWeatherPhase();
 
                 if (phase < 3 || cachedForecastChange == null) {
                     var cond = getWeatherCondition(false);
@@ -2623,24 +2630,17 @@ class Segment34View extends WatchUi.WatchFace {
                         pointer = " c" + cachedForecastChange[1] + "h";
                     }
                     val = join([cond, fl]) + pointer;
-                } else if (phase < 6) {
-                    var idx = (cachedForecastChange[0] as Number);
-                    if (idx < 0 || idx >= cachedWeatherResIds.size()) { idx = 53; }
-                    var condStr = Application.loadResource(cachedWeatherResIds[idx]);
-                    var fTemp = formatTemperature(convertTemperature(cachedForecastChange[2] as Number, cachedTempUnit));
-                    var pointer = "";
-                    if (cachedForecastWorse != null) {
-                        pointer = " c" + cachedForecastWorse[1] + "h";
-                    }
-                    val = join([condStr, fTemp]) + pointer;
                 } else {
-                    var idx = (cachedForecastWorse[0] as Number);
+                    var data = (phase < 6) ? cachedForecastChange : cachedForecastWorse;
+                    var idx = (data[0] as Number);
                     if (idx < 0 || idx >= cachedWeatherResIds.size()) { idx = 53; }
                     var condStr = Application.loadResource(cachedWeatherResIds[idx]);
-                    var fTemp = formatTemperature(convertTemperature(cachedForecastWorse[2] as Number, cachedTempUnit));
+                    var fTemp = formatTemperature(convertTemperature(data[2] as Number, cachedTempUnit));
                     var pointer = "";
-                    if (cachedForecastBetterHours >= 0) {
-                        pointer = " c" + cachedForecastBetterHours + "h";
+                    if (phase < 6) {
+                        if (cachedForecastWorse != null) { pointer = " c" + cachedForecastWorse[1] + "h"; }
+                    } else {
+                        if (cachedForecastBetterHours >= 0) { pointer = " c" + cachedForecastBetterHours + "h"; }
                     }
                     val = join([condStr, fTemp]) + pointer;
                 }
@@ -2959,6 +2959,12 @@ class Segment34View extends WatchUi.WatchFace {
         } else {  // width == 5
             return distance < 1000 ? distance.format("%05.1f") : distance.format("%05d");
         }
+    }
+
+    hidden function getWeatherPhase() as Number {
+        var elapsed = Time.now().value() - wakeTimestamp;
+        var cycleLen = (cachedForecastWorse != null) ? 9 : 6;
+        return (elapsed < 3) ? 0 : ((elapsed - 3) % (cycleLen - 3)) + 3;
     }
 
     hidden function getWeatherSeverity(condition as Number) as Number {
