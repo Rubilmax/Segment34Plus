@@ -27,52 +27,7 @@
             <listEntry value="16">@Strings.settings_green_on_white</listEntry>
             <listEntry value="17">@Strings.settings_orange_on_white</listEntry>
             <listEntry value="21">@Strings.settings_purple_on_white</listEntry>
-            <listEntry value="30">@Strings.settings_custom_colors</listEntry>
         </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.nightColorTheme" title="@Strings.settings_night_color_theme">
-        <settingConfig type="list">
-            <listEntry value="-1">@Strings.settings_no_change</listEntry>
-            <listEntry value="0">@Strings.settings_yellow_on_turquoise</listEntry>
-            <listEntry value="8">@Strings.settings_yellow_on_blue</listEntry>
-            <listEntry value="1">@Strings.settings_hot_pink</listEntry>
-            <listEntry value="10">@Strings.settings_blue</listEntry>
-            <listEntry value="2">@Strings.settings_blueish_green</listEntry>
-            <listEntry value="3">@Strings.settings_green</listEntry>
-            <listEntry value="19">@Strings.settings_green_camo</listEntry>
-            <listEntry value="18">@Strings.settings_green_and_orange</listEntry>
-            <listEntry value="11">@Strings.settings_orange</listEntry>
-            <listEntry value="23">@Strings.settings_amber</listEntry>
-            <listEntry value="5">@Strings.settings_peachy_orange</listEntry>
-            <listEntry value="24">@Strings.settings_peachy_orange_on_turquoise</listEntry>
-            <listEntry value="20">@Strings.settings_red</listEntry>
-            <listEntry value="22">@Strings.settings_purple</listEntry>
-            <listEntry value="4">@Strings.settings_white_on_turquoise</listEntry>
-            <listEntry value="6">@Strings.settings_white_on_red</listEntry>
-            <listEntry value="7">@Strings.settings_white_on_blue</listEntry>
-            <listEntry value="9">@Strings.settings_white_on_orange</listEntry>
-            <listEntry value="12">@Strings.settings_white_on_black</listEntry>
-            <listEntry value="13">@Strings.settings_black_on_white</listEntry>
-            <listEntry value="14">@Strings.settings_red_on_white</listEntry>
-            <listEntry value="15">@Strings.settings_blue_on_white</listEntry>
-            <listEntry value="16">@Strings.settings_green_on_white</listEntry>
-            <listEntry value="17">@Strings.settings_orange_on_white</listEntry>
-            <listEntry value="21">@Strings.settings_purple_on_white</listEntry>
-            <listEntry value="30">@Strings.settings_custom_colors_faq</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.nightThemeActivation" title="@Strings.settings_night_theme_activation">
-        <settingConfig type="list">
-            <listEntry value="0">@Strings.settings_during_scheduled_sleep</listEntry>
-            <listEntry value="1">@Strings.settings_two_hours_before</listEntry>
-            <listEntry value="2">@Strings.settings_from_sunset_sunrise</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.colorOverride" title="@Strings.settings_custom_colors_read">
-        <settingConfig type="alphanumeric" errorMessage="@Strings.settings_enter_13_values" />
     </setting>
 
     <setting propertyKey="@Properties.clockOutlineStyle" title="@Strings.settings_clock_outline_style">
@@ -85,28 +40,10 @@
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.clockGradientOverlay" title="@Strings.settings_clock_gradient_overlay">
-        <settingConfig type="list">
-            <listEntry value="0">@Strings.settings_gradient_clock_and_aod</listEntry>
-            <listEntry value="1">@Strings.settings_gradient_aod_only</listEntry>
-            <listEntry value="2">@Strings.settings_gradient_clock_only</listEntry>
-            <listEntry value="3">@Strings.settings_gradient_none</listEntry>
-        </settingConfig>
-    </setting>
-
     <setting propertyKey="@Properties.clockFont" title="@Strings.settings_clock_font">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_font_34_segments</listEntry>
             <listEntry value="1">@Strings.settings_font_17_segments</listEntry>
-        </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.updateFreq" title="@Strings.settings_update_frequency">
-        <settingConfig type="list">
-            <listEntry value="60">@Strings.settings_every_minute</listEntry>
-            <listEntry value="30">@Strings.settings_every_30_seconds</listEntry>
-            <listEntry value="5">@Strings.settings_every_5_seconds</listEntry>
-            <listEntry value="1">@Strings.settings_every_second</listEntry>
         </settingConfig>
     </setting>
 
@@ -864,7 +801,6 @@
     <setting propertyKey="@Properties.pressToOpenTop" title="@Strings.settings_press_top_third">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_nothing</listEntry>
-            <listEntry value="-1">@Strings.settings_toggle_night_color</listEntry>
             <listEntry value="1">@Strings.settings_battery</listEntry>
             <listEntry value="2">@Strings.settings_steps</listEntry>
             <listEntry value="3">@Strings.settings_calories</listEntry>
@@ -892,7 +828,6 @@
     <setting propertyKey="@Properties.pressToOpenMiddle" title="@Strings.settings_press_middle_clock">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_nothing</listEntry>
-            <listEntry value="-1">@Strings.settings_toggle_night_color</listEntry>
             <listEntry value="1">@Strings.settings_battery</listEntry>
             <listEntry value="2">@Strings.settings_steps</listEntry>
             <listEntry value="3">@Strings.settings_calories</listEntry>
@@ -920,7 +855,6 @@
     <setting propertyKey="@Properties.pressToOpenBottomLeft" title="@Strings.settings_press_bottom_left">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_nothing</listEntry>
-            <listEntry value="-1">@Strings.settings_toggle_night_color</listEntry>
             <listEntry value="1">@Strings.settings_battery</listEntry>
             <listEntry value="2">@Strings.settings_steps</listEntry>
             <listEntry value="3">@Strings.settings_calories</listEntry>
@@ -948,7 +882,6 @@
     <setting propertyKey="@Properties.pressToOpenBottomCenter" title="@Strings.settings_press_bottom_center">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_nothing</listEntry>
-            <listEntry value="-1">@Strings.settings_toggle_night_color</listEntry>
             <listEntry value="1">@Strings.settings_battery</listEntry>
             <listEntry value="2">@Strings.settings_steps</listEntry>
             <listEntry value="3">@Strings.settings_calories</listEntry>
@@ -976,7 +909,6 @@
     <setting propertyKey="@Properties.pressToOpenBottomRight" title="@Strings.settings_press_bottom_right">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_nothing</listEntry>
-            <listEntry value="-1">@Strings.settings_toggle_night_color</listEntry>
             <listEntry value="1">@Strings.settings_battery</listEntry>
             <listEntry value="2">@Strings.settings_steps</listEntry>
             <listEntry value="3">@Strings.settings_calories</listEntry>

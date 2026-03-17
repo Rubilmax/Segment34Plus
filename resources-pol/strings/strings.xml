@@ -229,16 +229,6 @@
     <string id="settings_green_on_white" scope="settings">Zielony na białym (nie zalecane dla AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Pomarańczowy na białym (nie zalecane dla AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Fioletowy na białym (nie zalecane dla AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Niestandardowe kolory, zobacz FAQ 1.2.0</string>
-    <string id="settings_custom_colors_faq" scope="settings">Niestandardowe kolory, zobacz FAQ</string>
-    <string id="settings_night_color_theme" scope="settings">Motyw kolorystyczny nocny</string>
-    <string id="settings_no_change" scope="settings">Bez zmian</string>
-    <string id="settings_night_theme_activation" scope="settings">Aktywuj nocny motyw kolorystyczny:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Podczas zaplanowanych godzin snu</string>
-    <string id="settings_two_hours_before" scope="settings">2 godziny przed zaplanowanymi godzinami snu</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Od zachodu do wschodu słońca (wymaga danych pogodowych)</string>
-    <string id="settings_custom_colors_read" scope="settings">Niestandardowe kolory, przeczytaj FAQ</string>
-    <string id="settings_enter_13_values" scope="settings">Wprowadź 13 wartości oddzielonych spacjami, format #FFFFFF lub -</string>
     <string id="settings_clock_outline_style" scope="settings">Styl obramowania zegara (tylko AMOLED)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Wypełnione cyfry bez obramowania, to samo w AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Wypełnione cyfry bez obramowania, tylko obramowanie w AOD</string>
@@ -375,7 +365,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Lewe, ale wyśrodkuj pole 5 cyfr</string>
     <string id="settings_press_top_third" scope="settings">Naciśnij górną trzecią część aby otworzyć:</string>
     <string id="settings_nothing" scope="settings">Nic</string>
-    <string id="settings_toggle_night_color" scope="settings">Przełącz nocny motyw kolorystyczny</string>
     <string id="settings_battery" scope="settings">Bateria</string>
     <string id="settings_steps" scope="settings">Kroki</string>
     <string id="settings_calories" scope="settings">Kalorie</string>

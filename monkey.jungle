@@ -279,7 +279,7 @@ venu445mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
 # -----------------------------------------------------------------------------
 
 venux1.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Round
-venux1.resourcePath = resources;disp-resources/amoled;size-resources/s454
+venux1.resourcePath = resources;disp-resources/amoled;size-resources/s448x486
 
 # -----------------------------------------------------------------------------
 # INSTINCT CROSSOVER (special layout)

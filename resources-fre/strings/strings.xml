@@ -229,16 +229,6 @@
     <string id="settings_green_on_white" scope="settings">Vert sur blanc (non recommandé pour AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange sur blanc (non recommandé pour AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Violet sur blanc (non recommandé pour AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Couleurs personnalisées, voir FAQ 1.2.0 pour détails</string>
-    <string id="settings_custom_colors_faq" scope="settings">Couleurs personnalisées, voir FAQ pour détails</string>
-    <string id="settings_night_color_theme" scope="settings">Thème de couleur nocturne</string>
-    <string id="settings_no_change" scope="settings">Aucun changement</string>
-    <string id="settings_night_theme_activation" scope="settings">Activer le thème de couleur nocturne :</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Pendant les heures de sommeil programmées</string>
-    <string id="settings_two_hours_before" scope="settings">2 heures avant les heures de sommeil programmées</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Du coucher au lever du soleil (nécessite les données météo)</string>
-    <string id="settings_custom_colors_read" scope="settings">Couleurs personnalisées, lire FAQ d'abord</string>
-    <string id="settings_enter_13_values" scope="settings">Entrer 13 valeurs séparées par des espaces, format #FFFFFF ou -</string>
     <string id="settings_clock_outline_style" scope="settings">Style de contour d'horloge (AMOLED uniquement)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Chiffres pleins sans contour, identique en AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Chiffres pleins sans contour, contour uniquement en AOD</string>
@@ -375,7 +365,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Gauche, mais centrer le champ à 5 chiffres</string>
     <string id="settings_press_top_third" scope="settings">Appuyer sur le tiers supérieur pour ouvrir :</string>
     <string id="settings_nothing" scope="settings">Rien</string>
-    <string id="settings_toggle_night_color" scope="settings">Basculer le thème de couleur nocturne</string>
     <string id="settings_battery" scope="settings">Batterie</string>
     <string id="settings_steps" scope="settings">Pas</string>
     <string id="settings_calories" scope="settings">Calories</string>

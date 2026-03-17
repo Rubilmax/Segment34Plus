@@ -230,16 +230,6 @@
     <string id="settings_green_on_white" scope="settings">Grün auf Weiß (nicht empf. für AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange auf Weiß (nicht empf. für AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Lila auf Weiß (nicht empf. für AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Benutzerdef. Farben, siehe FAQ 1.2.0</string>
-    <string id="settings_custom_colors_faq" scope="settings">Benutzerdef. Farben, siehe FAQ</string>
-    <string id="settings_night_color_theme" scope="settings">Nacht-Farbschema</string>
-    <string id="settings_no_change" scope="settings">Keine Änderung</string>
-    <string id="settings_night_theme_activation" scope="settings">Aktiviere Nacht-Farbschema:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Während geplanter Schlafenszeit</string>
-    <string id="settings_two_hours_before" scope="settings">2 Stunden vor geplanter Schlafenszeit</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Von Sonnenuntergang bis Sonnenaufgang (benötigt Wetterdaten)</string>
-    <string id="settings_custom_colors_read" scope="settings">Benutzerdef. Farben, erst FAQ lesen</string>
-    <string id="settings_enter_13_values" scope="settings">13 Werte getrennt durch Leerzeichen, #FFFFFF Format oder -</string>
     <string id="settings_clock_outline_style" scope="settings">Uhr-Kontur-Stil (nur AMOLED)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Gefüllte Zahlen keine Kontur, gleich im AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Gefüllte Zahlen keine Kontur, nur Kontur im AOD</string>
@@ -371,7 +361,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Links, aber 5-stelliges Feld zentriert</string>
     <string id="settings_press_top_third" scope="settings">Drücken oberes Drittel öffnet:</string>
     <string id="settings_nothing" scope="settings">Nichts</string>
-    <string id="settings_toggle_night_color" scope="settings">Nacht-Farbschema umschalten</string>
     <string id="settings_battery" scope="settings">Batterie</string>
     <string id="settings_steps" scope="settings">Schritte</string>
     <string id="settings_calories" scope="settings">Kalorien</string>

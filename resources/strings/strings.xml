@@ -256,16 +256,6 @@
     <string id="settings_green_on_white" scope="settings">Green on white (not recommended for AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange on white (not recommended for AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Purple on white (not recommended for AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Custom colors, see FAQ 1.2.0 for details</string>
-    <string id="settings_custom_colors_faq" scope="settings">Custom colors, see FAQ for details</string>
-    <string id="settings_night_color_theme" scope="settings">Night Color Theme</string>
-    <string id="settings_no_change" scope="settings">No change</string>
-    <string id="settings_night_theme_activation" scope="settings">Activate Night Color Theme:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">During scheduled sleep hours</string>
-    <string id="settings_two_hours_before" scope="settings">2 hours before scheduled sleep hours</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">From Sunset to Sunrise (requires weather data)</string>
-    <string id="settings_custom_colors_read" scope="settings">Custom colors, read FAQ first</string>
-    <string id="settings_enter_13_values" scope="settings">Enter 13 values separated by spaces, #FFFFFF format or -</string>
     <string id="settings_clock_outline_style" scope="settings">Clock outline style (AMOLED only)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Filled numbers no outline, same in AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Filled numbers no outline, only outline in AOD</string>
@@ -273,11 +263,6 @@
     <string id="settings_filled_numbers_with_outline" scope="settings">Filled numbers with outline, same in AOD</string>
     <string id="settings_filled_numbers_with_outline_aod" scope="settings">Filled numbers with outline, only outline in AOD</string>
     <string id="settings_filled_numbers_plain" scope="settings">Filled numbers no outline, no gradient in AOD (better for redshift)</string>
-    <string id="settings_clock_gradient_overlay" scope="settings">Clock Gradient Overlay</string>
-    <string id="settings_gradient_clock_and_aod" scope="settings">Gradient for both clock and AOD (default)</string>
-    <string id="settings_gradient_aod_only" scope="settings">No gradient for clock, gradient in AOD</string>
-    <string id="settings_gradient_clock_only" scope="settings">Gradient for clock, no gradient in AOD</string>
-    <string id="settings_gradient_none" scope="settings">No gradients</string>
     <string id="settings_clock_font" scope="settings">Clock Font</string>
     <string id="settings_font_34_segments" scope="settings">34 Segments, default</string>
     <string id="settings_font_17_segments" scope="settings">17 Segments, blockier more readable</string>
@@ -361,7 +346,7 @@
     <string id="settings_weather_conditions" scope="settings">Weather conditions</string>
     <string id="settings_weather_conditions_temperature" scope="settings">Weather conditions, Temperature</string>
     <string id="settings_weather_conditions_feelslike" scope="settings">Weather conditions, Feels like</string>
-    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Weather conditions, Feels like, Until when</string>
+    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Weather conditions, Feels Like, Until When</string>
     <string id="settings_daily_high_temperature" scope="settings">Daily high temperature</string>
     <string id="settings_daily_low_temperature" scope="settings">Daily low temperature</string>
     <string id="settings_temperature" scope="settings">Temperature</string>
@@ -412,7 +397,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Left, but center the 5 digit field</string>
     <string id="settings_press_top_third" scope="settings">Press top third to open:</string>
     <string id="settings_nothing" scope="settings">Nothing</string>
-    <string id="settings_toggle_night_color" scope="settings">Toggle night color theme</string>
     <string id="settings_battery" scope="settings">Battery</string>
     <string id="settings_steps" scope="settings">Steps</string>
     <string id="settings_calories" scope="settings">Calories</string>

@@ -230,16 +230,6 @@
     <string id="settings_green_on_white" scope="settings">Grön på vit (rekommenderas ej för AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange på vit (rekommenderas ej för AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Lila på vit (rekommenderas ej för AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Anpassade färger, se FAQ 1.2.0 för detaljer</string>
-    <string id="settings_custom_colors_faq" scope="settings">Anpassade färger, se FAQ för detaljer</string>
-    <string id="settings_night_color_theme" scope="settings">Natt färgtema</string>
-    <string id="settings_no_change" scope="settings">Ingen förändring</string>
-    <string id="settings_night_theme_activation" scope="settings">Aktivera natt färgtema:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Under schemalagd sömn</string>
-    <string id="settings_two_hours_before" scope="settings">2 timmar före schemalagd sömn</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Från solnedgång till soluppgång (kräver väderdata)</string>
-    <string id="settings_custom_colors_read" scope="settings">Anpassade färger, läs FAQ först</string>
-    <string id="settings_enter_13_values" scope="settings">Ange 13 värden separerade med mellanslag, #FFFFFF format eller -</string>
     <string id="settings_clock_outline_style" scope="settings">Klocka konturstil (endast AMOLED)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Fyllda siffror ingen kontur, samma i AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Fyllda siffror ingen kontur, endast kontur i AOD</string>
@@ -376,7 +366,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Vänster, men centrera 5-siffriga fältet</string>
     <string id="settings_press_top_third" scope="settings">Tryck övre tredjedel för att öppna:</string>
     <string id="settings_nothing" scope="settings">Inget</string>
-    <string id="settings_toggle_night_color" scope="settings">Växla natt färgtema</string>
     <string id="settings_battery" scope="settings">Batteri</string>
     <string id="settings_steps" scope="settings">Steg</string>
     <string id="settings_calories" scope="settings">Kalorier</string>
