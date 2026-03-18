@@ -1600,29 +1600,31 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getIconState(setting as Number, activityInfo) as String {
         var deviceSettings = getCachedDeviceSettings();
+        if (deviceSettings == null) { return ""; }
+
         if(setting == 1) { // Alarm
-            var alarms = deviceSettings.alarmCount;
+            var alarms = (deviceSettings has :alarmCount) ? deviceSettings.alarmCount : null;
             if(alarms > 0) {
                 return "A";
             } else {
                 return "";
             }
         } else if(setting == 2) { // DND
-            var dnd = deviceSettings.doNotDisturb;
+            var dnd = (deviceSettings has :doNotDisturb) ? deviceSettings.doNotDisturb : false;
             if(dnd) {
                 return "D";
             } else {
                 return "";
             }
         } else if(setting == 3) { // Bluetooth (on / off)
-            var bl = deviceSettings.phoneConnected;
+            var bl = (deviceSettings has :phoneConnected) ? deviceSettings.phoneConnected : false;
             if(bl) {
                 return "L";
             } else {
                 return "M";
             }
         } else if(setting == 4) { // Bluetooth (just off)
-            var bl = deviceSettings.phoneConnected;
+            var bl = (deviceSettings has :phoneConnected) ? deviceSettings.phoneConnected : false;
             if(bl) {
                 return "";
             } else {
@@ -1630,7 +1632,7 @@ class Segment34View extends WatchUi.WatchFace {
             }
         } else if(setting == 5) { // Move bar
             var mov = 0;
-            if(activityInfo has :moveBarLevel) {
+            if(activityInfo != null && activityInfo has :moveBarLevel) {
                 if(activityInfo.moveBarLevel != null) {
                     mov = activityInfo.moveBarLevel;
                 }
@@ -1732,6 +1734,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getStepGoalProgress(activityInfo) as Number? {
+        if (activityInfo == null) { return null; }
         if(activityInfo.steps != null and activityInfo.stepGoal != null) {
             var steps = activityInfo.steps;
             var goal = activityInfo.stepGoal;
@@ -1743,6 +1746,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getFloorGoalProgress(activityInfo) as Number? {
+        if (activityInfo == null) { return null; }
         if(activityInfo has :floorsClimbed and activityInfo has :floorsClimbedGoal) {
             if(activityInfo.floorsClimbed != null and activityInfo.floorsClimbedGoal != null) {
                 var floors = activityInfo.floorsClimbed;
@@ -1756,6 +1760,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getActMinGoalProgress(activityInfo) as Number? {
+        if (activityInfo == null) { return null; }
         if(activityInfo.activeMinutesWeek != null and activityInfo.activeMinutesWeekGoal != null) {
             var actmin = activityInfo.activeMinutesWeek;
             var val = actmin.total;
@@ -1768,6 +1773,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getMoveBar(activityInfo) as Number? {
+        if (activityInfo == null) { return null; }
         if(activityInfo has :moveBarLevel) {
             if(activityInfo.moveBarLevel != null) {
                 var mov = activityInfo.moveBarLevel;
@@ -1988,18 +1994,9 @@ class Segment34View extends WatchUi.WatchFace {
             hf = Weather.getHourlyForecast();
         }
         if(cc != null) {
-            var pcCc = cc.precipitationChance;
-            System.println("DEBUG precip: cc.precipitationChance=" + (pcCc != null ? pcCc.toString() : "null"));
-            if (hf != null && hf.size() > 0) {
-                var pcHf = hf[0].precipitationChance;
-                System.println("DEBUG precip: hf[0].precipitationChance=" + (pcHf != null ? pcHf.toString() : "null"));
-            } else {
-                System.println("DEBUG precip: hf is null or empty");
-            }
             weatherCondition = cc;
             try { storeWeatherData(cc, hf); } catch(e) {}
         } else {
-            System.println("DEBUG precip: cc is null");
             try { weatherCondition = readWeatherData(); } catch(e) {}
         }
         cachedTempUnit = getTempUnit();
@@ -2015,10 +2012,6 @@ class Segment34View extends WatchUi.WatchFace {
         var hf = null;
         if (Weather has :getHourlyForecast) {
             hf = Weather.getHourlyForecast();
-        }
-        if(cc != null) {
-            var pcCc2 = cc.precipitationChance;
-            System.println("DEBUG precip: cc.precipitationChance=" + (pcCc2 != null ? pcCc2.toString() : "null"));
         }
         weatherCondition = cc;
         cachedTempUnit = getTempUnit();
@@ -2257,14 +2250,11 @@ class Segment34View extends WatchUi.WatchFace {
             return getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats);
         }
 
-        var changeOverride = null;
-        var worseOverride = null;
         if (complicationType == 79) {
-            changeOverride = cachedLineForecastChange;
-            worseOverride = cachedLineForecastWorse;
+            return formatWeatherCycleValue(lineWeatherCondition, cachedLineForecastChange, cachedLineForecastWorse);
         }
 
-        return getValueByTypeWithUnitWithWeather(complicationType, width, now, activityInfo, sysStats, lineWeatherCondition, changeOverride, worseOverride);
+        return getValueByTypeWithUnitWithWeather(complicationType, width, now, activityInfo, sysStats, lineWeatherCondition, null, null);
     }
 
     hidden function getUnitByType(complicationType) as String {
@@ -2518,7 +2508,8 @@ class Segment34View extends WatchUi.WatchFace {
                 }
             }
         } else if(complicationType == 36) { // Notification count
-            var notif_count = getCachedDeviceSettings().notificationCount;
+            var deviceSettings = getCachedDeviceSettings();
+            var notif_count = (deviceSettings != null && deviceSettings has :notificationCount) ? deviceSettings.notificationCount : null;
             if(notif_count != null) {
                 if(width == 2 and notif_count == 0) {
                     val = ""; // Hide when shown in the notification field and is zero
@@ -2567,7 +2558,10 @@ class Segment34View extends WatchUi.WatchFace {
                 val = cachedLabelNa;
             }
         } else if(complicationType == 42) { // Alarms
-            val = getCachedDeviceSettings().alarmCount.format(numberFormat);
+            var deviceSettings = getCachedDeviceSettings();
+            if (deviceSettings != null && deviceSettings has :alarmCount && deviceSettings.alarmCount != null) {
+                val = deviceSettings.alarmCount.format(numberFormat);
+            }
         } else if(complicationType == 43) { // High temp
             var activeWeather = getActiveWeatherCondition();
             if(activeWeather != null and activeWeather.highTemperature != null) {
@@ -2712,7 +2706,11 @@ class Segment34View extends WatchUi.WatchFace {
                 if(width < 4) {
                     val = (acc as Number).format("%d");
                 } else {
-                    val = ["N/A", "LAST", "POOR", "USBL", "GOOD"][acc];
+                    if (acc >= 0 && acc < 5) {
+                        val = ["N/A", "LAST", "POOR", "USBL", "GOOD"][acc];
+                    } else {
+                        val = (acc as Number).format("%d");
+                    }
                 }
             }
         } else if(complicationType == 63) { // Temperature, Wind, Humidity, Precipitation chance
@@ -2754,27 +2752,9 @@ class Segment34View extends WatchUi.WatchFace {
         } else if(complicationType == 72) { // CGM Age (minutes)
             val = getCgmAge();
         } else if(complicationType == 73) { // Weather condition, Feels like
-            var condition = getWeatherCondition(false);
-            var fl = getFeelsLike(false);
-            val = join([condition, fl]);
+            val = formatWeatherConditionFeelsLike(getActiveWeatherCondition());
         } else if(complicationType == 79) { // Weather condition, Feels like, Until when
-            var activeWeather = getActiveWeatherCondition();
-            var activeChange = getActiveForecastChange();
-            var activeWorse = getActiveForecastWorse();
-
-            if (activeWeather == null || activeWeather.condition == null) {
-                val = "";
-            } else {
-                var phase = getWeatherPhase(activeWorse != null);
-
-                if (phase == 0 || activeChange == null) {
-                    val = getValueByType(73, width, now, activityInfo, sysStats) + formatForecastPointer(activeChange != null ? activeChange[1] as Number : null);
-                } else if (phase == 1 || activeWorse == null) {
-                    val = getValueByTypeWithUnitWithWeather(73, width, now, activityInfo, sysStats, activeChange[0] as ForecastWeather, null, null) + formatForecastPointer(activeChange[2] as Number);
-                } else {
-                    val = getValueByTypeWithUnitWithWeather(73, width, now, activityInfo, sysStats, activeWorse[0] as ForecastWeather, null, null) + formatForecastPointer(activeWorse[2] as Number);
-                }
-            }
+            val = formatWeatherCycleValue(getActiveWeatherCondition(), getActiveForecastChange(), getActiveForecastWorse());
         } else if(complicationType == 74) { // Feels like
             val = getFeelsLike(false);
         } else if(complicationType == 75) { // Hours to next sun event
@@ -3156,27 +3136,74 @@ class Segment34View extends WatchUi.WatchFace {
         return "  c" + formatHour(hour) + "H";
     }
 
-    hidden function getWeatherCondition(includePrecipitation as Boolean) as String {
-        var activeWeather = getActiveWeatherCondition();
+    hidden function getForecastEventWeather(event as Array?) as ForecastWeather or Null {
+        if (event == null || event.size() == 0) { return null; }
+        if (event[0] == null) { return null; }
+        return event[0] as ForecastWeather;
+    }
+
+    hidden function getForecastEventPointer(event as Array?, pointerIndex as Number) as Number? {
+        if (event == null || event.size() <= pointerIndex) { return null; }
+        if (event[pointerIndex] == null) { return null; }
+        return event[pointerIndex] as Number;
+    }
+
+    hidden function formatWeatherConditionForWeather(activeWeather as ForecastWeather or Null, includePrecipitation as Boolean) as String {
         if (activeWeather == null || activeWeather.condition == null) {
             return "";
         }
 
         var perp = "";
-        if(includePrecipitation) {
-            if (activeWeather has :precipitationChance &&
-                activeWeather.precipitationChance != null &&
-                activeWeather.precipitationChance instanceof Number) {
-                if(activeWeather.precipitationChance > 0) {
-                    perp = " (" + activeWeather.precipitationChance.format("%02d") + "%)";
-                }
-            }
+        if(includePrecipitation &&
+            activeWeather has :precipitationChance &&
+            activeWeather.precipitationChance != null &&
+            activeWeather.precipitationChance instanceof Number &&
+            activeWeather.precipitationChance > 0) {
+            perp = " (" + activeWeather.precipitationChance.format("%02d") + "%)";
         }
 
         var idx = activeWeather.condition.toNumber();
         if (idx < 0 || idx >= cachedWeatherResIds.size()) { idx = 53; }
 
         return Application.loadResource(cachedWeatherResIds[idx]) + perp;
+    }
+
+    hidden function formatFeelsLikeForWeather(activeWeather as ForecastWeather or Null, includeLabel as Boolean) as String {
+        if(activeWeather == null || activeWeather.feelsLikeTemperature == null) {
+            return "";
+        }
+
+        var fltemp = convertTemperatureFloat(activeWeather.feelsLikeTemperature, cachedTempUnit);
+        if(includeLabel) {
+            return cachedLabelFl + formatTemperature(fltemp);
+        }
+        return formatTemperature(fltemp);
+    }
+
+    hidden function formatWeatherConditionFeelsLike(activeWeather as ForecastWeather or Null) as String {
+        return join([
+            formatWeatherConditionForWeather(activeWeather, false),
+            formatFeelsLikeForWeather(activeWeather, false)
+        ]);
+    }
+
+    hidden function formatWeatherCycleValue(activeWeather as ForecastWeather or Null, activeChange as Array?, activeWorse as Array?) as String {
+        if (activeWeather == null || activeWeather.condition == null) {
+            return "";
+        }
+
+        var phase = getWeatherPhase(activeWorse != null);
+        if (phase == 0 || activeChange == null) {
+            return formatWeatherConditionFeelsLike(activeWeather) + formatForecastPointer(getForecastEventPointer(activeChange, 1));
+        }
+        if (phase == 1 || activeWorse == null) {
+            return formatWeatherConditionFeelsLike(getForecastEventWeather(activeChange)) + formatForecastPointer(getForecastEventPointer(activeChange, 2));
+        }
+        return formatWeatherConditionFeelsLike(getForecastEventWeather(activeWorse)) + formatForecastPointer(getForecastEventPointer(activeWorse, 2));
+    }
+
+    hidden function getWeatherCondition(includePrecipitation as Boolean) as String {
+        return formatWeatherConditionForWeather(getActiveWeatherCondition(), includePrecipitation);
     }
 
     hidden function getTemperature() as String {
@@ -3189,7 +3216,8 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getTempUnit() as String {
-        var temp_unit_setting = System.getDeviceSettings().temperatureUnits;
+        var deviceSettings = getCachedDeviceSettings();
+        var temp_unit_setting = (deviceSettings != null && deviceSettings has :temperatureUnits) ? deviceSettings.temperatureUnits : System.UNIT_METRIC;
         var propTempUnit = (propBitmapA >> 29) & 0x3;
         if((temp_unit_setting == System.UNIT_METRIC and (propTempUnit == 0 or propTempUnit == 3)) or propTempUnit == 1) {
             return "C";
@@ -3287,20 +3315,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getFeelsLike(include_label as Boolean) as String {
-        var fl = "";
-        var activeWeather = getActiveWeatherCondition();
-        if(activeWeather != null and activeWeather.feelsLikeTemperature != null) {
-            var fltemp = convertTemperatureFloat(activeWeather.feelsLikeTemperature, cachedTempUnit);
-            if(include_label) {
-                var fllabel = cachedLabelFl;
-                fl = fllabel + formatTemperature(fltemp);
-            } else {
-                fl = formatTemperature(fltemp);
-            }
-
-        }
-
-        return fl;
+        return formatFeelsLikeForWeather(getActiveWeatherCondition(), include_label);
     }
 
     hidden function getHumidity() as String {
@@ -3430,7 +3445,7 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         var weekly_distance = 0;
-        if(activityInfo has :distance) {
+        if(activityInfo != null && activityInfo has :distance) {
             var history = ActivityMonitor.getHistory();
             if (history != null) {
                 // Only take up to 6 previous days from history
