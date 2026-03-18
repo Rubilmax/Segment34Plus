@@ -230,16 +230,6 @@
     <string id="settings_green_on_white" scope="settings">Grön på vit (rekommenderas ej för AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange på vit (rekommenderas ej för AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Lila på vit (rekommenderas ej för AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Anpassade färger, se FAQ 1.2.0 för detaljer</string>
-    <string id="settings_custom_colors_faq" scope="settings">Anpassade färger, se FAQ för detaljer</string>
-    <string id="settings_night_color_theme" scope="settings">Natt färgtema</string>
-    <string id="settings_no_change" scope="settings">Ingen förändring</string>
-    <string id="settings_night_theme_activation" scope="settings">Aktivera natt färgtema:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Under schemalagd sömn</string>
-    <string id="settings_two_hours_before" scope="settings">2 timmar före schemalagd sömn</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Från solnedgång till soluppgång (kräver väderdata)</string>
-    <string id="settings_custom_colors_read" scope="settings">Anpassade färger, läs FAQ först</string>
-    <string id="settings_enter_13_values" scope="settings">Ange 13 värden separerade med mellanslag, #FFFFFF format eller -</string>
     <string id="settings_clock_outline_style" scope="settings">Klocka konturstil (endast AMOLED)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Fyllda siffror ingen kontur, samma i AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Fyllda siffror ingen kontur, endast kontur i AOD</string>
@@ -254,7 +244,6 @@
     <string id="settings_top_part_shows" scope="settings">Övre delen visar</string>
     <string id="settings_two_small_data" scope="settings">Två små datafält och månfas</string>
     <string id="settings_two_small_data_fields" scope="settings">Två små datafält</string>
-    <string id="settings_histogram_graph" scope="settings">Ett histogramgraf (senaste 2 timmars data)</string>
     <string id="settings_top_left_small" scope="settings">Övre vänstra lilla datafält:</string>
     <string id="settings_hidden" scope="settings">Dolt</string>
     <string id="settings_active_min_week" scope="settings">Aktiva min / vecka</string>
@@ -286,8 +275,6 @@
     <string id="settings_next_sun_event" scope="settings">Nästa solhändelse tid (solnedgång/soluppgång)</string>
     <string id="settings_hrs_next_sun_event" scope="settings">Timmar till nästa solhändelse (solnedgång/soluppgång)</string>
     <string id="settings_resting_heart_rate" scope="settings">Vilande hjärtfrekvens</string>
-    <string id="settings_alternative_timezone_1" scope="settings">Alternativ tidszon 1</string>
-    <string id="settings_alternative_timezone_2" scope="settings">Alternativ tidszon 2</string>
     <string id="settings_barometric_pressure_raw" scope="settings">Barometriskt tryck, rå</string>
     <string id="settings_barometric_pressure_sea" scope="settings">Barometriskt tryck, havsnivå</string>
     <string id="settings_weight_kg" scope="settings">Vikt (kg)</string>
@@ -308,15 +295,6 @@
     <string id="settings_next_calendar_event" scope="settings">Nästa kalenderhändelse tid</string>
     <string id="settings_next_calendar_event_time" scope="settings">Nästa kalenderhändelse tid</string>
     <string id="settings_top_right_small" scope="settings">Övre högra lilla datafält:</string>
-    <string id="settings_histogram_shows" scope="settings">Histogram visar (måste aktiveras i Övre delen visar)</string>
-    <string id="settings_body_battery_history" scope="settings">Kroppsbatteri historik</string>
-    <string id="settings_elevation_history" scope="settings">Höjdhistorik</string>
-    <string id="settings_heart_rate_history" scope="settings">Hjärtfrekvenshistorik</string>
-    <string id="settings_oxygen_saturation_history" scope="settings">Syremättnadshistorik</string>
-    <string id="settings_pressure_history" scope="settings">Tryckhistorik</string>
-    <string id="settings_stress_history" scope="settings">Stresshistorik</string>
-    <string id="settings_stress_rest_orange_blue" scope="settings">Stress/vila (orange/blå)</string>
-    <string id="settings_temperature_sensor_history" scope="settings">Temperatursensorhistorik</string>
     <string id="settings_small_font_variant" scope="settings">Liten punktmatrisfont variant:</string>
     <string id="settings_dots" scope="settings">Punkter</string>
     <string id="settings_blended" scope="settings">Blandad</string>
@@ -337,6 +315,7 @@
     <string id="settings_weather_conditions" scope="settings">Väderförhållanden</string>
     <string id="settings_weather_conditions_temperature" scope="settings">Väderförhållanden, Temperatur</string>
     <string id="settings_weather_conditions_feelslike" scope="settings">Väderförhållanden, Känns som</string>
+    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Väderförhållanden, Känns som, Prognos</string>
     <string id="settings_daily_high_temperature" scope="settings">Dagens högsta temperatur</string>
     <string id="settings_daily_low_temperature" scope="settings">Dagens lägsta temperatur</string>
     <string id="settings_temperature" scope="settings">Temperatur</string>
@@ -387,7 +366,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Vänster, men centrera 5-siffriga fältet</string>
     <string id="settings_press_top_third" scope="settings">Tryck övre tredjedel för att öppna:</string>
     <string id="settings_nothing" scope="settings">Inget</string>
-    <string id="settings_toggle_night_color" scope="settings">Växla natt färgtema</string>
     <string id="settings_battery" scope="settings">Batteri</string>
     <string id="settings_steps" scope="settings">Steg</string>
     <string id="settings_calories" scope="settings">Kalorier</string>
@@ -431,10 +409,6 @@
     <string id="settings_weekday_dd_mm_yyyy" scope="settings">VECKODAG, DD.MM.ÅÅÅÅ</string>
     <string id="settings_weekday_dd_month_week" scope="settings">VECKODAG, DD MÅNAD (Vecka)</string>
     <string id="settings_weekday_dd_month_yyyy_week" scope="settings">VECKODAG, DD MÅNAD ÅÅÅÅ (Vecka)</string>
-    <string id="settings_alternative_timezone_1_label" scope="settings">Alternativ tidszon 1 etikett</string>
-    <string id="settings_alternative_timezone_1_offset" scope="settings">Alternativ tidszon 1 offset</string>
-    <string id="settings_alternative_timezone_2_label" scope="settings">Alternativ tidszon 2 etikett</string>
-    <string id="settings_alternative_timezone_2_offset" scope="settings">Alternativ tidszon 2 offset</string>
     <string id="settings_temperature_unit" scope="settings">Temperaturenhet</string>
     <string id="settings_c" scope="settings">C</string>
     <string id="settings_f" scope="settings">F</string>

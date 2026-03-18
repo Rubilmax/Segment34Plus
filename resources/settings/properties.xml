@@ -1,8 +1,5 @@
 <properties>
     <property id="colorTheme" type="number">24</property>
-    <property id="nightColorTheme" type="number">-1</property>
-    <property id="nightThemeActivation" type="number">0</property>
-    <property id="colorOverride" type="string"></property>
     <property id="hourFormat" type="number">0</property>
     <property id="zeropadHour" type="boolean">true</property>
     <property id="timeSeparator" type="number">0</property>
@@ -15,17 +12,14 @@
     <property id="topPartShows" type="number">0</property>
     <property id="sunriseFieldShows" type="number">39</property>
     <property id="sunsetFieldShows" type="number">40</property>
-    <property id="histogramData" type="number">0</property>
     <property id="clockOutlineStyle" type="number">0</property>
-    <property id="clockGradientOverlay" type="number">0</property>
     <property id="clockFont" type="number">0</property>
     <property id="showClockBg" type="boolean">true</property>
     <property id="showDataBg" type="boolean">true</property>
     <property id="alwaysShowSeconds" type="boolean">false</property>
-    <property id="updateFreq" type="number">30</property>
-    <property id="batteryVariant" type="number">1</property>
+    <property id="batteryVariant" type="number">3</property>
     <property id="weatherLine1Shows" type="number">78</property>
-    <property id="weatherLine2Shows" type="number">73</property>
+    <property id="weatherLine2Shows" type="number">79</property>
     <property id="fieldLayout" type="number">14</property>
     <property id="leftValueShows" type="number">11</property>
     <property id="middleValueShows" type="number">29</property>
@@ -46,10 +40,6 @@
     <property id="dateFormat" type="number">0</property>
     <property id="smallFontVariant" type="number">2</property>
     <property id="hemisphere" type="number">0</property>
-    <property id="tzOffset1" type="number">0</property>
-    <property id="tzOffset2" type="number">0</property>
-    <property id="tzName1" type="string">UTC TIME</property>
-    <property id="tzName2" type="string">TZ2</property>
     <property id="icon1" type="number">1</property>
     <property id="icon2" type="number">2</property>
     <property id="weekOffset" type="number">0</property>

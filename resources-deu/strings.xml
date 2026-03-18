@@ -230,16 +230,6 @@
     <string id="settings_green_on_white" scope="settings">Grün auf Weiß (nicht empf. für AMOLED)</string>
     <string id="settings_orange_on_white" scope="settings">Orange auf Weiß (nicht empf. für AMOLED)</string>
     <string id="settings_purple_on_white" scope="settings">Lila auf Weiß (nicht empf. für AMOLED)</string>
-    <string id="settings_custom_colors" scope="settings">Benutzerdef. Farben, siehe FAQ 1.2.0</string>
-    <string id="settings_custom_colors_faq" scope="settings">Benutzerdef. Farben, siehe FAQ</string>
-    <string id="settings_night_color_theme" scope="settings">Nacht-Farbschema</string>
-    <string id="settings_no_change" scope="settings">Keine Änderung</string>
-    <string id="settings_night_theme_activation" scope="settings">Aktiviere Nacht-Farbschema:</string>
-    <string id="settings_during_scheduled_sleep" scope="settings">Während geplanter Schlafenszeit</string>
-    <string id="settings_two_hours_before" scope="settings">2 Stunden vor geplanter Schlafenszeit</string>
-    <string id="settings_from_sunset_sunrise" scope="settings">Von Sonnenuntergang bis Sonnenaufgang (benötigt Wetterdaten)</string>
-    <string id="settings_custom_colors_read" scope="settings">Benutzerdef. Farben, erst FAQ lesen</string>
-    <string id="settings_enter_13_values" scope="settings">13 Werte getrennt durch Leerzeichen, #FFFFFF Format oder -</string>
     <string id="settings_clock_outline_style" scope="settings">Uhr-Kontur-Stil (nur AMOLED)</string>
     <string id="settings_filled_numbers_no_outline" scope="settings">Gefüllte Zahlen keine Kontur, gleich im AOD</string>
     <string id="settings_filled_numbers_no_outline_aod" scope="settings">Gefüllte Zahlen keine Kontur, nur Kontur im AOD</string>
@@ -254,7 +244,6 @@
     <string id="settings_top_part_shows" scope="settings">Oberer Teil zeigt</string>
     <string id="settings_two_small_data" scope="settings">Zwei kleine Datenfelder und Mondphase</string>
     <string id="settings_two_small_data_fields" scope="settings">Zwei kleine Datenfelder</string>
-    <string id="settings_histogram_graph" scope="settings">Ein Histogramm (letzte 2 Stunden)</string>
     <string id="settings_top_left_small" scope="settings">Datenfeld oben links:</string>
     <string id="settings_hidden" scope="settings">Versteckt</string>
     <string id="settings_active_min_week" scope="settings">Aktiv-Min / Woche</string>
@@ -285,8 +274,6 @@
     <string id="settings_sunrise_time" scope="settings">Sonnenaufgangszeit</string>
     <string id="settings_sunset_time" scope="settings">Sonnenuntergangszeit</string>
     <string id="settings_next_sun_event" scope="settings">Nächstes Sonnenereignis</string>
-    <string id="settings_alternative_timezone_1" scope="settings">Alternative Zeitzone 1</string>
-    <string id="settings_alternative_timezone_2" scope="settings">Alternative Zeitzone 2</string>
     <string id="settings_barometric_pressure_raw" scope="settings">Luftdruck, roh</string>
     <string id="settings_barometric_pressure_sea" scope="settings">Luftdruck, Meeresspiegel</string>
     <string id="settings_weight_kg" scope="settings">Gewicht (kg)</string>
@@ -307,15 +294,6 @@
     <string id="settings_next_calendar_event" scope="settings">Nächster Kalendereintrag</string>
     <string id="settings_next_calendar_event_time" scope="settings">Nächste Kalendereintragszeit</string>
     <string id="settings_top_right_small" scope="settings">Datenfeld oben rechts:</string>
-    <string id="settings_histogram_shows" scope="settings">Histogramm zeigt (muss oben aktiviert sein)</string>
-    <string id="settings_body_battery_history" scope="settings">Body Battery Verlauf</string>
-    <string id="settings_elevation_history" scope="settings">Höhenverlauf</string>
-    <string id="settings_heart_rate_history" scope="settings">Herzfrequenzverlauf</string>
-    <string id="settings_oxygen_saturation_history" scope="settings">Sauerstoffsättigungsverlauf</string>
-    <string id="settings_pressure_history" scope="settings">Luftdruckverlauf</string>
-    <string id="settings_stress_history" scope="settings">Stressverlauf</string>
-    <string id="settings_stress_rest_orange_blue" scope="settings">Stress/Ruhe (orange/blau)</string>
-    <string id="settings_temperature_sensor_history" scope="settings">Temperatursensorverlauf</string>
     <string id="settings_small_font_variant" scope="settings">Kleine Punktmatrix Schriftart:</string>
     <string id="settings_dots" scope="settings">Punkte</string>
     <string id="settings_blended" scope="settings">Gemischt</string>
@@ -383,7 +361,6 @@
     <string id="settings_left_center_5_digit" scope="settings">Links, aber 5-stelliges Feld zentriert</string>
     <string id="settings_press_top_third" scope="settings">Drücken oberes Drittel öffnet:</string>
     <string id="settings_nothing" scope="settings">Nichts</string>
-    <string id="settings_toggle_night_color" scope="settings">Nacht-Farbschema umschalten</string>
     <string id="settings_battery" scope="settings">Batterie</string>
     <string id="settings_steps" scope="settings">Schritte</string>
     <string id="settings_calories" scope="settings">Kalorien</string>
@@ -427,10 +404,6 @@
     <string id="settings_weekday_dd_mm_yyyy" scope="settings">WOCHENTAG, DD.MM.YYYY</string>
     <string id="settings_weekday_dd_month_week" scope="settings">WOCHENTAG, DD MONAT (Woche)</string>
     <string id="settings_weekday_dd_month_yyyy_week" scope="settings">WOCHENTAG, DD MONAT YYYY (Woche)</string>
-    <string id="settings_alternative_timezone_1_label" scope="settings">Alt. Zeitzone 1 Beschriftung</string>
-    <string id="settings_alternative_timezone_1_offset" scope="settings">Alt. Zeitzone 1 Offset</string>
-    <string id="settings_alternative_timezone_2_label" scope="settings">Alt. Zeitzone 2 Beschriftung</string>
-    <string id="settings_alternative_timezone_2_offset" scope="settings">Alt. Zeitzone 2 Offset</string>
     <string id="settings_temperature_unit" scope="settings">Temperatureinheit</string>
     <string id="settings_c" scope="settings">C</string>
     <string id="settings_f" scope="settings">F</string>

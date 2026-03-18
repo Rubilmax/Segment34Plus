@@ -2,7 +2,9 @@
 
 A watchface for Garmin watches with a 34-segment display, forked from [Segment34 MkII](https://github.com/ludw/Segment34mkII) after [PR #76](https://github.com/ludw/Segment34mkII/pull/76) was rejected.
 
-![Screenshot of the watchface](screenshot.png "Screenshot")
+| Forecast Cycling | Alternate Layout |
+| --- | --- |
+| ![Screenshot of the watchface showing forecast cycling](screenshot-v1.png "Forecast cycling") | ![Screenshot of the watchface alternate layout](screenshot.png "Alternate layout") |
 
 ## Features
 
@@ -20,27 +22,35 @@ A watchface for Garmin watches with a 34-segment display, forked from [Segment34
 - Always-on mode
 - Settings in the Garmin app
 
-## Improvements over Segment34 MkII
+## Differences from upstream Segment34 MkII
 
-### New functionality
+Compared with `upstream/main` on 2026-03-18.
 
-- **Wind / Precip / UV / Humidity line option** with dedicated icons for weather line 1
-- **Humidity icon** added to the icon set
-- **Redesigned font icons** to better match the LED segment style
-- **Improved default settings** for a better out-of-box experience
-- **Altitude labels** renamed to `ALT (M)` / `ALT (FT)` format
+### Added in this fork
 
-### Performance (2x faster `drawWatchface`)
+- **More weather-focused line presets**: `Wind / Precipitation / UV`, `Wind / Precipitation / UV / Humidity`, and a cycling `Weather conditions / Feels Like / Until When` line
+- **Extra presentation options**: a `4, 4, 2, 3` bottom layout, right-aligned bottom labels, and a `°`-only temperature unit
+- **More uses for the notification slot**: it can show heart rate or resting heart rate
+- **Visual tweaks not in upstream**: a `Peachy Orange on turquoise` theme, LED-style icon redraws, a humidity icon, and `ALT (M)` / `ALT (FT)` labels
+- **Different defaults** tuned around the fork's weather-first layout
 
-The rendering pipeline has been heavily optimized to cut per-frame work in half:
+### Not carried over from current upstream
 
-- **Single data fetch per frame** — `ActivityMonitor.getInfo()`, `System.getSystemStats()`, and `Gregorian.info()` are called once and passed through, eliminating dozens of redundant system calls
-- **Cached string resources** — unit strings (`KCAL`, `M`, `FT`, `STEPS`, etc.) are loaded once at init instead of hitting flash storage every frame
-- **Pre-computed background strings** — background fill strings are built once at startup instead of concatenated per field per frame
-- **Cached weather condition resource IDs** — the 54-element weather condition array is allocated once instead of every frame
-- **Lazy-cached sensor data** — stress and body battery queries (Complications API + SensorHistory iterators) are cached per frame, avoiding redundant lookups when configured in multiple slots
-- **AMOLED pattern caching** — the burn-in protection pattern string and row count are computed once instead of every draw call
-- **Cached field widths** — bottom field width calculations reuse a stored array instead of recomputing on every update
+- **Custom color themes** and the upstream online theme-designer workflow
+- **Night-theme features**: a separate night theme, scheduled switching, and tap-to-toggle night mode
+- **Histogram mode** for the top section
+- **Alternative timezone fields**
+- **Clock display options** added upstream: gradient controls, outline-only mode, and AM/PM display
+- **Update-frequency control**
+- **The upstream distance simplification**: one shared distance-unit setting for all distance fields
+- **Upstream's per-sport rolling distance fields** for run distance and bike distance over the last 7 days
+- **Upstream's broader zero-notification hiding**, which is more consistent across placements
+
+### Technical notes
+
+- **Forecast cycling came with hard memory tradeoffs**: to stay within Connect IQ class-member limits on older MIP watches, this fork bit-packs many settings and drops some upstream features, most notably histogram and alternative timezone support
+- **Rendering work is reduced** through cached system/weather reads, cached strings, cached weather resource IDs, cached sensor lookups, and cached field-width calculations
+- **Font and bitmap resources are split by screen size**, which keeps the per-device binaries smaller than the shared-resource approach in upstream
 
 ## FAQ
 
