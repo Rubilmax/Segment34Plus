@@ -3309,7 +3309,7 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         if (windspeed.equals("0")) {
-            bearing = "\u2248"; // ≈ double wave when calm
+            bearing = "\u2248"; // Calm / no meaningful direction
         }
         return bearing + windspeed;
     }

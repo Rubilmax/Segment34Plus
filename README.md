@@ -2,7 +2,9 @@
 
 A watchface for Garmin watches with a 34-segment display, forked from [Segment34 MkII](https://github.com/ludw/Segment34mkII) after [PR #76](https://github.com/ludw/Segment34mkII/pull/76) was rejected.
 
-![Screenshot of the watchface](screenshot.png "Screenshot")
+| Forecast Cycling | Alternate Layout |
+| --- | --- |
+| ![Screenshot of the watchface showing forecast cycling](screenshot-v1.png "Forecast cycling") | ![Screenshot of the watchface alternate layout](screenshot.png "Alternate layout") |
 
 ## Features
 
