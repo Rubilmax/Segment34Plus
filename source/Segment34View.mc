@@ -95,7 +95,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var cgmAgeComplicationId as Complications.Id? = null;
     
     // Packed settings to keep the watch face under the class member limit on MIP devices.
-    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], battery[9:10], showSeconds[11],
+    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], reserved[9:10], showSeconds[11],
     // alwaysShowSeconds[12], clockBg[13], dataBg[14], aodStyle[15:16], aodAlign[17],
     // dateAlign[18], bottomAlign[19:20], bottomLabelAlign[21:22], hemisphere[23],
     // hourFormat[24:25], zeropadHour[26], timeSeparator[27:28], tempUnit[29:30]
@@ -1367,10 +1367,16 @@ class Segment34View extends WatchUi.WatchFace {
         dc.setPenWidth(1);
     }
 
+    hidden function getBatteryDisplayVariant(sysStats as System.Stats?) as Number {
+        if(sysStats != null && sysStats.battery < 20) {
+            return 1;
+        }
+        return 3;
+    }
+
     (:AMOLED)
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
-        if(propBatteryVariant == 2) { return; }
+        var batteryVariant = getBatteryDisplayVariant(cachedSysStats);
         if(x == null) { x = centerX; }
         if(y == null) { y =  screenHeight - 23; }
 
@@ -1381,7 +1387,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else {
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         }
-        if(propBatteryVariant == 3) {
+        if(batteryVariant == 3) {
             dc.drawText(x - 19, y + 4, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_LEFT);
         } else { // centered when not a bar
             dc.drawText(x - 1, y + 4, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_CENTER);
@@ -1390,8 +1396,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     (:MIP)
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
-        if(propBatteryVariant == 2) { return; }
+        var batteryVariant = getBatteryDisplayVariant(cachedSysStats);
         if(x == null) { x = centerX; }
         if(y == null) { y =  screenHeight - 20; }
 
@@ -1402,7 +1407,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else {
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         }
-        if(propBatteryVariant == 3) {
+        if(batteryVariant == 3) {
             dc.drawText(x - 11, y + 3, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_LEFT);
         } else {
             dc.drawText(x - 1, y + 3, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_CENTER);
@@ -1465,7 +1470,7 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapA |= (getValueOrDefault("colorTheme", 0) as Number) & 0x1F;
         propBitmapA |= ((getValueOrDefault("clockOutlineStyle", 0) as Number) & 0x7) << 5;
         propBitmapA |= ((getValueOrDefault("clockFont", 0) as Number) & 0x1) << 8;
-        propBitmapA |= ((getValueOrDefault("batteryVariant", 3) as Number) & 0x3) << 9;
+        // Bits 9:10 are intentionally unused after removing the battery display setting.
         propBitmapA |= (((getValueOrDefault("showSeconds", true) as Boolean) ? 1 : 0) << 11);
         propBitmapA |= (((getValueOrDefault("alwaysShowSeconds", false) as Boolean) ? 1 : 0) << 12);
         propBitmapA |= (((getValueOrDefault("showClockBg", true) as Boolean) ? 1 : 0) << 13);
@@ -1789,45 +1794,35 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getBattData(sysStats as System.Stats) as String {
         var value = "";
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
+        var batteryVariant = getBatteryDisplayVariant(sysStats);
 
-        if(propBatteryVariant == 0) {
-            if(sysStats has :batteryInDays) {
-                if (sysStats.batteryInDays != null){
-                    var sample = Math.round(sysStats.batteryInDays);
-                    value = sample.format("%0d") + "D";
-                }
-            } else {
-                propBatteryVariant = 1; // Fall back to percentage if days not available
-            }
-        }
-        if(propBatteryVariant == 1) {
+        if(batteryVariant == 1) {
             var sample = sysStats.battery;
             if(sample < 100) {
                 value = sample.format("%d") + "%";
             } else {
                 value = sample.format("%d");
             }
-        } else if(propBatteryVariant == 3) {
-                var sample = 0;
-                var max = 0;
-                var batLevel = sysStats.battery;
+        } else {
+            var sample = 0;
+            var max = 0;
+            var batLevel = sysStats.battery;
 
-                if(screenHeight > 280) {
-                    sample = Math.round(batLevel / 100.0 * 35).toNumber();
-                    max = 35;
-                } else {
-                    sample = Math.round(batLevel / 100.0 * 20).toNumber();
-                    max = 20;
-                }
-                if (sample > 0) {
-                    value += battFull.substring(0, sample);
-                }
-
-                if (sample < max) {
-                    value += battEmpty.substring(0, max - sample);
-                }
+            if(screenHeight > 280) {
+                sample = Math.round(batLevel / 100.0 * 35).toNumber();
+                max = 35;
+            } else {
+                sample = Math.round(batLevel / 100.0 * 20).toNumber();
+                max = 20;
             }
+            if(sample > 0) {
+                value += battFull.substring(0, sample);
+            }
+
+            if(sample < max) {
+                value += battEmpty.substring(0, max - sample);
+            }
+        }
 
         return value;
     }

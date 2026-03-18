@@ -625,15 +625,6 @@
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.batteryVariant" title="@Strings.settings_battery_display">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.settings_remaining_days</listEntry>
-                <listEntry value="1">@Strings.settings_percentage_remaining</listEntry>
-                <listEntry value="3">@Strings.settings_bar</listEntry>
-                <listEntry value="2">@Strings.settings_hidden</listEntry>
-            </settingConfig>
-    </setting>
-
     <setting propertyKey="@Properties.icon1" title="@Strings.settings_left_icon_indicates">
             <settingConfig type="list">
                 <listEntry value="-2">@Strings.settings_hidden</listEntry>
