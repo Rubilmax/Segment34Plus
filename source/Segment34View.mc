@@ -3046,10 +3046,10 @@ class Segment34View extends WatchUi.WatchFace {
 
         var phase = getWeatherPhase();
         if (phase == 1 && lineWeatherCondition != null) {
-            return [lineWeatherCondition, 20];
+            return [lineWeatherCondition, 40];
         }
         if (phase == 2 && lineWeatherCondition3h != null) {
-            return [lineWeatherCondition3h, 50];
+            return [lineWeatherCondition3h, 70];
         }
         return [currentWeather, 0];
     }
@@ -3069,20 +3069,20 @@ class Segment34View extends WatchUi.WatchFace {
             if (changeWeather != null) {
                 displayWeather = changeWeather;
                 pointer = getForecastEventPointer(activeChange, 2);
-                accentPercent = 20;
+                accentPercent = 40;
             }
         } else if (phase == 2) {
             var worseWeather = getForecastEventWeather(activeWorse);
             if (worseWeather != null) {
                 displayWeather = worseWeather;
                 pointer = getForecastEventPointer(activeWorse, 2);
-                accentPercent = 50;
+                accentPercent = 70;
             } else {
                 var changeWeather = getForecastEventWeather(activeChange);
                 if (changeWeather != null) {
                     displayWeather = changeWeather;
                     pointer = getForecastEventPointer(activeChange, 2);
-                    accentPercent = 50;
+                    accentPercent = 70;
                 }
             }
         }

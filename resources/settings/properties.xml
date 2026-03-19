@@ -46,7 +46,7 @@
     <property id="pressToOpenMiddle" type="number">12</property>
     <property id="pressToOpenBottomLeft" type="number">3</property>
     <property id="pressToOpenBottomCenter" type="number">1</property>
-    <property id="pressToOpenBottomRight" type="number">23</property>
+    <property id="pressToOpenBottomRight" type="number">18</property>
     <property id="labelVisibility" type="number">0</property>
     <property id="stressDynamicColor" type="boolean">true</property>
 </properties>
