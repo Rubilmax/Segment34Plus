@@ -95,7 +95,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var cgmAgeComplicationId as Complications.Id? = null;
     
     // Packed settings to keep the watch face under the class member limit on MIP devices.
-    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], battery[9:10], showSeconds[11],
+    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], reserved[9:10], showSeconds[11],
     // alwaysShowSeconds[12], clockBg[13], dataBg[14], aodStyle[15:16], aodAlign[17],
     // dateAlign[18], bottomAlign[19:20], bottomLabelAlign[21:22], hemisphere[23],
     // hourFormat[24:25], zeropadHour[26], timeSeparator[27:28], tempUnit[29:30]
@@ -127,6 +127,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var cachedLineForecastChange as Array? = null;
     hidden var cachedLineForecastWorse as Array? = null;
     hidden var lineWeatherCondition as ForecastWeather or Null = null;
+    hidden var lineWeatherCondition3h as ForecastWeather or Null = null;
     hidden var weatherConditionOverride as ForecastWeather or Null = null;
     hidden var forecastChangeOverride as Array? = null;
     hidden var forecastWorseOverride as Array? = null;
@@ -631,8 +632,12 @@ class Segment34View extends WatchUi.WatchFace {
         var fieldWidths = cachedFieldWidths;
         values[:dataTopLeft] = getValueByType(propSunriseFieldShows, 5, now, actInfo, sysStats);
         values[:dataTopRight] = getValueByType(propSunsetFieldShows, 5, now, actInfo, sysStats);
-        values[:dataAboveLine1] = getWeatherLineValue(propWeatherLine1Shows, 10, now, actInfo, sysStats);
-        values[:dataAboveLine2] = getWeatherLineValue(propWeatherLine2Shows, 10, now, actInfo, sysStats);
+        var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, actInfo, sysStats, true);
+        values[:dataAboveLine1] = aboveLine1[0];
+        values[:dataAboveLine1Color] = aboveLine1[1];
+        var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, actInfo, sysStats, false);
+        values[:dataAboveLine2] = aboveLine2[0];
+        values[:dataAboveLine2Color] = aboveLine2[1];
         values[:dataBelow] = getValueByTypeWithUnit(propDateFieldShows, 10, now, actInfo, sysStats);
         values[:dataNotifications] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
         if (values[:dataNotifications].length() > 0) {
@@ -710,8 +715,8 @@ class Segment34View extends WatchUi.WatchFace {
             } else {
                 cachedValues[:dataSeconds] = now.sec.format("%02d");
             }
-            // Refresh weather lines every 4 seconds for forecast cycling
-            if (propWeatherLine1Shows == 79 || propWeatherLine2Shows == 79) {
+            // Refresh phased weather lines every 4 seconds.
+            if (shouldRefreshWeatherLine(propWeatherLine1Shows, true) || shouldRefreshWeatherLine(propWeatherLine2Shows, false)) {
                 var phaseBucket = ((unix_timestamp - wakeTimestamp) / 4).toNumber();
                 if (phaseBucket != lastWeatherPhase) {
                     lastWeatherPhase = phaseBucket;
@@ -720,13 +725,12 @@ class Segment34View extends WatchUi.WatchFace {
                         sysStats = System.getSystemStats();
                         cachedSysStats = sysStats;
                     }
-                    var forecastLine = getWeatherLineValue(79, 10, now, null, sysStats);
-                    if (propWeatherLine1Shows == 79) {
-                        cachedValues[:dataAboveLine1] = forecastLine;
-                    }
-                    if (propWeatherLine2Shows == 79) {
-                        cachedValues[:dataAboveLine2] = forecastLine;
-                    }
+                    var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, null, sysStats, true);
+                    cachedValues[:dataAboveLine1] = aboveLine1[0];
+                    cachedValues[:dataAboveLine1Color] = aboveLine1[1];
+                    var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, null, sysStats, false);
+                    cachedValues[:dataAboveLine2] = aboveLine2[0];
+                    cachedValues[:dataAboveLine2Color] = aboveLine2[1];
                 }
             }
         }
@@ -887,8 +891,9 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Draw Lines above clock
-        dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(values[:dataAboveLine1Color], Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, yn2, fontSmallData, values[:dataAboveLine1], Graphics.TEXT_JUSTIFY_CENTER);
+        dc.setColor(values[:dataAboveLine2Color], Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, yn1, fontSmallData, values[:dataAboveLine2], Graphics.TEXT_JUSTIFY_CENTER);        
 
         // Draw Clock
@@ -1014,8 +1019,9 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Draw Lines above clock (shifted up by one row)
-        dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(values[:dataAboveLine1Color], Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, yn2, fontSmallData, values[:dataAboveLine1], Graphics.TEXT_JUSTIFY_CENTER);
+        dc.setColor(values[:dataAboveLine2Color], Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, yn1, fontSmallData, values[:dataAboveLine2], Graphics.TEXT_JUSTIFY_CENTER);
 
         // Draw date line ABOVE clock (at yn0)
@@ -1367,10 +1373,16 @@ class Segment34View extends WatchUi.WatchFace {
         dc.setPenWidth(1);
     }
 
+    hidden function getBatteryDisplayVariant(sysStats as System.Stats?) as Number {
+        if(sysStats != null && sysStats.battery < 20) {
+            return 1;
+        }
+        return 3;
+    }
+
     (:AMOLED)
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
-        if(propBatteryVariant == 2) { return; }
+        var batteryVariant = getBatteryDisplayVariant(cachedSysStats);
         if(x == null) { x = centerX; }
         if(y == null) { y =  screenHeight - 23; }
 
@@ -1381,7 +1393,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else {
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         }
-        if(propBatteryVariant == 3) {
+        if(batteryVariant == 3) {
             dc.drawText(x - 19, y + 4, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_LEFT);
         } else { // centered when not a bar
             dc.drawText(x - 1, y + 4, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_CENTER);
@@ -1390,8 +1402,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     (:MIP)
     hidden function drawBatteryIcon(dc as Dc, x as Number?, y as Number?, values as Dictionary) {
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
-        if(propBatteryVariant == 2) { return; }
+        var batteryVariant = getBatteryDisplayVariant(cachedSysStats);
         if(x == null) { x = centerX; }
         if(y == null) { y =  screenHeight - 20; }
 
@@ -1402,7 +1413,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else {
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         }
-        if(propBatteryVariant == 3) {
+        if(batteryVariant == 3) {
             dc.drawText(x - 11, y + 3, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_LEFT);
         } else {
             dc.drawText(x - 1, y + 3, fontBattery, values[:dataBattery], Graphics.TEXT_JUSTIFY_CENTER);
@@ -1465,7 +1476,7 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapA |= (getValueOrDefault("colorTheme", 0) as Number) & 0x1F;
         propBitmapA |= ((getValueOrDefault("clockOutlineStyle", 0) as Number) & 0x7) << 5;
         propBitmapA |= ((getValueOrDefault("clockFont", 0) as Number) & 0x1) << 8;
-        propBitmapA |= ((getValueOrDefault("batteryVariant", 3) as Number) & 0x3) << 9;
+        // Bits 9:10 are intentionally unused after removing the battery display setting.
         propBitmapA |= (((getValueOrDefault("showSeconds", true) as Boolean) ? 1 : 0) << 11);
         propBitmapA |= (((getValueOrDefault("alwaysShowSeconds", false) as Boolean) ? 1 : 0) << 12);
         propBitmapA |= (((getValueOrDefault("showClockBg", true) as Boolean) ? 1 : 0) << 13);
@@ -1789,45 +1800,35 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getBattData(sysStats as System.Stats) as String {
         var value = "";
-        var propBatteryVariant = (propBitmapA >> 9) & 0x3;
+        var batteryVariant = getBatteryDisplayVariant(sysStats);
 
-        if(propBatteryVariant == 0) {
-            if(sysStats has :batteryInDays) {
-                if (sysStats.batteryInDays != null){
-                    var sample = Math.round(sysStats.batteryInDays);
-                    value = sample.format("%0d") + "D";
-                }
-            } else {
-                propBatteryVariant = 1; // Fall back to percentage if days not available
-            }
-        }
-        if(propBatteryVariant == 1) {
+        if(batteryVariant == 1) {
             var sample = sysStats.battery;
             if(sample < 100) {
                 value = sample.format("%d") + "%";
             } else {
                 value = sample.format("%d");
             }
-        } else if(propBatteryVariant == 3) {
-                var sample = 0;
-                var max = 0;
-                var batLevel = sysStats.battery;
+        } else {
+            var sample = 0;
+            var max = 0;
+            var batLevel = sysStats.battery;
 
-                if(screenHeight > 280) {
-                    sample = Math.round(batLevel / 100.0 * 35).toNumber();
-                    max = 35;
-                } else {
-                    sample = Math.round(batLevel / 100.0 * 20).toNumber();
-                    max = 20;
-                }
-                if (sample > 0) {
-                    value += battFull.substring(0, sample);
-                }
-
-                if (sample < max) {
-                    value += battEmpty.substring(0, max - sample);
-                }
+            if(screenHeight > 280) {
+                sample = Math.round(batLevel / 100.0 * 35).toNumber();
+                max = 35;
+            } else {
+                sample = Math.round(batLevel / 100.0 * 20).toNumber();
+                max = 20;
             }
+            if(sample > 0) {
+                value += battFull.substring(0, sample);
+            }
+
+            if(sample < max) {
+                value += battEmpty.substring(0, max - sample);
+            }
+        }
 
         return value;
     }
@@ -2245,16 +2246,38 @@ class Segment34View extends WatchUi.WatchFace {
         return value;
     }
 
-    hidden function getWeatherLineValue(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as String {
-        if (lineWeatherCondition == null || !isWeatherSource(complicationType)) {
-            return getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats);
+    hidden function shouldRefreshWeatherLine(complicationType as Number, usePhasedWeather as Boolean) as Boolean {
+        if (complicationType == 79) { return true; }
+        return usePhasedWeather && isWeatherSource(complicationType);
+    }
+
+    hidden function getWeatherLineDisplayState(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats, usePhasedWeather as Boolean) as Array {
+        if (!isWeatherSource(complicationType)) {
+            return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
         }
 
         if (complicationType == 79) {
-            return formatWeatherCycleValue(lineWeatherCondition, cachedLineForecastChange, cachedLineForecastWorse);
+            var cycleState;
+            if (lineWeatherCondition != null) {
+                cycleState = getWeatherCycleState(lineWeatherCondition, cachedLineForecastChange, cachedLineForecastWorse);
+            } else {
+                cycleState = getWeatherCycleState(getActiveWeatherCondition(), getActiveForecastChange(), getActiveForecastWorse());
+            }
+            return [cycleState[0], getWeatherPhaseColor(cycleState[1] as Number)];
         }
 
-        return getValueByTypeWithUnitWithWeather(complicationType, width, now, activityInfo, sysStats, lineWeatherCondition, null, null);
+        if (!usePhasedWeather) {
+            if (lineWeatherCondition == null) {
+                return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
+            }
+            return [getValueByTypeWithUnitWithWeather(complicationType, width, now, activityInfo, sysStats, lineWeatherCondition, null, null), themeColors[dataVal]];
+        }
+
+        var weatherPhaseState = getPhasedWeatherLineState();
+        return [
+            getValueByTypeWithUnitWithWeather(complicationType, width, now, activityInfo, sysStats, weatherPhaseState[0], null, null),
+            getWeatherPhaseColor(weatherPhaseState[1] as Number)
+        ];
     }
 
     hidden function getUnitByType(complicationType) as String {
@@ -2992,10 +3015,79 @@ class Segment34View extends WatchUi.WatchFace {
         }
     }
 
-    hidden function getWeatherPhase(hasWorse as Boolean) as Number {
+    hidden function getWeatherPhase() as Number {
         var elapsed = Time.now().value() - wakeTimestamp;
-        var phaseCount = hasWorse ? 3 : 2;
-        return ((elapsed / 4).toNumber() % phaseCount);
+        return ((elapsed / 4).toNumber() % 3);
+    }
+
+    hidden function blendWeatherColorChannel(baseChannel as Number, accentChannel as Number, accentPercent as Number) as Number {
+        return Math.round(((baseChannel * (100 - accentPercent)) + (accentChannel * accentPercent)) / 100.0).toNumber();
+    }
+
+    hidden function getWeatherPhaseColor(accentPercent as Number) as Graphics.ColorType {
+        if (accentPercent <= 0) { return 0xFFFFFF; }
+
+        var primaryColor = themeColors[clock];
+        var red = blendWeatherColorChannel(0xFF, (primaryColor >> 16) & 0xFF, accentPercent);
+        var green = blendWeatherColorChannel(0xFF, (primaryColor >> 8) & 0xFF, accentPercent);
+        var blue = blendWeatherColorChannel(0xFF, primaryColor & 0xFF, accentPercent);
+
+        return (red << 16) | (green << 8) | blue;
+    }
+
+    hidden function getPhasedWeatherLineState() as Array {
+        var currentWeather = getActiveWeatherCondition();
+        if (currentWeather == null) {
+            currentWeather = lineWeatherCondition;
+            if (currentWeather == null) {
+                currentWeather = lineWeatherCondition3h;
+            }
+        }
+
+        var phase = getWeatherPhase();
+        if (phase == 1 && lineWeatherCondition != null) {
+            return [lineWeatherCondition, 40];
+        }
+        if (phase == 2 && lineWeatherCondition3h != null) {
+            return [lineWeatherCondition3h, 70];
+        }
+        return [currentWeather, 0];
+    }
+
+    hidden function getWeatherCycleState(activeWeather as ForecastWeather or Null, activeChange as Array?, activeWorse as Array?) as Array {
+        if (activeWeather == null || activeWeather.condition == null) {
+            return ["", 0];
+        }
+
+        var displayWeather = activeWeather;
+        var pointer = getForecastEventPointer(activeChange, 1);
+        var accentPercent = 0;
+        var phase = getWeatherPhase();
+
+        if (phase == 1) {
+            var changeWeather = getForecastEventWeather(activeChange);
+            if (changeWeather != null) {
+                displayWeather = changeWeather;
+                pointer = getForecastEventPointer(activeChange, 2);
+                accentPercent = 40;
+            }
+        } else if (phase == 2) {
+            var worseWeather = getForecastEventWeather(activeWorse);
+            if (worseWeather != null) {
+                displayWeather = worseWeather;
+                pointer = getForecastEventPointer(activeWorse, 2);
+                accentPercent = 70;
+            } else {
+                var changeWeather = getForecastEventWeather(activeChange);
+                if (changeWeather != null) {
+                    displayWeather = changeWeather;
+                    pointer = getForecastEventPointer(activeChange, 2);
+                    accentPercent = 70;
+                }
+            }
+        }
+
+        return [formatWeatherConditionFeelsLike(displayWeather) + formatForecastPointer(pointer), accentPercent];
     }
 
     hidden function getWeatherTier(condition as Number) as Number {
@@ -3017,7 +3109,7 @@ class Segment34View extends WatchUi.WatchFace {
         return [buildMergedForecastWeather(forecast), getForecastEventHour(forecast), -1];
     }
 
-    hidden function findHourlyForecastIndex(secondsAhead as Number) as Number {
+    hidden function findHourlyForecastIndex(secondsAhead as Number, maxDiffSeconds as Number?) as Number {
         if (cachedHourlyForecast.size() == 0) { return -1; }
 
         var now = Time.now().value();
@@ -3038,12 +3130,26 @@ class Segment34View extends WatchUi.WatchFace {
             break;
         }
 
-        if (afterIdx < 0) { return beforeIdx; }
-        if (beforeIdx < 0) { return afterIdx; }
+        var selectedIdx = -1;
+        if (afterIdx < 0) {
+            selectedIdx = beforeIdx;
+        } else if (beforeIdx < 0) {
+            selectedIdx = afterIdx;
+        } else {
+            var beforeDiff = target - (cachedHourlyForecast[beforeIdx].forecastTime as Number);
+            var afterDiff = (cachedHourlyForecast[afterIdx].forecastTime as Number) - target;
+            selectedIdx = (afterDiff <= beforeDiff) ? afterIdx : beforeIdx;
+        }
+        if (maxDiffSeconds == null || selectedIdx < 0) { return selectedIdx; }
 
-        var beforeDiff = target - (cachedHourlyForecast[beforeIdx].forecastTime as Number);
-        var afterDiff = (cachedHourlyForecast[afterIdx].forecastTime as Number) - target;
-        return (afterDiff <= beforeDiff) ? afterIdx : beforeIdx;
+        var selectedDiff = (cachedHourlyForecast[selectedIdx].forecastTime as Number) - target;
+        if (selectedDiff < 0) {
+            selectedDiff = -selectedDiff;
+        }
+        if (selectedDiff > maxDiffSeconds) {
+            return -1;
+        }
+        return selectedIdx;
     }
 
     hidden function buildForecastTimeline(baseCondition as Number, startIdx as Number) as Array {
@@ -3111,10 +3217,11 @@ class Segment34View extends WatchUi.WatchFace {
         cachedLineForecastChange = null;
         cachedLineForecastWorse = null;
         lineWeatherCondition = null;
+        lineWeatherCondition3h = null;
 
         if (cachedHourlyForecast.size() == 0) { return; }
 
-        var lineForecastIdx = findHourlyForecastIndex(3600);
+        var lineForecastIdx = findHourlyForecastIndex(3600, 2700);
         if (lineForecastIdx >= 0) {
             lineWeatherCondition = buildMergedForecastWeather(cachedHourlyForecast[lineForecastIdx]);
             if (cachedHourlyForecast[lineForecastIdx].condition != null) {
@@ -3122,6 +3229,11 @@ class Segment34View extends WatchUi.WatchFace {
                 cachedLineForecastChange = lineTimeline[0];
                 cachedLineForecastWorse = lineTimeline[1];
             }
+        }
+
+        var lineForecast3hIdx = findHourlyForecastIndex(10800, 2700);
+        if (lineForecast3hIdx >= 0) {
+            lineWeatherCondition3h = buildMergedForecastWeather(cachedHourlyForecast[lineForecast3hIdx]);
         }
 
         if (weatherCondition == null || weatherCondition.condition == null) { return; }
@@ -3188,18 +3300,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function formatWeatherCycleValue(activeWeather as ForecastWeather or Null, activeChange as Array?, activeWorse as Array?) as String {
-        if (activeWeather == null || activeWeather.condition == null) {
-            return "";
-        }
-
-        var phase = getWeatherPhase(activeWorse != null);
-        if (phase == 0 || activeChange == null) {
-            return formatWeatherConditionFeelsLike(activeWeather) + formatForecastPointer(getForecastEventPointer(activeChange, 1));
-        }
-        if (phase == 1 || activeWorse == null) {
-            return formatWeatherConditionFeelsLike(getForecastEventWeather(activeChange)) + formatForecastPointer(getForecastEventPointer(activeChange, 2));
-        }
-        return formatWeatherConditionFeelsLike(getForecastEventWeather(activeWorse)) + formatForecastPointer(getForecastEventPointer(activeWorse, 2));
+        return getWeatherCycleState(activeWeather, activeChange, activeWorse)[0];
     }
 
     hidden function getWeatherCondition(includePrecipitation as Boolean) as String {
