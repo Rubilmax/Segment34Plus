@@ -219,6 +219,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     function initialize() {
         WatchFace.initialize();
+        hrResetState();
 
         if(System.getDeviceSettings() has :requiresBurnInProtection) { canBurnIn = System.getDeviceSettings().requiresBurnInProtection; }
         updateProperties();
@@ -639,19 +640,19 @@ class Segment34View extends WatchUi.WatchFace {
         values[:dataAboveLine2] = aboveLine2[0];
         values[:dataAboveLine2Color] = aboveLine2[1];
         values[:dataBelow] = getValueByTypeWithUnit(propDateFieldShows, 10, now, actInfo, sysStats);
-        values[:dataNotifications] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
-        if (values[:dataNotifications].length() > 0) {
-            if (propNotificationCountShows == 14) {
-                values[:dataNotifications] = values[:dataNotifications] + "\u2665  ";
-            } else if (propNotificationCountShows == 10 or propNotificationCountShows == 76) {
-                values[:dataNotifications] = values[:dataNotifications] + "\u2764  ";
-            }
-        }
+        values[:dataNotificationsValue] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
+        values[:dataNotificationsSuffix] = getNotificationSuffix(propNotificationCountShows, values[:dataNotificationsValue]);
+        values[:dataNotificationsColor] = hrGetDisplayValueColor(propNotificationCountShows, themeColors[notif], themeColors[bg]);
         values[:dataBottomLeft] = getValueByType(propLeftValueShows, fieldWidths[0], now, actInfo, sysStats);
+        values[:dataBottomLeftColor] = hrGetDisplayValueColor(propLeftValueShows, themeColors[dataVal], themeColors[bg]);
         values[:dataBottomMiddle] = getValueByType(propMiddleValueShows, fieldWidths[1], now, actInfo, sysStats);
+        values[:dataBottomMiddleColor] = hrGetDisplayValueColor(propMiddleValueShows, themeColors[dataVal], themeColors[bg]);
         values[:dataBottomRight] = getValueByType(propRightValueShows, fieldWidths[2], now, actInfo, sysStats);
+        values[:dataBottomRightColor] = hrGetDisplayValueColor(propRightValueShows, themeColors[dataVal], themeColors[bg]);
         values[:dataBottomFourth] = getValueByType(propFourthValueShows, fieldWidths[3], now, actInfo, sysStats);
+        values[:dataBottomFourthColor] = hrGetDisplayValueColor(propFourthValueShows, themeColors[dataVal], themeColors[bg]);
         values[:dataBottom] = getValueByType(propBottomFieldShows, 5, now, actInfo, sysStats);
+        values[:dataBottomColor] = hrGetDisplayValueColor(propBottomFieldShows, themeColors[dataVal], themeColors[bg]);
         computeBottomField2Values(values, now, actInfo, sysStats);
         values[:dataIcon1] = getIconState(propIcon1, actInfo);
         values[:dataIcon2] = getIconState(propIcon2, actInfo);
@@ -684,6 +685,7 @@ class Segment34View extends WatchUi.WatchFace {
         lastSlowUpdate = null;
         wakeTimestamp = Time.now().value();
         lastWeatherPhase = -1;
+        hrResetState();
     }
 
     // Update the view
@@ -715,25 +717,70 @@ class Segment34View extends WatchUi.WatchFace {
             } else {
                 cachedValues[:dataSeconds] = now.sec.format("%02d");
             }
+            var actInfo = null;
+            var sysStats = cachedSysStats;
             // Refresh phased weather lines every 4 seconds.
             if (shouldRefreshWeatherLine(propWeatherLine1Shows, true) || shouldRefreshWeatherLine(propWeatherLine2Shows, false)) {
                 var phaseBucket = ((unix_timestamp - wakeTimestamp) / 4).toNumber();
                 if (phaseBucket != lastWeatherPhase) {
                     lastWeatherPhase = phaseBucket;
-                    var sysStats = cachedSysStats;
                     if (sysStats == null) {
                         sysStats = System.getSystemStats();
                         cachedSysStats = sysStats;
                     }
-                    var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, null, sysStats, true);
+                    actInfo = ActivityMonitor.getInfo();
+                    var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, actInfo, sysStats, true);
                     cachedValues[:dataAboveLine1] = aboveLine1[0];
                     cachedValues[:dataAboveLine1Color] = aboveLine1[1];
-                    var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, null, sysStats, false);
+                    var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, actInfo, sysStats, false);
                     cachedValues[:dataAboveLine2] = aboveLine2[0];
                     cachedValues[:dataAboveLine2Color] = aboveLine2[1];
                 }
             }
+
+            var hrDisplayTypes = [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()];
+            if (hrHasActiveDisplay(hrDisplayTypes)) {
+                if (actInfo == null) {
+                    actInfo = ActivityMonitor.getInfo();
+                }
+                if (sysStats == null) {
+                    sysStats = System.getSystemStats();
+                }
+                cachedSysStats = sysStats;
+
+                if (propNotificationCountShows == 10) {
+                    cachedValues[:dataNotificationsValue] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
+                    cachedValues[:dataNotificationsSuffix] = getNotificationSuffix(propNotificationCountShows, cachedValues[:dataNotificationsValue]);
+                    cachedValues[:dataNotificationsColor] = hrGetDisplayValueColor(propNotificationCountShows, themeColors[notif], themeColors[bg]);
+                }
+                if (propLeftValueShows == 10) {
+                    cachedValues[:dataBottomLeft] = getValueByType(propLeftValueShows, cachedFieldWidths[0], now, actInfo, sysStats);
+                    cachedValues[:dataBottomLeftColor] = hrGetDisplayValueColor(propLeftValueShows, themeColors[dataVal], themeColors[bg]);
+                }
+                if (propMiddleValueShows == 10) {
+                    cachedValues[:dataBottomMiddle] = getValueByType(propMiddleValueShows, cachedFieldWidths[1], now, actInfo, sysStats);
+                    cachedValues[:dataBottomMiddleColor] = hrGetDisplayValueColor(propMiddleValueShows, themeColors[dataVal], themeColors[bg]);
+                }
+                if (propRightValueShows == 10) {
+                    cachedValues[:dataBottomRight] = getValueByType(propRightValueShows, cachedFieldWidths[2], now, actInfo, sysStats);
+                    cachedValues[:dataBottomRightColor] = hrGetDisplayValueColor(propRightValueShows, themeColors[dataVal], themeColors[bg]);
+                }
+                if (propFourthValueShows == 10) {
+                    cachedValues[:dataBottomFourth] = getValueByType(propFourthValueShows, cachedFieldWidths[3], now, actInfo, sysStats);
+                    cachedValues[:dataBottomFourthColor] = hrGetDisplayValueColor(propFourthValueShows, themeColors[dataVal], themeColors[bg]);
+                }
+                if (propBottomFieldShows == 10) {
+                    cachedValues[:dataBottom] = getValueByType(propBottomFieldShows, 5, now, actInfo, sysStats);
+                    cachedValues[:dataBottomColor] = hrGetDisplayValueColor(propBottomFieldShows, themeColors[dataVal], themeColors[bg]);
+                }
+                if (getBottomField2Shows() == 10) {
+                    cachedValues[:dataBottom2] = getValueByType(getBottomField2Shows(), 5, now, actInfo, sysStats);
+                    cachedValues[:dataBottom2Color] = hrGetDisplayValueColor(getBottomField2Shows(), themeColors[dataVal], themeColors[bg]);
+                }
+            }
         }
+
+        hrSyncBlinkTimer(visible, isSleeping, [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()]);
 
         if(isSleeping and canBurnIn) {
             drawAOD(dc, now, cachedValues);
@@ -747,6 +794,7 @@ class Segment34View extends WatchUi.WatchFace {
     // This includes freeing resources from memory.
     function onHide() as Void {
         visible = false;
+        hrStopBlinkTimer();
     }
 
     // The user has just looked at their watch. Timers and animations may be started here.
@@ -756,6 +804,7 @@ class Segment34View extends WatchUi.WatchFace {
         lastUpdate = null;
         lastSlowUpdate = null;
         isSleeping = false;
+        hrResetState();
         WatchUi.requestUpdate();
     }
 
@@ -764,6 +813,7 @@ class Segment34View extends WatchUi.WatchFace {
         lastUpdate = null;
         lastSlowUpdate = null;
         isSleeping = true;
+        hrResetState();
         WatchUi.requestUpdate();
     }
 
@@ -771,6 +821,7 @@ class Segment34View extends WatchUi.WatchFace {
         initialize();
         lastUpdate = null;
         lastSlowUpdate = null;
+        hrResetState();
         WatchUi.requestUpdate();
     }
 
@@ -934,11 +985,13 @@ class Segment34View extends WatchUi.WatchFace {
             dc.drawText(baseX + halfClockWidth - textSideAdj, y1, fontSmallData, values[:dataSeconds], Graphics.TEXT_JUSTIFY_RIGHT);
         }
 
+        var hrDisplayTypes = [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()];
+        var liveHeartRateDigitsVisible = hrShouldDrawValue(10, visible, isSleeping, hrDisplayTypes);
+
         // Draw Notification count
-        dc.setColor(themeColors[notif], Graphics.COLOR_TRANSPARENT);
         if(propDateAlignment == 0) {
             if(!propShowSeconds) { // No seconds, notification on right side
-                dc.drawText(baseX + halfClockWidth - textSideAdj, y1, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_RIGHT);
+                hrDrawNotificationValue(dc, baseX + halfClockWidth - textSideAdj, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_RIGHT, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
             } else {
                 var date_width = dc.getTextWidthInPixels(values[:dataBelow], fontSmallData);
                 var sec_width = dc.getTextWidthInPixels(values[:dataSeconds], fontSmallData); 
@@ -948,19 +1001,19 @@ class Segment34View extends WatchUi.WatchFace {
                 if((sec_left - date_right_edge) < 3 * marginX) {
                     pos = (date_right_edge + sec_left) / 2;
                 }
-                dc.drawText(pos, y1, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_CENTER);
+                hrDrawNotificationValue(dc, pos, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_CENTER, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
             }
         } else { // Date is centered, notification on left side
-            dc.drawText(baseX - halfClockWidth, y1, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_LEFT);
+            hrDrawNotificationValue(dc, baseX - halfClockWidth, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_LEFT, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
         }
 
         // Draw the three bottom data fields
         var digits = getFieldWidths();
 
-        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], values[:dataBottomLeft], digits[0], fontLargeData, largeDataWidth * digits[0]);
-        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], values[:dataBottomMiddle], digits[1], fontLargeData, largeDataWidth * digits[1]);
-        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], values[:dataBottomRight], digits[2], fontLargeData, largeDataWidth * digits[2]);
-        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], values[:dataBottomFourth], digits[3], fontLargeData, largeDataWidth * digits[3]);
+        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], (propLeftValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomLeft], digits[0], fontLargeData, values[:dataBottomLeftColor]);
+        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], (propMiddleValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomMiddle], digits[1], fontLargeData, values[:dataBottomMiddleColor]);
+        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], (propRightValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomRight], digits[2], fontLargeData, values[:dataBottomRightColor]);
+        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], (propFourthValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomFourth], digits[3], fontLargeData, values[:dataBottomFourthColor]);
 
         // Draw the 5 digit bottom field(s) and icons
         drawBottomFieldsWithIcons(dc, values);
@@ -1037,11 +1090,13 @@ class Segment34View extends WatchUi.WatchFace {
             dc.drawText(baseX + halfClockWidth - textSideAdj, yn0, fontSmallData, values[:dataSeconds], Graphics.TEXT_JUSTIFY_RIGHT);
         }
 
+        var hrDisplayTypes = [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()];
+        var liveHeartRateDigitsVisible = hrShouldDrawValue(10, visible, isSleeping, hrDisplayTypes);
+
         // Draw Notification count (above clock)
-        dc.setColor(themeColors[notif], Graphics.COLOR_TRANSPARENT);
         if(propDateAlignment == 0) {
             if(!propShowSeconds) {
-                dc.drawText(baseX + halfClockWidth - textSideAdj, yn0, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_RIGHT);
+                hrDrawNotificationValue(dc, baseX + halfClockWidth - textSideAdj, yn0, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_RIGHT, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
             } else {
                 var date_width = dc.getTextWidthInPixels(values[:dataBelow], fontSmallData);
                 var sec_width = dc.getTextWidthInPixels(values[:dataSeconds], fontSmallData);
@@ -1051,10 +1106,10 @@ class Segment34View extends WatchUi.WatchFace {
                 if((sec_left - date_right_edge) < 3 * marginX) {
                     pos = (date_right_edge + sec_left) / 2;
                 }
-                dc.drawText(pos, yn0, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_CENTER);
+                hrDrawNotificationValue(dc, pos, yn0, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_CENTER, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
             }
         } else {
-            dc.drawText(baseX - halfClockWidth, yn0, fontSmallData, values[:dataNotifications], Graphics.TEXT_JUSTIFY_LEFT);
+            hrDrawNotificationValue(dc, baseX - halfClockWidth, yn0, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, [values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_LEFT, (propNotificationCountShows != 10) || liveHeartRateDigitsVisible]);
         }
 
         // Draw Clock
@@ -1083,13 +1138,17 @@ class Segment34View extends WatchUi.WatchFace {
         // Draw the three bottom data fields (directly below clock, no date row)
         var digits = getFieldWidths();
 
-        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], values[:dataBottomLeft], digits[0], fontLargeData, largeDataWidth * digits[0]);
-        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], values[:dataBottomMiddle], digits[1], fontLargeData, largeDataWidth * digits[1]);
-        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], values[:dataBottomRight], digits[2], fontLargeData, largeDataWidth * digits[2]);
-        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], values[:dataBottomFourth], digits[3], fontLargeData, largeDataWidth * digits[3]);
+        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], (propLeftValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomLeft], digits[0], fontLargeData, values[:dataBottomLeftColor]);
+        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], (propMiddleValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomMiddle], digits[1], fontLargeData, values[:dataBottomMiddleColor]);
+        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], (propRightValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomRight], digits[2], fontLargeData, values[:dataBottomRightColor]);
+        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], (propFourthValueShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottomFourth], digits[3], fontLargeData, values[:dataBottomFourthColor]);
 
         // Draw the 5 digit bottom field
-        var step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, values[:dataBottom], 5, fontBottomData, bottomDataWidth * 5);
+        var hideBottomFieldForBlink = propBottomFieldShows == 10 && !liveHeartRateDigitsVisible;
+        var step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, hideBottomFieldForBlink ? "" : values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
+        if (hideBottomFieldForBlink) {
+            step_width = bottomDataWidth * 5;
+        }
 
         // Draw icons
         dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
@@ -1277,12 +1336,26 @@ class Segment34View extends WatchUi.WatchFace {
         }
     }
 
-    hidden function drawDataField(dc as Dc, x as Number, y as Number, adjX as Number, label as String?, value as String, width as Number, font as FontResource, bgwidth as Number) as Number {
+    hidden function getNotificationSuffix(complicationType as Number, value as String) as String {
+        if (complicationType == 10 or complicationType == 76) {
+            return "\u2764  ";
+        }
+        if (value.length() == 0) {
+            return "";
+        }
+        if (complicationType == 14) {
+            return "\u2665  ";
+        }
+        return "";
+    }
+
+    hidden function drawDataField(dc as Dc, x as Number, y as Number, adjX as Number, label as String?, value as String, width as Number, font as FontResource, valueColor) as Number {
         var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var propShowDataBg = ((propBitmapA >> 14) & 0x1) == 1;
         var propBottomFieldAlignment = (propBitmapA >> 19) & 0x3;
         if(value.length() == 0 and (label == null or label.length() == 0)) { return 0; }
         if(width == 0) { return 0; }
+        if(valueColor == null) { valueColor = themeColors[dataVal]; }
         var valueBg;
         if(screenHeight == 360 and width == 5 and label == null) {
             valueBg = bgStringsAlt[width];
@@ -1290,7 +1363,7 @@ class Segment34View extends WatchUi.WatchFace {
             valueBg = bgStrings[width];
         }
 
-        var value_bg_width = bgwidth;//dc.getTextWidthInPixels(valueBg, font);
+        var value_bg_width = (width == 5 && label == null) ? (bottomDataWidth * width) : (largeDataWidth * width);
         var half_bg_width = Math.round(value_bg_width / 2);
         var data_y = y;
 
@@ -1304,7 +1377,7 @@ class Segment34View extends WatchUi.WatchFace {
             dc.drawText(x - half_bg_width + adjX, data_y, font, valueBg, Graphics.TEXT_JUSTIFY_LEFT);
         }
 
-        dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
+        dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
         if(propBottomFieldAlignment == 0) {
             dc.drawText(x - half_bg_width + adjX, data_y, font, value, Graphics.TEXT_JUSTIFY_LEFT);
         } else if (propBottomFieldAlignment == 1) {
@@ -2387,20 +2460,9 @@ class Segment34View extends WatchUi.WatchFace {
                 }
             }
         } else if(complicationType == 10) {
-            // Try to retrieve live HR from Activity::Info
-            var activity_info = getCachedActivityDetails();
-            var sample = activity_info != null ? activity_info.currentHeartRate : null;
+            var sample = hrGetCurrentHeartRateSample();
             if(sample != null) {
                 val = sample.format("%01d");
-            } else if (ActivityMonitor has :getHeartRateHistory) {
-                // Falling back to historical HR from ActivityMonitor
-                var history = ActivityMonitor.getHeartRateHistory(1, /* newestFirst */ true);
-                if (history != null) {
-                    var hist = history.next();
-                    if ((hist != null) && (hist.heartRate != ActivityMonitor.INVALID_HR_SAMPLE)) {
-                        val = hist.heartRate.format("%01d");
-                    }
-                }
             }
         } else if(complicationType == 11) { // Calories
             if (activityInfo has :calories) {
@@ -3739,6 +3801,7 @@ class Segment34View extends WatchUi.WatchFace {
     (:Square)
     hidden function computeBottomField2Values(values as Dictionary, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as Void {
         values[:dataBottom2] = getValueByType(propBottomField2Shows, 5, now, activityInfo, sysStats);
+        values[:dataBottom2Color] = hrGetDisplayValueColor(propBottomField2Shows, themeColors[dataVal], themeColors[bg]);
         if (propBottomFieldShows != -2 and propBottomField2Shows != -2) {
             values[:dataLabelBottom] = getLabelByType(propBottomFieldShows, 2);
             values[:dataLabelBottom2] = getLabelByType(propBottomField2Shows, 2);
@@ -3773,6 +3836,7 @@ class Segment34View extends WatchUi.WatchFace {
     (:Square)
     hidden function drawSquares(dc as Dc, values as Dictionary) as Void {
         var propLabelVisibility = (propBitmapB >> 11) & 0x3;
+        var liveHeartRateDigitsVisible = hrShouldDrawValue(10, visible, isSleeping, [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()]);
         if (dualBottomFieldActive) {
             var field1Width = bottomDataWidth * 5;
             var field2Width = bottomDataWidth * 5;
@@ -3787,12 +3851,12 @@ class Segment34View extends WatchUi.WatchFace {
 
             // Draw both fields
             drawDataField(dc, bottomFive1X, bottomFiveY, 0,
-                null, values[:dataBottom], 5,
-                fontBottomData, field1Width);
+                null, (propBottomFieldShows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottom], 5,
+                fontBottomData, values[:dataBottomColor]);
 
             drawDataField(dc, bottomFive2X, bottomFiveY, 0,
-                null, values[:dataBottom2], 5,
-                fontBottomData, field2Width);
+                null, (propBottomField2Shows == 10 && !liveHeartRateDigitsVisible) ? "" : values[:dataBottom2], 5,
+                fontBottomData, values[:dataBottom2Color]);
 
             // Icons on outer edges
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
@@ -3806,8 +3870,12 @@ class Segment34View extends WatchUi.WatchFace {
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         } else {
             // Single field - original behavior
+            var hideBottomFieldForBlink = propBottomFieldShows == 10 && !liveHeartRateDigitsVisible;
             var step_width = drawDataField(dc, centerX, bottomFiveY, 0, null,
-                values[:dataBottom], 5, fontBottomData, bottomDataWidth * 5);
+                hideBottomFieldForBlink ? "" : values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
+            if (hideBottomFieldForBlink) {
+                step_width = bottomDataWidth * 5;
+            }
 
             dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
             dc.drawText(centerX - (step_width / 2) - (marginX / 2),
@@ -3850,11 +3918,16 @@ class Segment34View extends WatchUi.WatchFace {
     (:Round)
     hidden function drawBottomFieldsWithIcons(dc as Dc, values as Dictionary) as Void {
         // Original single field behavior
+        var liveHeartRateDigitsVisible = hrShouldDrawValue(10, visible, isSleeping, [propNotificationCountShows, propLeftValueShows, propMiddleValueShows, propRightValueShows, propFourthValueShows, propBottomFieldShows, getBottomField2Shows()]);
         var step_width = 0;
+        var hideBottomFieldForBlink = propBottomFieldShows == 10 && !liveHeartRateDigitsVisible;
         if(screenHeight == 240) {
-            step_width = drawDataField(dc, centerX - 19, bottomFiveY + 3, 0, null, values[:dataBottom], 5, fontBottomData, bottomDataWidth * 5);
+            step_width = drawDataField(dc, centerX - 19, bottomFiveY + 3, 0, null, hideBottomFieldForBlink ? "" : values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
         } else {
-            step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, values[:dataBottom], 5, fontBottomData, bottomDataWidth * 5);
+            step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, hideBottomFieldForBlink ? "" : values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
+        }
+        if (hideBottomFieldForBlink) {
+            step_width = bottomDataWidth * 5;
         }
 
         // Draw icons
