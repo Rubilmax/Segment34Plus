@@ -17,11 +17,13 @@ const HR_FADE_FALLBACK_START_PERCENT = 60;
 
 var hrBlinkTimer = null;
 var hrBlinkTimerRunning = false;
+var hrBlinkActive = false;
 var hrCachedSample = null;
 var hrCachedSampleValid = false;
 var hrCachedSampleTimestampMs = 0;
 
 function hrResetState() as Void {
+    hrBlinkActive = false;
     hrCachedSample = null;
     hrCachedSampleValid = false;
     hrCachedSampleTimestampMs = 0;
@@ -169,32 +171,45 @@ function hrGetDangerColor(backgroundColor as Graphics.ColorType) as Graphics.Col
     return 0xFF4A4A;
 }
 
+function hrGetBaseDangerColor(backgroundColor as Graphics.ColorType) as Graphics.ColorType {
+    if (backgroundColor == 0xFFFFFF) {
+        return 0x550000;
+    }
+    return 0xAA2020;
+}
+
 function hrGetDisplayValueColor(complicationType as Number, defaultColor as Graphics.ColorType, backgroundColor as Graphics.ColorType) as Graphics.ColorType {
     if (!hrIsLiveHeartRateComplication(complicationType)) {
         return defaultColor;
     }
 
-    var baseColor = backgroundColor == 0xFFFFFF ? defaultColor : 0xFFFFFF;
     var maxHeartRate = hrGetMaxHeartRate();
     var accentPercent = hrGetFadePercent(hrGetCurrentHeartRateSample(), hrGetFadeStartBpm(maxHeartRate), maxHeartRate);
     if (accentPercent <= 0) {
-        return baseColor;
+        return defaultColor;
     }
-    return hrBlendColor(baseColor, hrGetDangerColor(backgroundColor), accentPercent);
+    return hrBlendColor(hrGetBaseDangerColor(backgroundColor), hrGetDangerColor(backgroundColor), accentPercent);
+}
+
+function hrRefreshBlinkState(displayTypes as Array<Number>) as Void {
+    if (!hrHasActiveDisplay(displayTypes)) {
+        hrBlinkActive = false;
+        return;
+    }
+
+    var maxHeartRate = hrGetMaxHeartRate();
+    var sample = hrGetCurrentHeartRateSample();
+    hrBlinkActive = sample != null
+        && maxHeartRate != null
+        && maxHeartRate > 0
+        && (sample * 100) >= (maxHeartRate * HR_BLINK_THRESHOLD_PERCENT);
 }
 
 function hrShouldBlink(visible as Boolean, isSleeping as Boolean, displayTypes as Array<Number>) as Boolean {
     if (!visible || isSleeping || !hrHasActiveDisplay(displayTypes)) {
         return false;
     }
-
-    var maxHeartRate = hrGetMaxHeartRate();
-    var sample = hrGetCurrentHeartRateSample();
-    if (sample == null || maxHeartRate == null || maxHeartRate <= 0) {
-        return false;
-    }
-
-    return (sample * 100) >= (maxHeartRate * HR_BLINK_THRESHOLD_PERCENT);
+    return hrBlinkActive;
 }
 
 function hrSyncBlinkTimer(visible as Boolean, isSleeping as Boolean, displayTypes as Array<Number>) as Void {

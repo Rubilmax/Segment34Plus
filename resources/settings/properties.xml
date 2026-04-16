@@ -24,6 +24,12 @@
     <property id="middleValueShows" type="number">29</property>
     <property id="rightValueShows" type="number">6</property>
     <property id="fourthValueShows" type="number">10</property>
+    <property id="touchAlternativeFieldLayout" type="number">4</property>
+    <property id="touchAlternativeLeftValueShows" type="number">12</property>
+    <property id="touchAlternativeMiddleValueShows" type="number">2</property>
+    <property id="touchAlternativeRightValueShows" type="number">32</property>
+    <property id="touchAlternativeFourthValueShows" type="number">-2</property>
+    <property id="touchAlternativeActive" type="boolean">false</property>
     <property id="bottomFieldShows" type="number">17</property>
     <property id="bottomField2Shows" type="number">-2</property>
     <property id="aodStyle" type="number">0</property>
@@ -42,11 +48,6 @@
     <property id="icon1" type="number">1</property>
     <property id="icon2" type="number">2</property>
     <property id="weekOffset" type="number">0</property>
-    <property id="pressToOpenTop" type="number">8</property>
-    <property id="pressToOpenMiddle" type="number">12</property>
-    <property id="pressToOpenBottomLeft" type="number">3</property>
-    <property id="pressToOpenBottomCenter" type="number">1</property>
-    <property id="pressToOpenBottomRight" type="number">18</property>
     <property id="labelVisibility" type="number">0</property>
     <property id="stressDynamicColor" type="boolean">true</property>
 </properties>

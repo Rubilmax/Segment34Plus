@@ -92,8 +92,8 @@
     <string id="LABEL_DMIN_1">MIN G</string>
     <string id="LABEL_DMIN_2">MIN OGGI</string>
     <string id="LABEL_DMIN_3">MIN ATT G</string>
-    <string id="LABEL_DKM_1">KM G</string>
-    <string id="LABEL_DKM_2">KM OGGI</string>
+    <string id="LABEL_DKM_1">KM/G</string>
+    <string id="LABEL_DKM_2">KM / GIORNO</string>
     <string id="LABEL_DMI_1">MI G</string>
     <string id="LABEL_DMI_2">MI OGGI</string>
     <string id="LABEL_DMI_3">MIGLIA OGGI</string>
@@ -127,7 +127,7 @@
     <string id="LABEL_DIST_2">M OGGI</string>
     <string id="LABEL_DIST_3">METRI OGGI</string>
     <string id="LABEL_PUSHES">SPINTE:</string>
-    <string id="LABEL_WKM_1">KM S</string>
+    <string id="LABEL_WKM_1">KM/S</string>
     <string id="LABEL_WRUNM_2">KM CORSA S</string>
     <string id="LABEL_WRUNM_3">KM CORSA S</string>
     <string id="LABEL_WMI_1">MI S</string>
@@ -148,8 +148,8 @@
     <string id="LABEL_ACAL_2">CAL ATT</string>
     <string id="LABEL_ACAL_3">CAL ATTIVE</string>
     <string id="LABEL_WEEK">SETTIMANA:</string>
-    <string id="LABEL_WDISTKM_2">KM SETT</string>
-    <string id="LABEL_WDISTKM_3">DIST KM SETT</string>
+    <string id="LABEL_WDISTKM_2">KM / 7D</string>
+    <string id="LABEL_WDISTKM_3">KM / 7D</string>
     <string id="LABEL_WDISTMI_2">MI SETT</string>
     <string id="LABEL_WDISTMI_3">MIGLIA SETT</string>
     <string id="LABEL_BATT_1">BAT</string>
@@ -248,13 +248,13 @@
     <string id="settings_hidden" scope="settings">Nascosto</string>
     <string id="settings_active_min_week" scope="settings">Minuti attivi / settimana</string>
     <string id="settings_active_min_day" scope="settings">Minuti attivi / giorno</string>
-    <string id="settings_distance_km_day" scope="settings">Distanza (km) / giorno</string>
+    <string id="settings_distance_km_day" scope="settings">km / giorno</string>
     <string id="settings_distance_miles_day" scope="settings">Distanza (miglia) / giorno</string>
     <string id="settings_run_distance_km_week" scope="settings">Distanza corsa (km) / settimana</string>
     <string id="settings_run_distance_miles_week" scope="settings">Distanza corsa (miglia) / settimana</string>
     <string id="settings_bike_distance_km_week" scope="settings">Distanza bici (km) / settimana</string>
     <string id="settings_bike_distance_miles_week" scope="settings">Distanza bici (miglia) / settimana</string>
-    <string id="settings_total_distance_7_days_km" scope="settings">Distanza totale ultimi 7 giorni (km)</string>
+    <string id="settings_total_distance_7_days_km" scope="settings">km / 7d</string>
     <string id="settings_total_distance_7_days_miles" scope="settings">Distanza totale ultimi 7 giorni (miglia)</string>
     <string id="settings_floors_climbed_day" scope="settings">Piani saliti / giorno</string>
     <string id="settings_meters_climbed_day" scope="settings">Metri saliti / giorno</string>
@@ -340,6 +340,11 @@
     <string id="settings_bottom_value_2" scope="settings">Valore inferiore 2:</string>
     <string id="settings_bottom_value_3" scope="settings">Valore inferiore 3:</string>
     <string id="settings_bottom_value_4" scope="settings">Valore inferiore 4 (se disponibile):</string>
+    <string id="settings_touch_alternative_bottom_field_layout" scope="settings">Layout alternativo al tocco per campi dati inferiori (numero di cifre per campo)</string>
+    <string id="settings_touch_alternative_bottom_value_1_left" scope="settings">Valore inferiore alternativo al tocco 1 (sinistra):</string>
+    <string id="settings_touch_alternative_bottom_value_2" scope="settings">Valore inferiore alternativo al tocco 2:</string>
+    <string id="settings_touch_alternative_bottom_value_3" scope="settings">Valore inferiore alternativo al tocco 3:</string>
+    <string id="settings_touch_alternative_bottom_value_4" scope="settings">Valore inferiore alternativo al tocco 4 (se disponibile):</string>
     <string id="settings_bottom_5_digit" scope="settings">Valore 5 cifre inferiore:</string>
     <string id="settings_bottom_5_digit_value" scope="settings">Valore 5 cifre inferiore:</string>
     <string id="settings_bottom_5_digit_value_2" scope="settings">Valore 5 cifre inferiore 2 (solo quadrato):</string>
@@ -364,33 +369,7 @@
     <string id="settings_text_alignment_bottom" scope="settings">Allineamento testo per campi dati inferiori:</string>
     <string id="settings_right" scope="settings">Destra</string>
     <string id="settings_left_center_5_digit" scope="settings">Sinistra, ma centra il campo 5 cifre</string>
-    <string id="settings_press_top_third" scope="settings">Premi il terzo superiore per aprire:</string>
-    <string id="settings_nothing" scope="settings">Niente</string>
-    <string id="settings_battery" scope="settings">Batteria</string>
-    <string id="settings_steps" scope="settings">Passi</string>
-    <string id="settings_calories" scope="settings">Calorie</string>
-    <string id="settings_floors_climbed" scope="settings">Piani saliti</string>
-    <string id="settings_intensity_minutes" scope="settings">Minuti intensità</string>
-    <string id="settings_date_2" scope="settings">Data</string>
-    <string id="settings_weather" scope="settings">Meteo</string>
-    <string id="settings_calendar" scope="settings">Calendario</string>
-    <string id="settings_sunrise" scope="settings">Alba</string>
-    <string id="settings_altitude" scope="settings">Altitudine</string>
-    <string id="settings_notifications" scope="settings">Notifiche</string>
-    <string id="settings_heart_rate_2" scope="settings">Frequenza cardiaca</string>
-    <string id="settings_weekly_run_distance" scope="settings">Distanza corsa settimanale</string>
-    <string id="settings_weekly_bike_distance" scope="settings">Distanza bici settimanale</string>
-    <string id="settings_recovery_time" scope="settings">Tempo di recupero</string>
     <string id="settings_stress" scope="settings">Stress</string>
-    <string id="settings_body_battery_2" scope="settings">Batteria corpo</string>
-    <string id="settings_training_status_2" scope="settings">Stato allenamento</string>
-    <string id="settings_race_predictor_5k" scope="settings">Predittore gara 5k</string>
-    <string id="settings_pulse_ox_2" scope="settings">Ossimetria</string>
-    <string id="settings_solar_input" scope="settings">Input Solare</string>
-    <string id="settings_press_middle_clock" scope="settings">Premi centro (orologio) per aprire:</string>
-    <string id="settings_press_bottom_left" scope="settings">Premi in basso a sinistra per aprire:</string>
-    <string id="settings_press_bottom_center" scope="settings">Premi centro inferiore per aprire:</string>
-    <string id="settings_press_bottom_right" scope="settings">Premi in basso a destra per aprire:</string>
     <string id="settings_hemisphere_moon" scope="settings">Emisfero (per icona Luna)</string>
     <string id="settings_northern" scope="settings">Settentrionale</string>
     <string id="settings_southern" scope="settings">Meridionale</string>

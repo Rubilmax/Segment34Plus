@@ -92,8 +92,8 @@
     <string id="LABEL_DMIN_1">D MIN</string>
     <string id="LABEL_DMIN_2">MIN TODAY</string>
     <string id="LABEL_DMIN_3">DAY ACT MIN</string>
-    <string id="LABEL_DKM_1">D KM</string>
-    <string id="LABEL_DKM_2">KM TODAY</string>
+    <string id="LABEL_DKM_1">KM/D</string>
+    <string id="LABEL_DKM_2">KM / DAY</string>
     <string id="LABEL_DMI_1">D MI</string>
     <string id="LABEL_DMI_2">MI TODAY</string>
     <string id="LABEL_DMI_3">MILES TODAY</string>
@@ -127,7 +127,7 @@
     <string id="LABEL_DIST_2">M TODAY</string>
     <string id="LABEL_DIST_3">METERS TODAY</string>
     <string id="LABEL_PUSHES">PUSHES:</string>
-    <string id="LABEL_WKM_1">W KM</string>
+    <string id="LABEL_WKM_1">KM/W</string>
     <string id="LABEL_WRUNM_2">W RUN KM</string>
     <string id="LABEL_WRUNM_3">WEEK RUN KM</string>
     <string id="LABEL_WMI_1">W MI</string>
@@ -148,8 +148,8 @@
     <string id="LABEL_ACAL_2">ACT. CAL</string>
     <string id="LABEL_ACAL_3">ACT. CALORIES</string>
     <string id="LABEL_WEEK">WEEK:</string>
-    <string id="LABEL_WDISTKM_2">WEEK KM</string>
-    <string id="LABEL_WDISTKM_3">WEEK DIST KM</string>
+    <string id="LABEL_WDISTKM_2">KM / 7D</string>
+    <string id="LABEL_WDISTKM_3">KM / 7D</string>
     <string id="LABEL_WDISTMI_2">WEEK MI</string>
     <string id="LABEL_WDISTMI_3">WEEKLY MILES</string>
     <string id="LABEL_BATT_1">BATT</string>
@@ -278,13 +278,13 @@
     <string id="settings_hidden" scope="settings">Hidden</string>
     <string id="settings_active_min_week" scope="settings">Active min / week</string>
     <string id="settings_active_min_day" scope="settings">Active min / day</string>
-    <string id="settings_distance_km_day" scope="settings">Distance (km) / day</string>
+    <string id="settings_distance_km_day" scope="settings">km / day</string>
     <string id="settings_distance_miles_day" scope="settings">Distance (miles) / day</string>
     <string id="settings_run_distance_km_week" scope="settings">Run distance (km) / week</string>
     <string id="settings_run_distance_miles_week" scope="settings">Run distance (miles) / week</string>
     <string id="settings_bike_distance_km_week" scope="settings">Bike distance (km) / week</string>
     <string id="settings_bike_distance_miles_week" scope="settings">Bike distance (miles) / week</string>
-    <string id="settings_total_distance_7_days_km" scope="settings">Total distance past 7 days (km)</string>
+    <string id="settings_total_distance_7_days_km" scope="settings">km / 7d</string>
     <string id="settings_total_distance_7_days_miles" scope="settings">Total distance past 7 days (miles)</string>
     <string id="settings_floors_climbed_day" scope="settings">Floors climbed / day</string>
     <string id="settings_meters_climbed_day" scope="settings">Meters climbed / day</string>
@@ -371,6 +371,11 @@
     <string id="settings_bottom_value_2" scope="settings">Bottom value 2:</string>
     <string id="settings_bottom_value_3" scope="settings">Bottom value 3:</string>
     <string id="settings_bottom_value_4" scope="settings">Bottom value 4 (if available):</string>
+    <string id="settings_touch_alternative_bottom_field_layout" scope="settings">Touch-alternative bottom field layout (number of digits per field)</string>
+    <string id="settings_touch_alternative_bottom_value_1_left" scope="settings">Touch-alternative bottom value 1 (left):</string>
+    <string id="settings_touch_alternative_bottom_value_2" scope="settings">Touch-alternative bottom value 2:</string>
+    <string id="settings_touch_alternative_bottom_value_3" scope="settings">Touch-alternative bottom value 3:</string>
+    <string id="settings_touch_alternative_bottom_value_4" scope="settings">Touch-alternative bottom value 4 (if available):</string>
     <string id="settings_bottom_5_digit" scope="settings">Bottom 5 digit value:</string>
     <string id="settings_bottom_5_digit_value" scope="settings">Bottom 5 digit value:</string>
     <string id="settings_bottom_5_digit_value_2" scope="settings">Bottom 5 digit value 2 (square watches only):</string>
@@ -395,33 +400,7 @@
     <string id="settings_text_alignment_bottom" scope="settings">Text alignment for bottom data fields:</string>
     <string id="settings_right" scope="settings">Right</string>
     <string id="settings_left_center_5_digit" scope="settings">Left, but center the 5 digit field</string>
-    <string id="settings_press_top_third" scope="settings">Press top third to open:</string>
-    <string id="settings_nothing" scope="settings">Nothing</string>
-    <string id="settings_battery" scope="settings">Battery</string>
-    <string id="settings_steps" scope="settings">Steps</string>
-    <string id="settings_calories" scope="settings">Calories</string>
-    <string id="settings_floors_climbed" scope="settings">Floors climbed</string>
-    <string id="settings_intensity_minutes" scope="settings">Intensiy minutes</string>
-    <string id="settings_date_2" scope="settings">Date</string>
-    <string id="settings_weather" scope="settings">Weather</string>
-    <string id="settings_calendar" scope="settings">Calendar</string>
-    <string id="settings_sunrise" scope="settings">Sunrise</string>
-    <string id="settings_altitude" scope="settings">Altitude</string>
-    <string id="settings_notifications" scope="settings">Notifications</string>
-    <string id="settings_heart_rate_2" scope="settings">Heart rate</string>
-    <string id="settings_weekly_run_distance" scope="settings">Weekly Run distance</string>
-    <string id="settings_weekly_bike_distance" scope="settings">Weekly Bike distance</string>
-    <string id="settings_recovery_time" scope="settings">Recovery time</string>
     <string id="settings_stress" scope="settings">Stress</string>
-    <string id="settings_body_battery_2" scope="settings">Body battery</string>
-    <string id="settings_training_status_2" scope="settings">Training status</string>
-    <string id="settings_race_predictor_5k" scope="settings">Race predictor 5k</string>
-    <string id="settings_pulse_ox_2" scope="settings">Pulse OX</string>
-    <string id="settings_solar_input" scope="settings">Solar Input</string>
-    <string id="settings_press_middle_clock" scope="settings">Press middle (clock) to open:</string>
-    <string id="settings_press_bottom_left" scope="settings">Press bottom left to open:</string>
-    <string id="settings_press_bottom_center" scope="settings">Press bottom center to open:</string>
-    <string id="settings_press_bottom_right" scope="settings">Press bottom right to open:</string>
     <string id="settings_hemisphere_moon" scope="settings">Hemisphere (for Moon icon)</string>
     <string id="settings_northern" scope="settings">Northern</string>
     <string id="settings_southern" scope="settings">Southern</string>

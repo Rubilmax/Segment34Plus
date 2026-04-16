@@ -15,11 +15,6 @@ Most fields can be configures in settings what data they should display. This pi
 
 For watches with an AMOLED screen you have two more fields shown in the Always On Display (if activated). These are called "Always On (below clock)" and "Second Always On Field (to the right)".
 
-### Can I press values to open widgets on the watch?
-Yes, but you have to configure what to open in settings (it's towards the bottom on the settings screen). There are 5 areas that when pressed can open something:
-
-![image explaining the areas that can be configured to open things](press_to_open.png)
-
 ## Dissapearing or hidden fields
 
 ### Why are seconds disappearing?
