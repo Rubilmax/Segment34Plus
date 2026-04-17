@@ -4,54 +4,23 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
-import Toybox.Timer;
 import Toybox.UserProfile;
-import Toybox.WatchUi;
 
 const HR_SAMPLE_CACHE_INTERVAL_MS = 250;
-const HR_BLINK_PULSE_MS = 125;
-const HR_BLINK_WINDOW_MS = 500;
-const HR_BLINK_CYCLE_MS = 1500;
-const HR_BLINK_THRESHOLD_PERCENT = 90;
 const HR_FADE_FALLBACK_START_PERCENT = 60;
 
-var hrBlinkTimer = null;
-var hrBlinkTimerRunning = false;
-var hrBlinkActive = false;
 var hrCachedSample = null;
 var hrCachedSampleValid = false;
 var hrCachedSampleTimestampMs = 0;
 
 function hrResetState() as Void {
-    hrBlinkActive = false;
     hrCachedSample = null;
     hrCachedSampleValid = false;
     hrCachedSampleTimestampMs = 0;
-    hrStopBlinkTimer();
 }
 
-function hrStopBlinkTimer() as Void {
-    if (hrBlinkTimer != null && hrBlinkTimerRunning) {
-        hrBlinkTimer.stop();
-    }
-    hrBlinkTimerRunning = false;
-}
-
-function hrOnBlinkTimerTick() as Void {
-    WatchUi.requestUpdate();
-}
-
-function hrIsLiveHeartRateComplication(complicationType as Number) as Boolean {
+function hrIsHeartRateComplication(complicationType as Number) as Boolean {
     return complicationType == 10;
-}
-
-function hrHasActiveDisplay(displayTypes as Array<Number>) as Boolean {
-    for (var i = 0; i < displayTypes.size(); i++) {
-        if (hrIsLiveHeartRateComplication(displayTypes[i])) {
-            return true;
-        }
-    }
-    return false;
 }
 
 function hrReadCurrentHeartRateSample() as Number? {
@@ -179,7 +148,7 @@ function hrGetBaseDangerColor(backgroundColor as Graphics.ColorType) as Graphics
 }
 
 function hrGetDisplayValueColor(complicationType as Number, defaultColor as Graphics.ColorType, backgroundColor as Graphics.ColorType) as Graphics.ColorType {
-    if (!hrIsLiveHeartRateComplication(complicationType)) {
+    if (!hrIsHeartRateComplication(complicationType)) {
         return defaultColor;
     }
 
@@ -191,64 +160,7 @@ function hrGetDisplayValueColor(complicationType as Number, defaultColor as Grap
     return hrBlendColor(hrGetBaseDangerColor(backgroundColor), hrGetDangerColor(backgroundColor), accentPercent);
 }
 
-function hrRefreshBlinkState(displayTypes as Array<Number>) as Void {
-    if (!hrHasActiveDisplay(displayTypes)) {
-        hrBlinkActive = false;
-        return;
-    }
-
-    var maxHeartRate = hrGetMaxHeartRate();
-    var sample = hrGetCurrentHeartRateSample();
-    hrBlinkActive = sample != null
-        && maxHeartRate != null
-        && maxHeartRate > 0
-        && (sample * 100) >= (maxHeartRate * HR_BLINK_THRESHOLD_PERCENT);
-}
-
-function hrShouldBlink(visible as Boolean, isSleeping as Boolean, displayTypes as Array<Number>) as Boolean {
-    if (!visible || isSleeping || !hrHasActiveDisplay(displayTypes)) {
-        return false;
-    }
-    return hrBlinkActive;
-}
-
-function hrSyncBlinkTimer(visible as Boolean, isSleeping as Boolean, displayTypes as Array<Number>) as Void {
-    if (!hrShouldBlink(visible, isSleeping, displayTypes)) {
-        hrStopBlinkTimer();
-        return;
-    }
-
-    if (hrBlinkTimer == null) {
-        hrBlinkTimer = new Timer.Timer();
-    }
-    if (!hrBlinkTimerRunning) {
-        hrBlinkTimer.start(new Lang.Method($, :hrOnBlinkTimerTick), HR_BLINK_PULSE_MS, true);
-        hrBlinkTimerRunning = true;
-    }
-}
-
-function hrShouldDrawValue(complicationType as Number, visible as Boolean, isSleeping as Boolean, displayTypes as Array<Number>) as Boolean {
-    if (!hrIsLiveHeartRateComplication(complicationType)) {
-        return true;
-    }
-    if (!hrShouldBlink(visible, isSleeping, displayTypes)) {
-        return true;
-    }
-
-    var blinkPhaseMs = System.getTimer() % HR_BLINK_CYCLE_MS;
-    if (blinkPhaseMs >= HR_BLINK_WINDOW_MS) {
-        return true;
-    }
-
-    return !(blinkPhaseMs < HR_BLINK_PULSE_MS
-        || (blinkPhaseMs >= HR_BLINK_PULSE_MS * 2 && blinkPhaseMs < HR_BLINK_PULSE_MS * 3));
-}
-
-function hrDrawNotificationValue(dc, x as Number, y as Number, value as String, suffix as String, fontSmallData, drawConfig as Array) as Void {
-    var valueColor = drawConfig[0];
-    var notifColor = drawConfig[1];
-    var justification = drawConfig[2];
-    var showValue = drawConfig[3];
+function hrDrawNotificationValue(dc, x as Number, y as Number, value as String, suffix as String, fontSmallData, valueColor as Graphics.ColorType, suffixColor as Graphics.ColorType, justification as Number) as Void {
     if (value.length() == 0 && suffix.length() == 0) {
         return;
     }
@@ -258,10 +170,10 @@ function hrDrawNotificationValue(dc, x as Number, y as Number, value as String, 
 
     if (justification == Graphics.TEXT_JUSTIFY_RIGHT) {
         if (suffix.length() > 0) {
-            dc.setColor(notifColor, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(suffixColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, y, fontSmallData, suffix, Graphics.TEXT_JUSTIFY_RIGHT);
         }
-        if (showValue && value.length() > 0) {
+        if (value.length() > 0) {
             dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x - suffixWidth, y, fontSmallData, value, Graphics.TEXT_JUSTIFY_RIGHT);
         }
@@ -271,23 +183,23 @@ function hrDrawNotificationValue(dc, x as Number, y as Number, value as String, 
     if (justification == Graphics.TEXT_JUSTIFY_CENTER) {
         var totalWidth = valueWidth + suffixWidth;
         var leftX = x - Math.round(totalWidth / 2.0);
-        if (showValue && value.length() > 0) {
+        if (value.length() > 0) {
             dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(leftX, y, fontSmallData, value, Graphics.TEXT_JUSTIFY_LEFT);
         }
         if (suffix.length() > 0) {
-            dc.setColor(notifColor, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(suffixColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(leftX + valueWidth, y, fontSmallData, suffix, Graphics.TEXT_JUSTIFY_LEFT);
         }
         return;
     }
 
-    if (showValue && value.length() > 0) {
+    if (value.length() > 0) {
         dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, fontSmallData, value, Graphics.TEXT_JUSTIFY_LEFT);
     }
     if (suffix.length() > 0) {
-        dc.setColor(notifColor, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(suffixColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x + valueWidth, y, fontSmallData, suffix, Graphics.TEXT_JUSTIFY_LEFT);
     }
 }
