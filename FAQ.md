@@ -18,15 +18,24 @@ For watches with an AMOLED screen you have two more fields shown in the Always O
 ## Dissapearing or hidden fields
 
 ### Why are seconds disappearing?
-If you have a watch with a Memory In Pixel (MIP) display, seconds can be displayed continuously. However, doing so uses a bit more battery so I have disabled it by default. If you want to always see seconds at the cost of slightly less battery life you can enable "Show Seconds in Inactive mode (MIP Screens only)" in settings.
+Seconds are shown while the watch face is active and stop updating when the watch face goes inactive or enters low-power mode.
 
-If you have a AMOLED screen you can enable the Always On Display to always see the hours and minutes, but updating the screen every second is not possible (this is a limitation from Garmins side, not with this watch face).
+If you have an AMOLED screen you can enable the Always On Display to always see the hours and minutes, but updating the screen every second is not possible (this is a limitation from Garmins side, not with this watch face).
 
 ### I added the value X, and it doesn't show up, why?
 If a specific value does not show up (you see an empty spot instead) it's most likely because your watch does not have that value available. As a watch face developer there is nothing I can do to make it available. 
 
 ### Why is weather (or sunset/sunrise) disappearing after a while? Why is the top part of the screen empty?
-The weather fields, including also sunset and sunrise, need weather data to be able to display something. This data comes from Garmins Weather API which in turn fetches the data over bluetooth from your phone running the Garmin Connect app. If the weather data doesn't show up, make sure your watch is connected to your phone via bluetooth. You can also try restarting the watch if you can't get it to work.
+The weather fields, including sunrise and sunset, need weather data to display anything.
+
+If you use `Garmin Weather`, the data comes from Garmin's Weather API through the Garmin Connect app on your phone. If it does not show up, make sure the watch is connected to the phone over Bluetooth and that Garmin Connect has location access.
+
+If you use `Open-Meteo France`, the watch face fetches weather in a Garmin background service. This mode is automatic-location only. It will try the device position first, then the last Garmin weather location, then the last successful Open-Meteo location. If none of those are available, the weather fields stay blank until a location becomes available again.
+
+Open-Meteo France is tuned for use in France and uses Open-Meteo's Météo-France-backed forecast endpoint.
+
+### How do I change the weather provider?
+Open the watch face settings in Garmin Connect IQ and look for `Weather provider`. `Garmin Weather` is the default. `Open-Meteo France` keeps the same layouts and weather fields, but switches the data source.
 
 ## Commonly requested features
 

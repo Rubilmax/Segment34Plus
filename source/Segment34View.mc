@@ -56,15 +56,14 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var bottomFiveY as Number = 0;
     (:Square) hidden var bottomFive1X as Number = 0;
     (:Square) hidden var bottomFive2X as Number = 0;
-    (:Square) hidden var dualBottomFieldActive as Boolean = false;
     (:Square) hidden var bottomFiveYOriginal as Number = 0;
 
     hidden var drawGradient as BitmapResource?;
     hidden var drawAODPattern as BitmapResource?;
     
     hidden var themeColors as Array<Graphics.ColorType> = [];
-    (:WeatherCache) hidden var weatherCondition as CurrentConditions or StoredWeather or Null;
-    (:NoWeatherCache) hidden var weatherCondition as CurrentConditions or Null;
+    (:WeatherCache) hidden var weatherCondition as CurrentConditions or ForecastWeather or StoredWeather or Null;
+    (:NoWeatherCache) hidden var weatherCondition as CurrentConditions or ForecastWeather or Null;
     hidden var lastUpdate as Number? = null;
     hidden var lastSlowUpdate as Number? = null;
     hidden var lastCurrentConditionsFetch as Number? = null;
@@ -77,27 +76,26 @@ class Segment34View extends WatchUi.WatchFace {
     (:WeatherCache) hidden var lastHfTime as Number? = null;
     (:WeatherCache) hidden var lastCcHash as Number? = null;
 
-    // CGM Connect Widget complication IDs
-    hidden var cgmComplicationId as Complications.Id? = null;
-    hidden var cgmAgeComplicationId as Complications.Id? = null;
+    // CGM Connect Widget complication IDs: reading, age
+    hidden var cgmComplicationIds as Array = [null, null];
 
     // runtimeBitmap: visible[0], cachedStressDataValid[1], cachedBBDataValid[2], canBurnIn[3],
-    // isSleeping[4], isWeatherRequired[5], isLowMem[6], doesPartialUpdate[7],
+    // isSleeping[4], isWeatherRequired[5], isLowMem[6], reserved[7],
     // hasComplications[8], touchAlternativeActive[9], clockBgCompact[10],
     // lastWeatherPhasePlusOne[11:30]
     hidden var runtimeBitmap as Number = 1;
     // layoutBitmap: fieldSpaceingAdj[0:4], barBottomAdj[5:9], bottomFiveAdj[10:14],
-    // textSideAdj[15:19], iconYAdjPlus16[20:24], patternRows[25:29]
+    // textSideAdj[15:19], iconYAdjPlus16[20:24], patternRows[25:29], dualBottomFields[30]
     hidden var layoutBitmap as Number = 0;
     
     // Packed settings to keep the watch face under the class member limit on MIP devices.
-    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], reserved[9:10], showSeconds[11],
-    // alwaysShowSeconds[12], clockBg[13], dataBg[14], aodStyle[15:16], aodAlign[17],
+    // propBitmapA: theme[0:4], outline[5:7], clockFont[8], reserved[9:12], clockBg[13],
+    // dataBg[14], aodStyle[15:16], aodAlign[17],
     // dateAlign[18], bottomAlign[19:20], bottomLabelAlign[21:22], hemisphere[23],
-    // hourFormat[24:25], zeropadHour[26], timeSeparator[27:28], tempUnit[29:30]
+    // hourFormat[24:25], reserved[26:28], tempUnit[29:30]
     // propBitmapB: showTempUnit[0], windUnit[1:3], pressureUnit[4:5], topPartShows[6],
-    // dateFormat[7:10], labelVisibility[11:12], smallFontVariant[13:14],
-    // stressDynamicColor[15], is24H[16], reserved[17:22], fieldLayout[23:26]
+    // dateFormat[7:10], reserved[11:12], smallFontVariant[13:14],
+    // stressDynamicColor[15], is24H[16], weatherProvider[17], reserved[18:22], fieldLayout[23:26]
     hidden var propBitmapA as Number = 0;
     hidden var propBitmapB as Number = 0;
     hidden var propLeftValueShows as Number = 6;
@@ -131,23 +129,12 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var propWeekOffset as Number = 0;
     hidden var touchAlternativeBottomRow as Array<Number> = [4, 12, 2, 32, -2];
 
-    // Cached Labels
-    hidden var strLabelTopLeft as String = "";
-    hidden var strLabelTopRight as String = "";
-    hidden var strLabelBottomLeft as String = "";
-    hidden var strLabelBottomMiddle as String = "";
-    hidden var strLabelBottomRight as String = "";
-    hidden var strLabelBottomFourth as String = "";
+    // Cached labels: topLeft, topRight, bottomLeft, bottomMiddle, bottomRight, bottomFourth
+    hidden var cachedLabels as Array<String> = ["", "", "", "", "", ""];
 
-    // Cached unit strings (loaded once from resources)
-    hidden var cachedUnitKcal as String = "";
-    hidden var cachedUnitM as String = "";
-    hidden var cachedUnitFt as String = "";
-    hidden var cachedUnitSteps as String = "";
-    hidden var cachedUnitPushes as String = "";
-    hidden var cachedLabelNa as String = "";
-    hidden var cachedLabelPosNa as String = "";
-    hidden var cachedLabelFl as String = "";
+    // Cached strings: UNIT_KCAL, UNIT_M, UNIT_FT, UNIT_STEPS, UNIT_PUSHES, LABEL_NA,
+    // LABEL_POS_NA, LABEL_FL
+    hidden var cachedTextResources as Array<String> = ["", "", "", "", "", "", "", ""];
 
     const battFull = "|||||||||||||||||||||||||||||||||||";
     const battEmpty = "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{";
@@ -256,14 +243,16 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Cache string resources (loadResource reads from flash each call)
-        cachedUnitKcal = Application.loadResource(Rez.Strings.UNIT_KCAL);
-        cachedUnitM = Application.loadResource(Rez.Strings.UNIT_M);
-        cachedUnitFt = Application.loadResource(Rez.Strings.UNIT_FT);
-        cachedUnitSteps = Application.loadResource(Rez.Strings.UNIT_STEPS);
-        cachedUnitPushes = Application.loadResource(Rez.Strings.UNIT_PUSHES);
-        cachedLabelNa = Application.loadResource(Rez.Strings.LABEL_NA);
-        cachedLabelPosNa = Application.loadResource(Rez.Strings.LABEL_POS_NA);
-        cachedLabelFl = Application.loadResource(Rez.Strings.LABEL_FL);
+        cachedTextResources = [
+            Application.loadResource(Rez.Strings.UNIT_KCAL),
+            Application.loadResource(Rez.Strings.UNIT_M),
+            Application.loadResource(Rez.Strings.UNIT_FT),
+            Application.loadResource(Rez.Strings.UNIT_STEPS),
+            Application.loadResource(Rez.Strings.UNIT_PUSHES),
+            Application.loadResource(Rez.Strings.LABEL_NA),
+            Application.loadResource(Rez.Strings.LABEL_POS_NA),
+            Application.loadResource(Rez.Strings.LABEL_FL)
+        ];
 
         calculateLayout();
 
@@ -273,12 +262,14 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function updateActiveLabels() as Void {
         var activeSlots = getActiveBottomRowSlots();
         cachedFieldWidths = getFieldWidths();
-        strLabelTopLeft = getLabelByType(propSunriseFieldShows, 1);
-        strLabelTopRight = getLabelByType(propSunsetFieldShows, 1);
-        strLabelBottomLeft = getLabelByType(activeSlots[0], cachedFieldWidths[0] - 1);
-        strLabelBottomMiddle = getLabelByType(activeSlots[1], cachedFieldWidths[1] - 1);
-        strLabelBottomRight = getLabelByType(activeSlots[2], cachedFieldWidths[2] - 1);
-        strLabelBottomFourth = getLabelByType(activeSlots[3], cachedFieldWidths[3] - 1);
+        cachedLabels = [
+            getLabelByType(propSunriseFieldShows, 1),
+            getLabelByType(propSunsetFieldShows, 1),
+            getLabelByType(activeSlots[0], cachedFieldWidths[0] - 1),
+            getLabelByType(activeSlots[1], cachedFieldWidths[1] - 1),
+            getLabelByType(activeSlots[2], cachedFieldWidths[2] - 1),
+            getLabelByType(activeSlots[3], cachedFieldWidths[3] - 1)
+        ];
     }
 
     hidden function getPrimaryBottomRowSlots() as Array<Number> {
@@ -678,7 +669,6 @@ class Segment34View extends WatchUi.WatchFace {
         var sysStats = System.getSystemStats();
         var activeSlots = getActiveBottomRowSlots();
         var isSleeping = ((runtimeBitmap >> 4) & 0x1) == 1;
-        var canBurnIn = ((runtimeBitmap >> 3) & 0x1) == 1;
         var displayTypes = [
             propSunriseFieldShows, propSunsetFieldShows,
             propWeatherLine1Shows, propWeatherLine2Shows,
@@ -694,7 +684,6 @@ class Segment34View extends WatchUi.WatchFace {
             || barNeedsActivityInfo(propLeftBarShows)
             || barNeedsActivityInfo(propRightBarShows);
         var actInfo = needsActivityInfo ? ActivityMonitor.getInfo() : null;
-        var propAlwaysShowSeconds = ((propBitmapA >> 12) & 0x1) == 1;
         cachedSysStats = sysStats;
         refreshCache = {};
         runtimeBitmap &= ~0x6;
@@ -702,12 +691,12 @@ class Segment34View extends WatchUi.WatchFace {
         // From updateSlowData logic
         values[:dataClock] = getClockData(now);
         values[:dataMoon] = moonPhase(now);
-        values[:dataLabelTopLeft] = strLabelTopLeft;
-        values[:dataLabelTopRight] = strLabelTopRight;
-        values[:dataLabelBottomLeft] = strLabelBottomLeft;
-        values[:dataLabelBottomMiddle] = strLabelBottomMiddle;
-        values[:dataLabelBottomRight] = strLabelBottomRight;
-        values[:dataLabelBottomFourth] = strLabelBottomFourth;
+        values[:dataLabelTopLeft] = cachedLabels[0];
+        values[:dataLabelTopRight] = cachedLabels[1];
+        values[:dataLabelBottomLeft] = cachedLabels[2];
+        values[:dataLabelBottomMiddle] = cachedLabels[3];
+        values[:dataLabelBottomRight] = cachedLabels[4];
+        values[:dataLabelBottomFourth] = cachedLabels[5];
 
         // From updateData logic
         var fieldWidths = cachedFieldWidths;
@@ -742,8 +731,8 @@ class Segment34View extends WatchUi.WatchFace {
         values[:dataLeftBar] = getBarData(propLeftBarShows, actInfo);
         values[:dataRightBar] = getBarData(propRightBarShows, actInfo);
 
-        // updateSeconds logic
-        if(isSleeping and (!propAlwaysShowSeconds or canBurnIn)) {
+        // Seconds are intentionally shown only while the watch face is active.
+        if(isSleeping) {
             values[:dataSeconds] = "";
         } else {
             values[:dataSeconds] = now.sec.format("%02d");
@@ -774,15 +763,9 @@ class Segment34View extends WatchUi.WatchFace {
 
         var now = Time.Gregorian.info(Time.now(), Time.FORMAT_SHORT);
         var unix_timestamp = Time.now().value();
-        var propAlwaysShowSeconds = ((propBitmapA >> 12) & 0x1) == 1;
         var isSleeping = ((runtimeBitmap >> 4) & 0x1) == 1;
         var canBurnIn = ((runtimeBitmap >> 3) & 0x1) == 1;
         var lastWeatherPhase = ((runtimeBitmap >> 11) & 0xFFFFF) - 1;
-
-        if(((runtimeBitmap >> 7) & 0x1) == 1) {
-            dc.clearClip();
-            runtimeBitmap &= ~0x80;
-        }
 
         if(now.sec % 60 == 0 or lastSlowUpdate == null or unix_timestamp - lastSlowUpdate >= 60) {
             lastSlowUpdate = unix_timestamp;
@@ -799,7 +782,7 @@ class Segment34View extends WatchUi.WatchFace {
             // Between full refreshes, only repaint time-driven data and phased weather text.
             // The rest of the complications are allowed to stay cached until the next minute tick.
             cachedValues[:dataClock] = getClockData(now);
-            if(isSleeping and (!propAlwaysShowSeconds or canBurnIn)) {
+            if(isSleeping) {
                 cachedValues[:dataSeconds] = "";
             } else {
                 cachedValues[:dataSeconds] = now.sec.format("%02d");
@@ -869,34 +852,17 @@ class Segment34View extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
-    function onPartialUpdate(dc) {
-        var canBurnIn = ((runtimeBitmap >> 3) & 0x1) == 1;
-        var textSideAdj = (layoutBitmap >> 15) & 0x1F;
-        if(canBurnIn) { return; }
-        var propShowSeconds = ((propBitmapA >> 11) & 0x1) == 1;
-        var propAlwaysShowSeconds = ((propBitmapA >> 12) & 0x1) == 1;
-        if(!propShowSeconds) { return; }
-        if(!propAlwaysShowSeconds) { return; }
-        runtimeBitmap |= 0x80;
+    public function onWeatherDataChanged() as Void {
+        if (!useOpenMeteoProvider()) { return; }
+        if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
 
-        var clip_width = 24;
-        var clip_height = 20;
-        var now = Time.Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var y1 = baseY + halfClockHeight + marginY;
-
-        var seconds = now.sec.format("%02d");
-        
-        dc.setClip(baseX + halfClockWidth - textSideAdj - clip_width, y1, clip_width, clip_height);
-        dc.setColor(themeColors[bg], themeColors[bg]);
-        dc.clear();
-
-        dc.setColor(themeColors[date], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(baseX + halfClockWidth - textSideAdj, y1, fontSmallData, seconds, Graphics.TEXT_JUSTIFY_RIGHT);
+        applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+        cachedTempUnit = getTempUnit();
+        updateForecastChanges();
     }
 
     (:DefaultLayout)
     hidden function calculateLayout() as Void {
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var fieldSpaceingAdj = layoutBitmap & 0x1F;
         var bottomFiveAdj = (layoutBitmap >> 10) & 0x1F;
         var y1 = baseY + halfClockHeight + marginY;
@@ -911,13 +877,11 @@ class Segment34View extends WatchUi.WatchFace {
         calculateFieldXCoords(data_width, left_edge);
 
         bottomFiveY = y3 + halfMarginY + bottomFiveAdj - 2;
-        if((propLabelVisibility == 1 or propLabelVisibility == 3)) { bottomFiveY = bottomFiveY - labelHeight; }
         calculateSquareLayout();
     }
 
     (:InstinctCrossover)
     hidden function calculateLayout() as Void {
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var fieldSpaceingAdj = layoutBitmap & 0x1F;
         var bottomFiveAdj = (layoutBitmap >> 10) & 0x1F;
         var y1 = baseY + halfClockHeight + marginY;
@@ -931,7 +895,6 @@ class Segment34View extends WatchUi.WatchFace {
         calculateFieldXCoords(data_width, left_edge);
 
         bottomFiveY = y2 + halfMarginY + bottomFiveAdj - 2;
-        if((propLabelVisibility == 1 or propLabelVisibility == 3)) { bottomFiveY = bottomFiveY - labelHeight; }
     }
     
     hidden function calculateFieldXCoords(data_width as Float, left_edge as Number) as Void {
@@ -952,11 +915,10 @@ class Segment34View extends WatchUi.WatchFace {
     (:DefaultLayout)
     hidden function drawWatchface(dc as Dc, now as Gregorian.Info, aod as Boolean, values as Dictionary) as Void {
         var propTopPartShows = (propBitmapB >> 6) & 0x1;
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var propShowClockBg = ((propBitmapA >> 13) & 0x1) == 1;
         var propClockOutlineStyle = (propBitmapA >> 5) & 0x7;
         var propDateAlignment = (propBitmapA >> 18) & 0x1;
-        var propShowSeconds = ((propBitmapA >> 11) & 0x1) == 1;
+        var showSeconds = values[:dataSeconds].length() > 0;
         var textSideAdj = (layoutBitmap >> 15) & 0x1F;
         var clockBgText = (((runtimeBitmap >> 10) & 0x1) == 1) ? "####" : "#####";
 
@@ -967,17 +929,13 @@ class Segment34View extends WatchUi.WatchFace {
         var yn2 = yn1 - marginY - smallDataHeight;
 
         // Draw Top data fields
-        var top_data_height = halfMarginY;
+        var top_data_height = labelHeight + halfMarginY;
         var top_field_font = fontTinyData;
         var top_field_center_offset = 20;
         if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
-        if(propLabelVisibility == 0 or propLabelVisibility == 3) {
-            dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-            dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-            top_data_height = labelHeight + halfMarginY;
-        }
+        dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
+        dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+        dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
 
         dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         if(propTopPartShows == 0) {
@@ -1033,13 +991,13 @@ class Segment34View extends WatchUi.WatchFace {
         }
         
         // Draw seconds
-        if(propShowSeconds) {
+        if(showSeconds) {
             dc.drawText(baseX + halfClockWidth - textSideAdj, y1, fontSmallData, values[:dataSeconds], Graphics.TEXT_JUSTIFY_RIGHT);
         }
 
         // Draw Notification count
         if(propDateAlignment == 0) {
-            if(!propShowSeconds) { // No seconds, notification on right side
+            if(!showSeconds) { // No seconds, notification on right side
                 hrDrawNotificationValue(dc, baseX + halfClockWidth - textSideAdj, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_RIGHT);
             } else {
                 var date_width = dc.getTextWidthInPixels(values[:dataBelow], fontSmallData);
@@ -1078,11 +1036,10 @@ class Segment34View extends WatchUi.WatchFace {
     (:InstinctCrossover)
     hidden function drawWatchface(dc as Dc, now as Gregorian.Info, aod as Boolean, values as Dictionary) as Void {
         var propTopPartShows = (propBitmapB >> 6) & 0x1;
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var propShowClockBg = ((propBitmapA >> 13) & 0x1) == 1;
         var propClockOutlineStyle = (propBitmapA >> 5) & 0x7;
         var propDateAlignment = (propBitmapA >> 18) & 0x1;
-        var propShowSeconds = ((propBitmapA >> 11) & 0x1) == 1;
+        var showSeconds = values[:dataSeconds].length() > 0;
         var textSideAdj = (layoutBitmap >> 15) & 0x1F;
         var iconYAdj = ((layoutBitmap >> 20) & 0x1F) - 16;
         var clockBgText = (((runtimeBitmap >> 10) & 0x1) == 1) ? "####" : "#####";
@@ -1097,17 +1054,13 @@ class Segment34View extends WatchUi.WatchFace {
         var yn2 = yn1 - marginY - smallDataHeight;  // weather line 1
 
         // Draw Top data fields
-        var top_data_height = halfMarginY;
+        var top_data_height = labelHeight + halfMarginY + 2;
         var top_field_font = fontTinyData;
         var top_field_center_offset = 20;
         if(propTopPartShows == 1) { top_field_center_offset = labelHeight; }
-        if(propLabelVisibility == 0 or propLabelVisibility == 3) {
-            dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
-            dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
-            dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
-
-            top_data_height = labelHeight + halfMarginY + 2;
-        }
+        dc.setColor(themeColors[fieldLbl], Graphics.COLOR_TRANSPARENT);
+        dc.drawText(centerX - top_field_center_offset, marginY, fontLabel, values[:dataLabelTopLeft], Graphics.TEXT_JUSTIFY_RIGHT);
+        dc.drawText(centerX + top_field_center_offset, marginY, fontLabel, values[:dataLabelTopRight], Graphics.TEXT_JUSTIFY_LEFT);
 
         dc.setColor(themeColors[dataVal], Graphics.COLOR_TRANSPARENT);
         if(propTopPartShows == 0) {
@@ -1138,13 +1091,13 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Draw seconds (above clock)
-        if(propShowSeconds) {
+        if(showSeconds) {
             dc.drawText(baseX + halfClockWidth - textSideAdj, yn0, fontSmallData, values[:dataSeconds], Graphics.TEXT_JUSTIFY_RIGHT);
         }
 
         // Draw Notification count (above clock)
         if(propDateAlignment == 0) {
-            if(!propShowSeconds) {
+            if(!showSeconds) {
                 hrDrawNotificationValue(dc, baseX + halfClockWidth - textSideAdj, yn0, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_RIGHT);
             } else {
                 var date_width = dc.getTextWidthInPixels(values[:dataBelow], fontSmallData);
@@ -1388,7 +1341,6 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function drawDataField(dc as Dc, x as Number, y as Number, adjX as Number, label as String?, value as String, width as Number, font as FontResource, valueColor) as Number {
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
         var propShowDataBg = ((propBitmapA >> 14) & 0x1) == 1;
         var propBottomFieldAlignment = (propBitmapA >> 19) & 0x3;
         if(value.length() == 0 and (label == null or label.length() == 0)) { return 0; }
@@ -1405,7 +1357,7 @@ class Segment34View extends WatchUi.WatchFace {
         var half_bg_width = Math.round(value_bg_width / 2);
         var data_y = y;
 
-        if((propLabelVisibility == 0 or propLabelVisibility == 2) and !(label == null)) {
+        if(label != null && label.length() > 0) {
             drawFieldLabel(dc, x, y, adjX, label, value_bg_width);
             data_y += labelHeight + labelMargin;
         }
@@ -1669,7 +1621,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function cacheComplicationValue(complicationType as Number, width as Number, now as Gregorian.Info, value as String) as Void {
-        if (value.length() == 0 || value.equals(cachedLabelNa) || value.equals(cachedLabelPosNa)) {
+        if (value.length() == 0 || value.equals(cachedTextResources[5]) || value.equals(cachedTextResources[6])) {
             return;
         }
 
@@ -1698,9 +1650,7 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapA |= (getValueOrDefault("colorTheme", 0) as Number) & 0x1F;
         propBitmapA |= ((getValueOrDefault("clockOutlineStyle", 0) as Number) & 0x7) << 5;
         propBitmapA |= ((getValueOrDefault("clockFont", 0) as Number) & 0x1) << 8;
-        // Bits 9:10 are intentionally unused after removing the battery display setting.
-        propBitmapA |= (((getValueOrDefault("showSeconds", true) as Boolean) ? 1 : 0) << 11);
-        propBitmapA |= (((getValueOrDefault("alwaysShowSeconds", false) as Boolean) ? 1 : 0) << 12);
+        // Bits 9:12 are intentionally unused after removing display toggles.
         propBitmapA |= (((getValueOrDefault("showClockBg", true) as Boolean) ? 1 : 0) << 13);
         propBitmapA |= (((getValueOrDefault("showDataBg", true) as Boolean) ? 1 : 0) << 14);
         propBitmapA |= ((getValueOrDefault("aodStyle", 0) as Number) & 0x3) << 15;
@@ -1710,8 +1660,6 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapA |= ((getValueOrDefault("bottomFieldLabelAlignment", 0) as Number) & 0x3) << 21;
         propBitmapA |= ((getValueOrDefault("hemisphere", 0) as Number) & 0x1) << 23;
         propBitmapA |= ((getValueOrDefault("hourFormat", 0) as Number) & 0x3) << 24;
-        propBitmapA |= (((getValueOrDefault("zeropadHour", true) as Boolean) ? 1 : 0) << 26);
-        propBitmapA |= ((getValueOrDefault("timeSeparator", 0) as Number) & 0x3) << 27;
         propBitmapA |= ((getValueOrDefault("tempUnit", 0) as Number) & 0x3) << 29;
 
         propBitmapB = 0;
@@ -1720,10 +1668,10 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapB |= ((getValueOrDefault("pressureUnit", 0) as Number) & 0x3) << 4;
         propBitmapB |= ((getValueOrDefault("topPartShows", 0) as Number) & 0x1) << 6;
         propBitmapB |= ((getValueOrDefault("dateFormat", 0) as Number) & 0xF) << 7;
-        propBitmapB |= ((getValueOrDefault("labelVisibility", 0) as Number) & 0x3) << 11;
         propBitmapB |= ((getValueOrDefault("smallFontVariant", 2) as Number) & 0x3) << 13;
         propBitmapB |= (((getValueOrDefault("stressDynamicColor", true) as Boolean) ? 1 : 0) << 15);
         propBitmapB |= ((System.getDeviceSettings().is24Hour ? 1 : 0) << 16);
+        propBitmapB |= ((getValueOrDefault("weatherProvider", WEATHER_PROVIDER_GARMIN) as Number) & 0x1) << 17;
         propBitmapB |= ((getValueOrDefault("fieldLayout", 11) as Number) & 0xF) << 23;
 
         propSunriseFieldShows = getValueOrDefault("sunriseFieldShows", 39) as Number;
@@ -1763,12 +1711,6 @@ class Segment34View extends WatchUi.WatchFace {
         refreshBottomRowState();
         initializeWeatherData();
 
-        var propTimeSeparator = (propBitmapA >> 27) & 0x3;
-        if(propTimeSeparator == 2) {
-            runtimeBitmap |= 0x400;
-        } else {
-            runtimeBitmap &= ~0x400;
-        }
     }
 
     hidden function getAltitudeValue() as Float? {
@@ -1814,17 +1756,8 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getClockData(now as Gregorian.Info) as String {
-        var propTimeSeparator = (propBitmapA >> 27) & 0x3;
-        var propZeropadHour = ((propBitmapA >> 26) & 0x1) == 1;
-        var separator = ":";
-        if(propTimeSeparator == 1) { separator = " "; }
-        if(propTimeSeparator == 2) { separator = ""; }
-
-        if(propZeropadHour) {
-            return formatHour(now.hour).format("%02d") + separator + now.min.format("%02d");
-        } else {
-            return formatHour(now.hour).format("%2d") + separator + now.min.format("%02d");
-        }
+        // Clock formatting is fixed to zero-padded hours with a colon separator.
+        return formatHour(now.hour).format("%02d") + ":" + now.min.format("%02d");
     }
 
     hidden function getIconState(setting as Number, activityInfo) as String {
@@ -2094,6 +2027,39 @@ class Segment34View extends WatchUi.WatchFace {
         return value.toFloat();
     }
 
+    hidden function useOpenMeteoProvider() as Boolean {
+        return ((propBitmapB >> 17) & 0x1) == WEATHER_PROVIDER_OPEN_METEO_FR;
+    }
+
+    hidden function rememberGarminWeatherLocation(weather) as Void {
+        weatherProviderStoreGarminCachedLocationFromWeather(weather);
+    }
+
+    hidden function buildForecastWeatherFromSnapshotEntry(entry as Dictionary?, location as Position.Location or Null) as ForecastWeather {
+        var forecast = new ForecastWeather();
+        if (entry == null) { return forecast; }
+
+        forecast.observationLocationPosition = location;
+        forecast.forecastTime = toNumberOrNull(entry.get("forecastTime"));
+        forecast.forecastHour = toNumberOrNull(entry.get("forecastHour"));
+        forecast.condition = toNumberOrNull(entry.get("condition"));
+        forecast.temperature = toNumberOrNull(entry.get("temperature"));
+        forecast.windBearing = toNumberOrNull(entry.get("windBearing"));
+        forecast.windSpeed = toFloatOrNull(entry.get("windSpeed"));
+        forecast.precipitationChance = toNumberOrNull(entry.get("precipitationChance"));
+        forecast.highTemperature = toNumberOrNull(entry.get("highTemperature"));
+        forecast.lowTemperature = toNumberOrNull(entry.get("lowTemperature"));
+        forecast.feelsLikeTemperature = toFloatOrNull(entry.get("feelsLikeTemperature"));
+        forecast.relativeHumidity = toNumberOrNull(entry.get("relativeHumidity"));
+
+        var uv = toFloatOrNull(entry.get("uvIndex"));
+        if (uv != null && uv >= 0.0f) {
+            forecast.uvIndex = uv;
+        }
+
+        return forecast;
+    }
+
     hidden function copyWeatherToSnapshot(snapshot as ForecastWeather, weather) as Void {
         if (weather == null) { return; }
 
@@ -2152,6 +2118,41 @@ class Segment34View extends WatchUi.WatchFace {
         return forecast;
     }
 
+    hidden function clearCustomWeatherData() as Void {
+        weatherCondition = null;
+        cachedHourlyForecast = [];
+        cachedForecastChange = null;
+        cachedForecastWorse = null;
+        cachedLineForecastChange = null;
+        cachedLineForecastWorse = null;
+        lineWeatherCondition = null;
+        lineWeatherCondition3h = null;
+    }
+
+    hidden function loadCustomWeatherSnapshot() as Dictionary? {
+        return weatherProviderLoadSnapshot();
+    }
+
+    hidden function applyCustomWeatherSnapshot(snapshot as Dictionary?) as Void {
+        clearCustomWeatherData();
+        if (snapshot == null) { return; }
+
+        var location = weatherProviderBuildLocation(snapshot.get("location") as Array?);
+        weatherCondition = buildForecastWeatherFromSnapshotEntry(snapshot.get("current") as Dictionary?, location);
+
+        var hourly = snapshot.get("hourly") as Array?;
+        if (hourly == null) { return; }
+
+        for (var i = 0; i < hourly.size(); i++) {
+            cachedHourlyForecast.add(buildForecastWeatherFromSnapshotEntry(hourly[i] as Dictionary?, location));
+        }
+    }
+
+    public function scheduleImmediateCustomWeatherRefreshIfNeeded() as Void {
+        if (!useOpenMeteoProvider()) { return; }
+        weatherProviderScheduleImmediateRefreshIfNeeded();
+    }
+
     (:WeatherCache)
     hidden function buildForecastWeatherFromStored(entry) as ForecastWeather {
         var forecast = new ForecastWeather();
@@ -2180,33 +2181,54 @@ class Segment34View extends WatchUi.WatchFace {
     (:WeatherCache)
     hidden function initializeWeatherData() as Void {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
-            try { weatherCondition = readWeatherData(); } catch(e) {}
-            if (weatherCondition == null) {
-                if(Toybox has :Weather && Weather has :getCurrentConditions) {
-                    weatherCondition = Weather.getCurrentConditions();
+            if (useOpenMeteoProvider()) {
+                applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+                scheduleImmediateCustomWeatherRefreshIfNeeded();
+            } else {
+                try { weatherCondition = readWeatherData(); } catch(e) {}
+                if (weatherCondition == null) {
+                    if(Toybox has :Weather && Weather has :getCurrentConditions) {
+                        weatherCondition = Weather.getCurrentConditions();
+                        rememberGarminWeatherLocation(weatherCondition);
+                    }
                 }
             }
         }
         cachedTempUnit = getTempUnit();
-        updateHourlyForecastData(null);
+        if (!useOpenMeteoProvider()) {
+            updateHourlyForecastData(null);
+        }
         updateForecastChanges();
     }
 
     (:NoWeatherCache)
     hidden function initializeWeatherData() as Void {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
-            if(Toybox has :Weather && Weather has :getCurrentConditions) {
+            if (useOpenMeteoProvider()) {
+                applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+                scheduleImmediateCustomWeatherRefreshIfNeeded();
+            } else if(Toybox has :Weather && Weather has :getCurrentConditions) {
                 weatherCondition = Weather.getCurrentConditions();
+                rememberGarminWeatherLocation(weatherCondition);
             }
         }
         cachedTempUnit = getTempUnit();
-        updateHourlyForecastData(null);
+        if (!useOpenMeteoProvider()) {
+            updateHourlyForecastData(null);
+        }
         updateForecastChanges();
     }
 
     (:WeatherCache)
     hidden function updateWeather() as Void {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
+        if (useOpenMeteoProvider()) {
+            applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+            scheduleImmediateCustomWeatherRefreshIfNeeded();
+            cachedTempUnit = getTempUnit();
+            updateForecastChanges();
+            return;
+        }
         if(!(Toybox has :Weather) or !(Weather has :getCurrentConditions)) { return; }
 
         var now = Time.now().value();
@@ -2221,6 +2243,7 @@ class Segment34View extends WatchUi.WatchFace {
         var hf = null;
         if (shouldFetchCurrentConditions) {
             cc = Weather.getCurrentConditions();
+            rememberGarminWeatherLocation(cc);
             lastCurrentConditionsFetch = now;
         }
         if (shouldFetchHourlyForecast) {
@@ -2250,6 +2273,13 @@ class Segment34View extends WatchUi.WatchFace {
     (:NoWeatherCache)
     hidden function updateWeather() as Void {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
+        if (useOpenMeteoProvider()) {
+            applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+            scheduleImmediateCustomWeatherRefreshIfNeeded();
+            cachedTempUnit = getTempUnit();
+            updateForecastChanges();
+            return;
+        }
         if(!(Toybox has :Weather) or !(Weather has :getCurrentConditions)) { return; }
 
         var now = Time.now().value();
@@ -2264,6 +2294,7 @@ class Segment34View extends WatchUi.WatchFace {
         var hf = null;
         if (shouldFetchCurrentConditions) {
             cc = Weather.getCurrentConditions();
+            rememberGarminWeatherLocation(cc);
             lastCurrentConditionsFetch = now;
         }
         if (shouldFetchHourlyForecast) {
@@ -2366,6 +2397,7 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         if (cc != null) {
+            rememberGarminWeatherLocation(cc);
             var newCcHash = computeCcHash(cc);
 
             if (lastCcHash == null || lastCcHash != newCcHash) {
@@ -2545,15 +2577,15 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getUnitByType(complicationType) as String {
         if(complicationType == 11 or complicationType == 29 or complicationType == 58) { // Calories
-            return cachedUnitKcal;
+            return cachedTextResources[0];
         } else if(complicationType == 12) { // Altitude (m)
-            return cachedUnitM;
+            return cachedTextResources[1];
         } else if(complicationType == 15) { // Altitude (ft)
-            return cachedUnitFt;
+            return cachedTextResources[2];
         } else if(complicationType == 17) { // Steps / day
-            return cachedUnitSteps;
+            return cachedTextResources[3];
         } else if(complicationType == 19) { // Wheelchair pushes
-            return cachedUnitPushes;
+            return cachedTextResources[4];
         }
         return "";
     }
@@ -2818,7 +2850,7 @@ class Segment34View extends WatchUi.WatchFace {
                     val = sunriseHour.format("%02d") + ":" + sunrise.min.format("%02d");
                 }
             } else {
-                val = cachedLabelNa;
+                val = cachedTextResources[5];
             }
         } else if(complicationType == 40) { // Sunset
             var todaySunEvents = getCachedSunEvents(Time.now(), "today");
@@ -2831,7 +2863,7 @@ class Segment34View extends WatchUi.WatchFace {
                     val = sunsetHour.format("%02d") + ":" + sunset.min.format("%02d");
                 }
             } else {
-                val = cachedLabelNa;
+                val = cachedTextResources[5];
             }
         } else if(complicationType == 42) { // Alarms
             var deviceSettings = getCachedDeviceSettings();
@@ -2963,7 +2995,7 @@ class Segment34View extends WatchUi.WatchFace {
                 var degrees = pos.toDegrees() as Array;
                 val = degrees[0] + " " + degrees[1];
             } else {
-                val = cachedLabelPosNa;
+                val = cachedTextResources[6];
             }
             
         } else if(complicationType == 61) { // Location Millitary format
@@ -2972,7 +3004,7 @@ class Segment34View extends WatchUi.WatchFace {
             if(pos != null) {
                 val = pos.toGeoString(Position.GEO_MGRS);
             } else {
-                val = cachedLabelPosNa;
+                val = cachedTextResources[6];
             }
             
         } else if(complicationType == 62) { // Location Accuracy
@@ -3540,7 +3572,7 @@ class Segment34View extends WatchUi.WatchFace {
 
         var fltemp = convertTemperatureFloat(activeWeather.feelsLikeTemperature, cachedTempUnit);
         if(includeLabel) {
-            return cachedLabelFl + formatTemperature(fltemp);
+            return cachedTextResources[7] + formatTemperature(fltemp);
         }
         return formatTemperature(fltemp);
     }
@@ -3874,9 +3906,10 @@ class Segment34View extends WatchUi.WatchFace {
         var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
         if (!hasComplications) { return ""; }
         try {
-            if (cgmComplicationId == null) {
-                cgmComplicationId = getCgmComplicationByLabel("CGM");
+            if (cgmComplicationIds[0] == null) {
+                cgmComplicationIds[0] = getCgmComplicationByLabel("CGM");
             }
+            var cgmComplicationId = cgmComplicationIds[0] as Complications.Id?;
             if (cgmComplicationId == null) { return ""; }
 
             var comp = Complications.getComplication(cgmComplicationId);
@@ -3900,9 +3933,10 @@ class Segment34View extends WatchUi.WatchFace {
         var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
         if (!hasComplications) { return ""; }
         try {
-            if (cgmAgeComplicationId == null) {
-                cgmAgeComplicationId = getCgmComplicationByLabel("CGM Age");
+            if (cgmComplicationIds[1] == null) {
+                cgmComplicationIds[1] = getCgmComplicationByLabel("CGM Age");
             }
+            var cgmAgeComplicationId = cgmComplicationIds[1] as Complications.Id?;
             if (cgmAgeComplicationId == null) { return ""; }
             var comp = Complications.getComplication(cgmAgeComplicationId);
             if (comp == null || comp.value == null) { return ""; }
@@ -4005,11 +4039,11 @@ class Segment34View extends WatchUi.WatchFace {
 
     (:Square)
     hidden function calculateSquareLayout() as Void {
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
-        dualBottomFieldActive = (propBottomFieldShows != -2 and propBottomField2Shows != -2);
+        var dualBottomFieldActive = (propBottomFieldShows != -2 and propBottomField2Shows != -2);
         bottomFiveYOriginal = bottomFiveY;
 
         if (dualBottomFieldActive) {
+            layoutBitmap |= 0x40000000;
             // Position two 5-digit fields with 40px gap between them, centered
             var fieldWidth = bottomDataWidth * 5;
             var gap = 20;
@@ -4017,11 +4051,10 @@ class Segment34View extends WatchUi.WatchFace {
             bottomFive1X = centerX - (gap / 2) - (fieldWidth / 2);
             bottomFive2X = centerX + (gap / 2) + (fieldWidth / 2);
 
-            // Shift the entire row DOWN to make room for labels above (only if labels visible)
-            if (propLabelVisibility == 0 or propLabelVisibility == 2) {
-                bottomFiveY = bottomFiveY + labelHeight + labelMargin;
-            }
+            // Shift the entire row DOWN to make room for labels above.
+            bottomFiveY = bottomFiveY + labelHeight + labelMargin;
         } else {
+            layoutBitmap &= ~0x40000000;
             // Single field mode - center position
             bottomFive1X = centerX;
             bottomFive2X = centerX;
@@ -4030,7 +4063,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     (:Square)
     hidden function drawSquares(dc as Dc, values as Dictionary) as Void {
-        var propLabelVisibility = (propBitmapB >> 11) & 0x3;
+        var dualBottomFieldActive = (layoutBitmap & 0x40000000) != 0;
         var iconYAdj = ((layoutBitmap >> 20) & 0x1F) - 16;
         if (dualBottomFieldActive) {
             var field1Width = bottomDataWidth * 5;
@@ -4039,10 +4072,8 @@ class Segment34View extends WatchUi.WatchFace {
             var field2Left = bottomFive2X - (field2Width / 2);
 
             // Draw labels above fields using the same alignment rules as the standard fields.
-            if (propLabelVisibility == 0 or propLabelVisibility == 2) {
-                drawFieldLabel(dc, bottomFive1X, bottomFiveYOriginal, 0, values[:dataLabelBottom], field1Width);
-                drawFieldLabel(dc, bottomFive2X, bottomFiveYOriginal, 0, values[:dataLabelBottom2], field2Width);
-            }
+            drawFieldLabel(dc, bottomFive1X, bottomFiveYOriginal, 0, values[:dataLabelBottom], field1Width);
+            drawFieldLabel(dc, bottomFive2X, bottomFiveYOriginal, 0, values[:dataLabelBottom2], field2Width);
 
             // Draw both fields
             drawDataField(dc, bottomFive1X, bottomFiveY, 0,

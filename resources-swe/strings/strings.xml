@@ -331,6 +331,11 @@
     <string id="settings_current_location_lat_long" scope="settings">Nuvarande position (lat/long i decimalgrader)</string>
     <string id="settings_current_location_military" scope="settings">Nuvarande position (militärt rutnätssystem)</string>
     <string id="settings_current_location_accuracy" scope="settings">Nuvarande position noggrannhet</string>
+    <string id="settings_weather_provider" scope="settings">Väderleverantör</string>
+    <string id="settings_weather_provider_garmin" scope="settings">Garmin-väder</string>
+    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo Frankrike</string>
+    <string id="settings_weather_provider_location_auto" scope="settings">Plats: endast automatisk</string>
+    <string id="settings_weather_provider_location_unavailable" scope="settings">Plats ej tillgänglig</string>
     <string id="settings_line_2_above_clock" scope="settings">Rad 2 över klocka visar:</string>
     <string id="settings_weather_conditions_precipitation_chance" scope="settings">Väderförhållanden + nederbörd risk</string>
     <string id="settings_line_below_clock" scope="settings">Rad under klocka visar:</string>
@@ -405,19 +410,7 @@
     <string id="settings_show_clock_background" scope="settings">Visa klockbakgrund</string>
     <string id="settings_show_data_fields_background" scope="settings">Visa datafält bakgrund</string>
     <string id="settings_notification_field_shows" scope="settings">Nummer till vänster om sekunder visar</string>
-    <string id="settings_zeropad_hour_clock" scope="settings">Nollpadda timme på klocka</string>
-    <string id="settings_separator_hours_minutes" scope="settings">Separator mellan timmar och minuter</string>
-    <string id="settings_colon" scope="settings">:</string>
-    <string id="settings_blank_space" scope="settings">Tomt utrymme</string>
-    <string id="settings_no_separator" scope="settings">Ingen separator</string>
-    <string id="settings_show_seconds_active" scope="settings">Visa sekunder i aktivt läge</string>
-    <string id="settings_show_seconds_inactive" scope="settings">Visa sekunder i inaktivt läge (endast MIP-skärmar)</string>
     <string id="settings_show_stress_body_battery" scope="settings">Visa stress (orange) och kroppsbatteri (blå) staplar</string>
-    <string id="settings_show_hide_labels" scope="settings">Visa/dölj etiketter</string>
-    <string id="settings_show_all_labels" scope="settings">Visa alla etiketter</string>
-    <string id="settings_hide_all_labels" scope="settings">Dölj alla etiketter</string>
-    <string id="settings_hide_top_labels" scope="settings">Dölj övre etiketter</string>
-    <string id="settings_hide_bottom_labels" scope="settings">Dölj nedre etiketter</string>
     <string id="settings_left_bar_shows" scope="settings">Vänster stapel visar</string>
     <string id="settings_right_bar_shows" scope="settings">Höger stapel visar</string>
     <string id="settings_step_goal_progress" scope="settings">Stegmålsframsteg</string>

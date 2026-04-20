@@ -330,6 +330,11 @@
     <string id="settings_current_location_lat_long" scope="settings">Aktualna lokalizacja (szer. dł. w stopniach dziesiętnych)</string>
     <string id="settings_current_location_military" scope="settings">Aktualna lokalizacja (Wojskowy system odniesienia siatki)</string>
     <string id="settings_current_location_accuracy" scope="settings">Dokładność aktualnej lokalizacji</string>
+    <string id="settings_weather_provider" scope="settings">Dostawca pogody</string>
+    <string id="settings_weather_provider_garmin" scope="settings">Pogoda Garmin</string>
+    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo Francja</string>
+    <string id="settings_weather_provider_location_auto" scope="settings">Lokalizacja: tylko automatyczna</string>
+    <string id="settings_weather_provider_location_unavailable" scope="settings">Lokalizacja niedostępna</string>
     <string id="settings_line_2_above_clock" scope="settings">Linia 2 nad zegarem pokazuje:</string>
     <string id="settings_weather_conditions_precipitation_chance" scope="settings">Warunki pogodowe + Szansa opadów</string>
     <string id="settings_line_below_clock" scope="settings">Linia pod zegarem pokazuje:</string>
@@ -404,19 +409,7 @@
     <string id="settings_show_clock_background" scope="settings">Pokaż tło zegara</string>
     <string id="settings_show_data_fields_background" scope="settings">Pokaż tło pól danych</string>
     <string id="settings_notification_field_shows" scope="settings">Liczba po lewej od sekund pokazuje</string>
-    <string id="settings_zeropad_hour_clock" scope="settings">Dodaj zero do godziny na zegarze</string>
-    <string id="settings_separator_hours_minutes" scope="settings">Separator między godzinami a minutami</string>
-    <string id="settings_colon" scope="settings">:</string>
-    <string id="settings_blank_space" scope="settings">Pusta przestrzeń</string>
-    <string id="settings_no_separator" scope="settings">Brak separatora</string>
-    <string id="settings_show_seconds_active" scope="settings">Pokaż sekundy w trybie aktywnym</string>
-    <string id="settings_show_seconds_inactive" scope="settings">Pokaż sekundy w trybie nieaktywnym (tylko ekrany MIP)</string>
     <string id="settings_show_stress_body_battery" scope="settings">Pokaż paski stresu (pomarańczowy) i baterii ciała (niebieski)</string>
-    <string id="settings_show_hide_labels" scope="settings">Pokaż/Ukryj etykiety</string>
-    <string id="settings_show_all_labels" scope="settings">Pokaż wszystkie etykiety</string>
-    <string id="settings_hide_all_labels" scope="settings">Ukryj wszystkie etykiety</string>
-    <string id="settings_hide_top_labels" scope="settings">Ukryj górne etykiety</string>
-    <string id="settings_hide_bottom_labels" scope="settings">Ukryj dolne etykiety</string>
     <string id="settings_left_bar_shows" scope="settings">Lewy pasek pokazuje</string>
     <string id="settings_right_bar_shows" scope="settings">Prawy pasek pokazuje</string>
     <string id="settings_step_goal_progress" scope="settings">Postęp celu kroków</string>

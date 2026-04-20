@@ -29,6 +29,7 @@ Compared with `upstream/main` on 2026-03-18.
 ### Added in this fork
 
 - **More weather-focused line presets**: `Wind / Precipitation / UV`, `Wind / Precipitation / UV / Humidity`, and a cycling `Weather conditions / Feels Like / Until When` line
+- **France-tuned weather provider option**: keep Garmin Weather or switch to `Open-Meteo France`, fetched in a background service and normalized for the existing weather layouts
 - **Extra presentation options**: a `4, 4, 2, 3` bottom layout, right-aligned bottom labels, and a `°`-only temperature unit
 - **More uses for the notification slot**: it can show heart rate or resting heart rate
 - **Visual tweaks not in upstream**: a `Peachy Orange on turquoise` theme, LED-style icon redraws, a humidity icon, and `ALT (M)` / `ALT (FT)` labels
@@ -55,6 +56,16 @@ Compared with `upstream/main` on 2026-03-18.
 ## FAQ
 
 https://github.com/Rubilmax/Segment34Plus/blob/main/FAQ.md
+
+## Weather Providers
+
+`Garmin Weather` remains the default provider.
+
+`Open-Meteo France` uses Open-Meteo's `/v1/meteofrance` endpoint with Météo-France-backed forecast models. It is intended for users in France who want a more France-tuned forecast source while keeping the existing weather fields and forecast cycling.
+
+The Open-Meteo provider uses automatic location only. The watch face resolves the current position from the device when available, falls back to the last known Garmin weather location, and then to the last successful Open-Meteo fetch location.
+
+Attribution: weather data for the France-tuned provider is delivered by Open-Meteo using Météo-France forecast models.
 
 ## IQ Store Listing
 

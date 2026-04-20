@@ -327,6 +327,11 @@
     <string id="settings_current_location_lat_long" scope="settings">Aktuelle Position (Lat/Long Dezimal)</string>
     <string id="settings_current_location_military" scope="settings">Aktuelle Position (MGRS)</string>
     <string id="settings_current_location_accuracy" scope="settings">Positionsgenauigkeit</string>
+    <string id="settings_weather_provider" scope="settings">Wetteranbieter</string>
+    <string id="settings_weather_provider_garmin" scope="settings">Garmin-Wetter</string>
+    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo Frankreich</string>
+    <string id="settings_weather_provider_location_auto" scope="settings">Standort: nur automatisch</string>
+    <string id="settings_weather_provider_location_unavailable" scope="settings">Standort nicht verfügbar</string>
     <string id="settings_line_2_above_clock" scope="settings">Zeile 2 über der Uhr:</string>
     <string id="settings_weather_conditions_precipitation_chance" scope="settings">Wetterlage + Regenwahrsch.</string>
     <string id="settings_line_below_clock" scope="settings">Zeile unter der Uhr:</string>
@@ -400,19 +405,7 @@
     <string id="settings_show_clock_background" scope="settings">Zeige Uhr-Hintergrund</string>
     <string id="settings_show_data_fields_background" scope="settings">Zeige Datenfeld-Hintergrund</string>
     <string id="settings_show_notification_count" scope="settings">Zeige Benachrichtigungsanzahl</string>
-    <string id="settings_zeropad_hour_clock" scope="settings">Führende Null bei Stunden</string>
-    <string id="settings_separator_hours_minutes" scope="settings">Trennzeichen Stunden/Minuten</string>
-    <string id="settings_colon" scope="settings">:</string>
-    <string id="settings_blank_space" scope="settings">Leerzeichen</string>
-    <string id="settings_no_separator" scope="settings">Kein Trennzeichen</string>
-    <string id="settings_show_seconds_active" scope="settings">Zeige Sekunden im Aktiv-Modus</string>
-    <string id="settings_show_seconds_inactive" scope="settings">Zeige Sekunden im Inaktiv-Modus (nur MIP)</string>
     <string id="settings_show_stress_body_battery" scope="settings">Zeige Stress (orange) u. Body Batt. (blau) Balken</string>
-    <string id="settings_show_hide_labels" scope="settings">Zeige/Verberge Beschriftungen</string>
-    <string id="settings_show_all_labels" scope="settings">Zeige alle Beschriftungen</string>
-    <string id="settings_hide_all_labels" scope="settings">Verberge alle Beschriftungen</string>
-    <string id="settings_hide_top_labels" scope="settings">Verberge obere Beschriftungen</string>
-    <string id="settings_hide_bottom_labels" scope="settings">Verberge untere Beschriftungen</string>
     <string id="settings_left_bar_shows" scope="settings">Linker Balken zeigt</string>
     <string id="settings_right_bar_shows" scope="settings">Rechter Balken zeigt</string>
     <string id="settings_step_goal_progress" scope="settings">Schrittziel-Fortschritt</string>

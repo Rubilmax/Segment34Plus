@@ -54,6 +54,13 @@
             </settingConfig>
     </setting>
 
+    <setting propertyKey="@Properties.weatherProvider" title="@Strings.settings_weather_provider">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.settings_weather_provider_garmin</listEntry>
+            <listEntry value="1">@Strings.settings_weather_provider_open_meteo_fr</listEntry>
+        </settingConfig>
+    </setting>
+
     <setting propertyKey="@Properties.sunriseFieldShows" title="@Strings.settings_top_left_small">
         <settingConfig type="list">
             <listEntry value="-2">@Strings.settings_hidden</listEntry>
@@ -1114,32 +1121,4 @@
         <settingConfig type="boolean" />
     </setting>
 
-    <setting propertyKey="@Properties.zeropadHour" title="@Strings.settings_zeropad_hour_clock">
-        <settingConfig type="boolean" />
-    </setting>
-
-    <setting propertyKey="@Properties.timeSeparator" title="@Strings.settings_separator_hours_minutes">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.settings_colon</listEntry>
-                <listEntry value="1">@Strings.settings_blank_space</listEntry>
-                <listEntry value="2">@Strings.settings_no_separator</listEntry>
-            </settingConfig>
-    </setting>
-
-    <setting propertyKey="@Properties.showSeconds" title="@Strings.settings_show_seconds_active">
-        <settingConfig type="boolean" />
-    </setting>
-
-    <setting propertyKey="@Properties.alwaysShowSeconds" title="@Strings.settings_show_seconds_inactive">
-        <settingConfig type="boolean" />
-    </setting>
-
-    <setting propertyKey="@Properties.labelVisibility" title="@Strings.settings_show_hide_labels">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.settings_show_all_labels</listEntry>
-                <listEntry value="1">@Strings.settings_hide_all_labels</listEntry>
-                <listEntry value="2">@Strings.settings_hide_top_labels</listEntry>
-                <listEntry value="3">@Strings.settings_hide_bottom_labels</listEntry>
-            </settingConfig>
-    </setting>
 </settings>

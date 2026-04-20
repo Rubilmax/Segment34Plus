@@ -325,6 +325,11 @@
     <string id="settings_weather_uv_index" scope="settings">Weather: UV index</string>
     <string id="settings_next_calendar_event" scope="settings">Next calendar event time</string>
     <string id="settings_next_calendar_event_time" scope="settings">Next calendar event time</string>
+    <string id="settings_weather_provider" scope="settings">Weather provider</string>
+    <string id="settings_weather_provider_garmin" scope="settings">Garmin Weather</string>
+    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo France</string>
+    <string id="settings_weather_provider_location_auto" scope="settings">Location: automatic only</string>
+    <string id="settings_weather_provider_location_unavailable" scope="settings">Location unavailable</string>
     <string id="settings_top_right_small" scope="settings">Top right small data field:</string>
     <string id="settings_small_font_variant" scope="settings">Small dot matrix font variant:</string>
     <string id="settings_dots" scope="settings">Dots</string>
@@ -437,19 +442,7 @@
     <string id="settings_show_clock_background" scope="settings">Show clock background</string>
     <string id="settings_show_data_fields_background" scope="settings">Show data fields background</string>
     <string id="settings_notification_field_shows" scope="settings">Number left of seconds shows</string>
-    <string id="settings_zeropad_hour_clock" scope="settings">Zeropad hour on clock</string>
-    <string id="settings_separator_hours_minutes" scope="settings">Separator between Hours and Minutes</string>
-    <string id="settings_colon" scope="settings">:</string>
-    <string id="settings_blank_space" scope="settings">Blank space</string>
-    <string id="settings_no_separator" scope="settings">No separator</string>
-    <string id="settings_show_seconds_active" scope="settings">Show Seconds in Active mode</string>
-    <string id="settings_show_seconds_inactive" scope="settings">Show seconds in Inactive mode (MIP screens only)</string>
     <string id="settings_show_stress_body_battery" scope="settings">Show Stress (orange) and Body Battery (blue) bars</string>
-    <string id="settings_show_hide_labels" scope="settings">Show/Hide Labels</string>
-    <string id="settings_show_all_labels" scope="settings">Show All Labels</string>
-    <string id="settings_hide_all_labels" scope="settings">Hide All Labels</string>
-    <string id="settings_hide_top_labels" scope="settings">Hide Top Labels</string>
-    <string id="settings_hide_bottom_labels" scope="settings">Hide Bottom Labels</string>
     <string id="settings_left_bar_shows" scope="settings">Left Bar Shows</string>
     <string id="settings_right_bar_shows" scope="settings">Right Bar Shows</string>
     <string id="settings_step_goal_progress" scope="settings">Step Goal Progress</string>
