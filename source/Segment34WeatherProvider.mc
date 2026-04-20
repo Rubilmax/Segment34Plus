@@ -3,6 +3,7 @@ import Toybox.Background;
 import Toybox.Lang;
 import Toybox.Position;
 import Toybox.Time;
+import Toybox.Weather;
 using Toybox.Position;
 
 const WEATHER_PROVIDER_GARMIN = 0;
@@ -57,7 +58,8 @@ function weatherProviderIsWeatherRequired() as Boolean {
         weatherProviderGetPropertyOrDefault("bottomFieldShows", 17) as Number,
         weatherProviderGetPropertyOrDefault("aodFieldShows", -1) as Number,
         weatherProviderGetPropertyOrDefault("aodRightFieldShows", -2) as Number,
-        weatherProviderGetPropertyOrDefault("bottomField2Shows", -2) as Number
+        weatherProviderGetPropertyOrDefault("bottomField2Shows", -2) as Number,
+        weatherProviderGetPropertyOrDefault("notificationCountShows", 14) as Number
     ];
 
     var touchAlternativeActive = weatherProviderGetPropertyOrDefault("touchAlternativeActive", false) as Boolean;
@@ -117,6 +119,17 @@ function weatherProviderStoreGarminCachedLocationFromWeather(weather) as Void {
 
     try {
         weatherProviderStoreGarminCachedLocation(weather.observationLocationPosition.toDegrees() as Array?);
+    } catch(e) {}
+}
+
+function weatherProviderPrimeGarminLocationCache() as Void {
+    if (weatherProviderLoadGarminCachedLocation() != null) { return; }
+    if (!(Toybox has :Weather) || !(Weather has :getCurrentConditions)) { return; }
+
+    // Keep Open-Meteo provider-pure for displayed data; only seed Garmin's cached
+    // observation location so the first Open-Meteo fetch has coordinates to use.
+    try {
+        weatherProviderStoreGarminCachedLocationFromWeather(Weather.getCurrentConditions());
     } catch(e) {}
 }
 

@@ -63,6 +63,8 @@ class Segment34App extends Application.AppBase {
             return;
         }
 
+        weatherProviderPrimeGarminLocationCache();
+
         if (mView != null) {
             mView.scheduleImmediateCustomWeatherRefreshIfNeeded();
         } else {

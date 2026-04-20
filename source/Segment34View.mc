@@ -304,7 +304,8 @@ class Segment34View extends WatchUi.WatchFace {
             activeSlots[0], activeSlots[1], activeSlots[2], activeSlots[3],
             propBottomFieldShows,
             propAodFieldShows, propAodRightFieldShows,
-            getBottomField2Shows()
+            getBottomField2Shows(),
+            propNotificationCountShows
         ];
 
         runtimeBitmap &= ~0x20;
@@ -2183,6 +2184,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
             if (useOpenMeteoProvider()) {
                 applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+                weatherProviderPrimeGarminLocationCache();
                 scheduleImmediateCustomWeatherRefreshIfNeeded();
             } else {
                 try { weatherCondition = readWeatherData(); } catch(e) {}
@@ -2206,6 +2208,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
             if (useOpenMeteoProvider()) {
                 applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+                weatherProviderPrimeGarminLocationCache();
                 scheduleImmediateCustomWeatherRefreshIfNeeded();
             } else if(Toybox has :Weather && Weather has :getCurrentConditions) {
                 weatherCondition = Weather.getCurrentConditions();
@@ -2224,6 +2227,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
         if (useOpenMeteoProvider()) {
             applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+            weatherProviderPrimeGarminLocationCache();
             scheduleImmediateCustomWeatherRefreshIfNeeded();
             cachedTempUnit = getTempUnit();
             updateForecastChanges();
@@ -2275,6 +2279,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
         if (useOpenMeteoProvider()) {
             applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
+            weatherProviderPrimeGarminLocationCache();
             scheduleImmediateCustomWeatherRefreshIfNeeded();
             cachedTempUnit = getTempUnit();
             updateForecastChanges();
