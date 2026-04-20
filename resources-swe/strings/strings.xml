@@ -333,7 +333,7 @@
     <string id="settings_current_location_accuracy" scope="settings">Nuvarande position noggrannhet</string>
     <string id="settings_weather_provider" scope="settings">Väderleverantör</string>
     <string id="settings_weather_provider_garmin" scope="settings">Garmin-väder</string>
-    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo Frankrike</string>
+    <string id="settings_weather_provider_open_meteo" scope="settings">Open-Meteo</string>
     <string id="settings_weather_provider_location_auto" scope="settings">Plats: endast automatisk</string>
     <string id="settings_weather_provider_location_unavailable" scope="settings">Plats ej tillgänglig</string>
     <string id="settings_line_2_above_clock" scope="settings">Rad 2 över klocka visar:</string>

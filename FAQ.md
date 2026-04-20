@@ -30,12 +30,12 @@ The weather fields, including sunrise and sunset, need weather data to display a
 
 If you use `Garmin Weather`, the data comes from Garmin's Weather API through the Garmin Connect app on your phone. If it does not show up, make sure the watch is connected to the phone over Bluetooth and that Garmin Connect has location access.
 
-If you use `Open-Meteo France`, the watch face fetches weather in a Garmin background service. This mode is automatic-location only. It will try the device position first, then the last Garmin weather location, then the last successful Open-Meteo location. If none of those are available, the weather fields stay blank until a location becomes available again.
+If you use `Open-Meteo`, the watch face fetches weather in a Garmin background service. This mode is automatic-location only. It will try the device position first, then the last Garmin weather location, then the last successful Open-Meteo location. If none of those are available, the weather fields stay blank until a location becomes available again.
 
-Open-Meteo France is tuned for use in France and uses Open-Meteo's Météo-France-backed forecast endpoint.
+Open-Meteo uses Open-Meteo's generic forecast endpoint with automatic best-model selection for the current location.
 
 ### How do I change the weather provider?
-Open the watch face settings in Garmin Connect IQ and look for `Weather provider`. `Garmin Weather` is the default. `Open-Meteo France` keeps the same layouts and weather fields, but switches the data source.
+Open the watch face settings in Garmin Connect IQ and look for `Weather provider`. `Garmin Weather` is the default. `Open-Meteo` keeps the same layouts and weather fields, but switches the data source.
 
 ## Commonly requested features
 

@@ -57,7 +57,7 @@
     <setting propertyKey="@Properties.weatherProvider" title="@Strings.settings_weather_provider">
         <settingConfig type="list">
             <listEntry value="0">@Strings.settings_weather_provider_garmin</listEntry>
-            <listEntry value="1">@Strings.settings_weather_provider_open_meteo_fr</listEntry>
+            <listEntry value="1">@Strings.settings_weather_provider_open_meteo</listEntry>
         </settingConfig>
     </setting>
 

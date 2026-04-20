@@ -332,7 +332,7 @@
     <string id="settings_current_location_accuracy" scope="settings">Précision de localisation actuelle</string>
     <string id="settings_weather_provider" scope="settings">Source météo</string>
     <string id="settings_weather_provider_garmin" scope="settings">Météo Garmin</string>
-    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo France</string>
+    <string id="settings_weather_provider_open_meteo" scope="settings">Open-Meteo</string>
     <string id="settings_weather_provider_location_auto" scope="settings">Localisation : automatique uniquement</string>
     <string id="settings_weather_provider_location_unavailable" scope="settings">Localisation indisponible</string>
     <string id="settings_line_2_above_clock" scope="settings">Ligne 2 au-dessus de l'horloge affiche :</string>

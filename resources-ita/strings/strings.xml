@@ -333,7 +333,7 @@
     <string id="settings_current_location_accuracy" scope="settings">Precisione Posizione Attuale</string>
     <string id="settings_weather_provider" scope="settings">Fornitore meteo</string>
     <string id="settings_weather_provider_garmin" scope="settings">Meteo Garmin</string>
-    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo Francia</string>
+    <string id="settings_weather_provider_open_meteo" scope="settings">Open-Meteo</string>
     <string id="settings_weather_provider_location_auto" scope="settings">Posizione: solo automatica</string>
     <string id="settings_weather_provider_location_unavailable" scope="settings">Posizione non disponibile</string>
     <string id="settings_line_2_above_clock" scope="settings">Riga 2 sopra l'orologio mostra:</string>

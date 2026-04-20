@@ -6,14 +6,14 @@ import Toybox.Time;
 using Toybox.Position;
 
 const WEATHER_PROVIDER_GARMIN = 0;
-const WEATHER_PROVIDER_OPEN_METEO_FR = 1;
+const WEATHER_PROVIDER_OPEN_METEO = 1;
 const WEATHER_PROVIDER_STATE_KEY = "weather_provider_state_v1";
 const WEATHER_SNAPSHOT_KEY = "weather_snapshot_v2";
 const WEATHER_PROVIDER_GARMIN_LOCATION_KEY = "garmin_weather_location_v1";
-const WEATHER_PROVIDER_OPEN_METEO_NAME = "open_meteo_fr";
+const WEATHER_PROVIDER_OPEN_METEO_NAME = "open_meteo_best_match";
 const WEATHER_SNAPSHOT_VERSION = 2;
-const WEATHER_PROVIDER_FETCH_INTERVAL_S = 3600;
-const WEATHER_PROVIDER_STALE_AFTER_S = 21600;
+const WEATHER_PROVIDER_FETCH_INTERVAL_S = 1800;
+const WEATHER_PROVIDER_STALE_AFTER_S = 10800;
 const WEATHER_PROVIDER_IMMEDIATE_GUARD_S = 300;
 const WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE = "device";
 const WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE = "garmin_cache";
@@ -22,7 +22,7 @@ const WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE = "unavailable";
 const WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE = "Location unavailable";
 const WEATHER_PROVIDER_ERROR_INVALID_RESPONSE = "Invalid response";
 const WEATHER_PROVIDER_ERROR_REQUEST_FAILED = "Request failed";
-const WEATHER_PROVIDER_OPEN_METEO_URL = "https://api.open-meteo.com/v1/meteofrance";
+const WEATHER_PROVIDER_OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast";
 
 function weatherProviderGetSelection() as Number {
     var provider = Application.Properties.getValue("weatherProvider");
@@ -31,7 +31,7 @@ function weatherProviderGetSelection() as Number {
 }
 
 function weatherProviderUsesOpenMeteo() as Boolean {
-    return weatherProviderGetSelection() == WEATHER_PROVIDER_OPEN_METEO_FR;
+    return weatherProviderGetSelection() == WEATHER_PROVIDER_OPEN_METEO;
 }
 
 function weatherProviderGetPropertyOrDefault(key as String, defaultValue) {
@@ -134,6 +134,13 @@ function weatherProviderLoadState() as Dictionary? {
     return Application.Storage.getValue(WEATHER_PROVIDER_STATE_KEY) as Dictionary?;
 }
 
+function weatherProviderLoadOpenMeteoState() as Dictionary? {
+    var state = weatherProviderLoadState();
+    if (state == null) { return null; }
+    if ((state.get("provider") as String?) != WEATHER_PROVIDER_OPEN_METEO_NAME) { return null; }
+    return state;
+}
+
 function weatherProviderStoreState(state as Dictionary) as Void {
     Application.Storage.setValue(WEATHER_PROVIDER_STATE_KEY, state);
 }
@@ -191,12 +198,12 @@ function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
         return;
     }
 
-    var state = weatherProviderLoadState();
+    var state = weatherProviderLoadOpenMeteoState();
     var lastAttemptAt = (state != null) ? weatherProviderToNumber(state.get("lastAttemptAt")) : null;
     var now = Time.now().value();
 
     // Known limitation: a failed refresh still throttles immediate retries until the
-    // normal hourly schedule runs again, which can leave Open-Meteo blank after a
+    // normal scheduled refresh runs again, which can leave Open-Meteo blank after a
     // transient location or network failure.
     if (lastAttemptAt != null && now - (lastAttemptAt as Number) < WEATHER_PROVIDER_FETCH_INTERVAL_S) {
         return;

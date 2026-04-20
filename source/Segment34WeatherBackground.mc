@@ -24,7 +24,7 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
         weatherProviderScheduleNextRefresh();
 
         var now = Time.now().value();
-        var previousState = weatherProviderLoadState();
+        var previousState = weatherProviderLoadOpenMeteoState();
         var lastSuccessAt = (previousState != null) ? weatherProviderToNumber(previousState.get("lastSuccessAt")) : null;
         var resolvedLocation = resolveWeatherLocation();
         var location = resolvedLocation.get("location") as Array?;

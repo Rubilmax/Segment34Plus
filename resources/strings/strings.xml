@@ -327,7 +327,7 @@
     <string id="settings_next_calendar_event_time" scope="settings">Next calendar event time</string>
     <string id="settings_weather_provider" scope="settings">Weather provider</string>
     <string id="settings_weather_provider_garmin" scope="settings">Garmin Weather</string>
-    <string id="settings_weather_provider_open_meteo_fr" scope="settings">Open-Meteo France</string>
+    <string id="settings_weather_provider_open_meteo" scope="settings">Open-Meteo</string>
     <string id="settings_weather_provider_location_auto" scope="settings">Location: automatic only</string>
     <string id="settings_weather_provider_location_unavailable" scope="settings">Location unavailable</string>
     <string id="settings_top_right_small" scope="settings">Top right small data field:</string>

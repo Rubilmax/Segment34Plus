@@ -2028,7 +2028,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function useOpenMeteoProvider() as Boolean {
-        return ((propBitmapB >> 17) & 0x1) == WEATHER_PROVIDER_OPEN_METEO_FR;
+        return ((propBitmapB >> 17) & 0x1) == WEATHER_PROVIDER_OPEN_METEO;
     }
 
     hidden function rememberGarminWeatherLocation(weather) as Void {
