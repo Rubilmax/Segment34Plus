@@ -74,6 +74,11 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
                 method(:onWeatherResponse)
             );
         } catch(e) {
+            logOpenMeteoRequestFailure(
+                WEATHER_PROVIDER_ERROR_REQUEST_FAILED,
+                -1,
+                options.get(:context) as Dictionary
+            );
             persistFailureState(-1, WEATHER_PROVIDER_ERROR_REQUEST_FAILED, options.get(:context) as Dictionary);
             Background.exit({"weatherUpdated" => false});
         }
@@ -113,6 +118,7 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             errorMessage = WEATHER_PROVIDER_ERROR_REQUEST_FAILED + " (" + responseCode.format("%d") + ")";
         }
 
+        logOpenMeteoRequestFailure(errorMessage, responseCode, responseContext);
         weatherProviderStoreState(weatherProviderBuildState(
             WEATHER_PROVIDER_OPEN_METEO_NAME,
             lastAttemptAt,
@@ -172,5 +178,22 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             context.get("locationSource") as String?,
             context.get("location") as Array?
         ));
+    }
+
+    hidden function logOpenMeteoRequestFailure(message as String, responseCode as Number, context as Dictionary) as Void {
+        var locationSource = context.get("locationSource") as String?;
+        var location = weatherProviderNormalizeLocation(context.get("location") as Array?);
+        var locationText = "unknown";
+        if (location != null) {
+            locationText = (location[0] as Float).format("%.4f") + "," + (location[1] as Float).format("%.4f");
+        }
+
+        System.println(
+            "Open-Meteo request failure"
+            + ": code=" + responseCode.format("%d")
+            + ", message=" + message
+            + ", locationSource=" + ((locationSource == null) ? "unknown" : locationSource)
+            + ", location=" + locationText
+        );
     }
 }
