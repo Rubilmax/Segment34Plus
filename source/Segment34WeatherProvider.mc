@@ -11,6 +11,7 @@ const WEATHER_PROVIDER_OPEN_METEO = 1;
 const WEATHER_PROVIDER_STATE_KEY = "weather_provider_state_v1";
 const WEATHER_SNAPSHOT_KEY = "weather_snapshot_v2";
 const WEATHER_PROVIDER_GARMIN_LOCATION_KEY = "garmin_weather_location_v1";
+const WEATHER_PROVIDER_TEMPORAL_EVENT_PENDING_KEY = "weather_provider_temporal_event_pending_v1";
 const WEATHER_PROVIDER_OPEN_METEO_NAME = "open_meteo_best_match";
 const WEATHER_SNAPSHOT_VERSION = 2;
 const WEATHER_PROVIDER_FETCH_INTERVAL_S = 1800;
@@ -48,39 +49,35 @@ function weatherProviderIsWeatherSourceId(id as Number) as Boolean {
     return false;
 }
 
+function weatherProviderPropertyNeedsWeather(key as String, defaultValue as Number) as Boolean {
+    return weatherProviderIsWeatherSourceId(weatherProviderGetPropertyOrDefault(key, defaultValue) as Number);
+}
+
 function weatherProviderIsWeatherRequired() as Boolean {
-    var weatherFields = [
-        weatherProviderGetPropertyOrDefault("sunriseFieldShows", 39) as Number,
-        weatherProviderGetPropertyOrDefault("sunsetFieldShows", 40) as Number,
-        weatherProviderGetPropertyOrDefault("weatherLine1Shows", 78) as Number,
-        weatherProviderGetPropertyOrDefault("weatherLine2Shows", 79) as Number,
-        weatherProviderGetPropertyOrDefault("dateFieldShows", -1) as Number,
-        weatherProviderGetPropertyOrDefault("bottomFieldShows", 17) as Number,
-        weatherProviderGetPropertyOrDefault("aodFieldShows", -1) as Number,
-        weatherProviderGetPropertyOrDefault("aodRightFieldShows", -2) as Number,
-        weatherProviderGetPropertyOrDefault("bottomField2Shows", -2) as Number,
-        weatherProviderGetPropertyOrDefault("notificationCountShows", 14) as Number
-    ];
+    if (weatherProviderPropertyNeedsWeather("sunriseFieldShows", 39)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("sunsetFieldShows", 40)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("weatherLine1Shows", 78)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("weatherLine2Shows", 79)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("dateFieldShows", -1)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("bottomFieldShows", 17)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("aodFieldShows", -1)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("aodRightFieldShows", -2)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("bottomField2Shows", -2)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("notificationCountShows", 14)) { return true; }
 
     var touchAlternativeActive = weatherProviderGetPropertyOrDefault("touchAlternativeActive", false) as Boolean;
     if (touchAlternativeActive) {
-        weatherFields.add(weatherProviderGetPropertyOrDefault("touchAlternativeLeftValueShows", 12) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("touchAlternativeMiddleValueShows", 2) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("touchAlternativeRightValueShows", 32) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("touchAlternativeFourthValueShows", -2) as Number);
-    } else {
-        weatherFields.add(weatherProviderGetPropertyOrDefault("leftValueShows", 11) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("middleValueShows", 29) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("rightValueShows", 6) as Number);
-        weatherFields.add(weatherProviderGetPropertyOrDefault("fourthValueShows", 10) as Number);
+        if (weatherProviderPropertyNeedsWeather("touchAlternativeLeftValueShows", 12)) { return true; }
+        if (weatherProviderPropertyNeedsWeather("touchAlternativeMiddleValueShows", 2)) { return true; }
+        if (weatherProviderPropertyNeedsWeather("touchAlternativeRightValueShows", 32)) { return true; }
+        if (weatherProviderPropertyNeedsWeather("touchAlternativeFourthValueShows", -2)) { return true; }
+        return false;
     }
 
-    for (var i = 0; i < weatherFields.size(); i++) {
-        if (weatherProviderIsWeatherSourceId(weatherFields[i] as Number)) {
-            return true;
-        }
-    }
-    return false;
+    if (weatherProviderPropertyNeedsWeather("leftValueShows", 11)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("middleValueShows", 29)) { return true; }
+    if (weatherProviderPropertyNeedsWeather("rightValueShows", 6)) { return true; }
+    return weatherProviderPropertyNeedsWeather("fourthValueShows", 10);
 }
 
 function weatherProviderToNumber(value) as Number? {
@@ -193,15 +190,27 @@ function weatherProviderStoreSnapshot(snapshot as Dictionary) as Void {
     Application.Storage.setValue(WEATHER_SNAPSHOT_KEY, snapshot);
 }
 
+function weatherProviderHasScheduledRefresh() as Boolean {
+    return Application.Storage.getValue(WEATHER_PROVIDER_TEMPORAL_EVENT_PENDING_KEY) == true;
+}
+
+function weatherProviderSetScheduledRefreshPending(pending as Boolean) as Void {
+    Application.Storage.setValue(WEATHER_PROVIDER_TEMPORAL_EVENT_PENDING_KEY, pending);
+}
+
 function weatherProviderDeleteScheduledRefresh() as Void {
+    if (!weatherProviderHasScheduledRefresh()) { return; }
+
     try {
         Background.deleteTemporalEvent();
     } catch(e) {}
+    weatherProviderSetScheduledRefreshPending(false);
 }
 
 function weatherProviderScheduleNextRefresh() as Void {
     try {
         Background.registerForTemporalEvent(new Time.Duration(WEATHER_PROVIDER_FETCH_INTERVAL_S));
+        weatherProviderSetScheduledRefreshPending(true);
     } catch(e) {}
 }
 
@@ -228,9 +237,11 @@ function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
 
     try {
         Background.registerForTemporalEvent(Time.now());
+        weatherProviderSetScheduledRefreshPending(true);
     } catch(e) {
         try {
             Background.registerForTemporalEvent(new Time.Duration(WEATHER_PROVIDER_IMMEDIATE_GUARD_S));
+            weatherProviderSetScheduledRefreshPending(true);
         } catch(e2) {}
     }
 }

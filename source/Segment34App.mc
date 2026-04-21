@@ -56,10 +56,13 @@ class Segment34App extends Application.AppBase {
     }
 
     hidden function scheduleWeatherRefresh() as Void {
-        if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
-            try {
-                Background.deleteTemporalEvent();
-            } catch(e) {}
+        if (!weatherProviderUsesOpenMeteo()) {
+            weatherProviderDeleteScheduledRefresh();
+            return;
+        }
+
+        if (!weatherProviderIsWeatherRequired()) {
+            weatherProviderDeleteScheduledRefresh();
             return;
         }
 

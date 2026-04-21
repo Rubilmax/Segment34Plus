@@ -15,6 +15,8 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
     }
 
     function onTemporalEvent() as Void {
+        weatherProviderSetScheduledRefreshPending(false);
+
         if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
             weatherProviderDeleteScheduledRefresh();
             Background.exit(null);
