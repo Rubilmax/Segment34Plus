@@ -1,3 +1,4 @@
+import Toybox.Activity;
 import Toybox.Background;
 import Toybox.Communications;
 import Toybox.Lang;
@@ -5,6 +6,7 @@ import Toybox.PersistedContent;
 import Toybox.Position;
 import Toybox.System;
 import Toybox.Time;
+import Toybox.Weather;
 using Toybox.Position;
 
 (:background)
@@ -16,19 +18,10 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
 
     function onTemporalEvent() as Void {
         weatherProviderSetScheduledRefreshPending(false);
-
-        var settingsSnapshot = weatherProviderLoadSettingsSnapshot();
-        if (!weatherProviderUsesOpenMeteoSnapshot(settingsSnapshot) || !weatherProviderIsWeatherRequiredFromSnapshot(settingsSnapshot)) {
-            weatherProviderDeleteScheduledRefresh();
-            Background.exit(null);
-            return;
-        }
-
         weatherProviderScheduleNextRefresh();
 
         var now = Time.now().value();
-        var previousState = weatherProviderLoadOpenMeteoState();
-        var lastSuccessAt = (previousState != null) ? weatherProviderToNumber(previousState.get("lastSuccessAt")) : null;
+        var lastSuccessAt = null;
         var resolvedLocation = resolveWeatherLocation();
         var location = resolvedLocation.get("location") as Array?;
         var locationSource = resolvedLocation.get("source") as String?;
@@ -139,30 +132,43 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             var info = Position.getInfo();
             if (info != null && info has :position && info.position != null) {
                 var degrees = info.position.toDegrees() as Array?;
-                var normalized = weatherProviderNormalizeLocation(degrees);
-                if (normalized != null) {
+                if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
                     return {
-                        "location" => normalized,
+                        "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],
                         "source" => WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE
                     };
                 }
             }
         } catch(e) {}
 
-        var garminLocation = weatherProviderLoadGarminCachedLocation();
-        if (garminLocation != null) {
-            return {
-                "location" => garminLocation,
-                "source" => WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE
-            };
+        if (Activity has :getActivityInfo) {
+            try {
+                var activityInfo = Activity.getActivityInfo();
+                if (activityInfo != null && activityInfo.currentLocation != null) {
+                    var degrees = activityInfo.currentLocation.toDegrees() as Array?;
+                    if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
+                        return {
+                            "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],
+                            "source" => WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE
+                        };
+                    }
+                }
+            } catch(e) {}
         }
 
-        var stateLocation = weatherProviderLoadStateLocation();
-        if (stateLocation != null) {
-            return {
-                "location" => stateLocation,
-                "source" => WEATHER_PROVIDER_LOCATION_SOURCE_STATE
-            };
+        if (Weather has :getCurrentConditions) {
+            try {
+                var currentConditions = Weather.getCurrentConditions();
+                if (currentConditions != null && currentConditions.observationLocationPosition != null) {
+                    var degrees = currentConditions.observationLocationPosition.toDegrees() as Array?;
+                    if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
+                        return {
+                            "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],
+                            "source" => WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE
+                        };
+                    }
+                }
+            } catch(e) {}
         }
 
         return {

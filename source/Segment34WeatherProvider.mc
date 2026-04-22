@@ -9,7 +9,6 @@ using Toybox.Position;
 
 const WEATHER_PROVIDER_GARMIN = 0;
 const WEATHER_PROVIDER_OPEN_METEO = 1;
-const WEATHER_PROVIDER_SETTINGS_KEY = "weather_provider_settings_v1";
 const WEATHER_PROVIDER_STATE_KEY = "weather_provider_state_v1";
 const WEATHER_SNAPSHOT_KEY = "weather_snapshot_v2";
 const WEATHER_PROVIDER_GARMIN_LOCATION_KEY = "garmin_weather_location_v1";
@@ -21,7 +20,6 @@ const WEATHER_PROVIDER_STALE_AFTER_S = 28800;
 const WEATHER_PROVIDER_IMMEDIATE_GUARD_S = 300;
 const WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE = "device";
 const WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE = "garmin_cache";
-const WEATHER_PROVIDER_LOCATION_SOURCE_STATE = "provider_state";
 const WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE = "unavailable";
 const WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE = "Location unavailable";
 const WEATHER_PROVIDER_ERROR_INVALID_RESPONSE = "Invalid response";
@@ -36,30 +34,6 @@ function weatherProviderGetSelection() as Number {
 
 function weatherProviderUsesOpenMeteo() as Boolean {
     return weatherProviderGetSelection() == WEATHER_PROVIDER_OPEN_METEO;
-}
-
-function weatherProviderLoadSettingsSnapshot() as Dictionary? {
-    return Application.Storage.getValue(WEATHER_PROVIDER_SETTINGS_KEY) as Dictionary?;
-}
-
-function weatherProviderStoreSettingsSnapshot(snapshot as Dictionary) as Void {
-    Application.Storage.setValue(WEATHER_PROVIDER_SETTINGS_KEY, snapshot);
-}
-
-function weatherProviderGetSnapshotValue(snapshot as Dictionary?, key as String, defaultValue) {
-    if (snapshot == null) { return defaultValue; }
-
-    var value = snapshot.get(key);
-    if (value == null) { return defaultValue; }
-    return value;
-}
-
-function weatherProviderGetSelectionFromSnapshot(snapshot as Dictionary?) as Number {
-    return weatherProviderGetSnapshotValue(snapshot, "weatherProvider", WEATHER_PROVIDER_GARMIN) as Number;
-}
-
-function weatherProviderUsesOpenMeteoSnapshot(snapshot as Dictionary?) as Boolean {
-    return weatherProviderGetSelectionFromSnapshot(snapshot) == WEATHER_PROVIDER_OPEN_METEO;
 }
 
 function weatherProviderGetPropertyOrDefault(key as String, defaultValue) {
@@ -77,10 +51,6 @@ function weatherProviderIsWeatherSourceId(id as Number) as Boolean {
 
 function weatherProviderPropertyNeedsWeather(key as String, defaultValue as Number) as Boolean {
     return weatherProviderIsWeatherSourceId(weatherProviderGetPropertyOrDefault(key, defaultValue) as Number);
-}
-
-function weatherProviderSnapshotNeedsWeather(snapshot as Dictionary?, key as String, defaultValue as Number) as Boolean {
-    return weatherProviderIsWeatherSourceId(weatherProviderGetSnapshotValue(snapshot, key, defaultValue) as Number);
 }
 
 function weatherProviderIsWeatherRequired() as Boolean {
@@ -108,33 +78,6 @@ function weatherProviderIsWeatherRequired() as Boolean {
     if (weatherProviderPropertyNeedsWeather("middleValueShows", 29)) { return true; }
     if (weatherProviderPropertyNeedsWeather("rightValueShows", 6)) { return true; }
     return weatherProviderPropertyNeedsWeather("fourthValueShows", 10);
-}
-
-function weatherProviderIsWeatherRequiredFromSnapshot(snapshot as Dictionary?) as Boolean {
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "sunriseFieldShows", 39)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "sunsetFieldShows", 40)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "weatherLine1Shows", 78)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "weatherLine2Shows", 79)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "dateFieldShows", -1)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "bottomFieldShows", 17)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "aodFieldShows", -1)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "aodRightFieldShows", -2)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "bottomField2Shows", -2)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "notificationCountShows", 14)) { return true; }
-
-    var touchAlternativeActive = weatherProviderGetSnapshotValue(snapshot, "touchAlternativeActive", false) as Boolean;
-    if (touchAlternativeActive) {
-        if (weatherProviderSnapshotNeedsWeather(snapshot, "touchAlternativeLeftValueShows", 12)) { return true; }
-        if (weatherProviderSnapshotNeedsWeather(snapshot, "touchAlternativeMiddleValueShows", 2)) { return true; }
-        if (weatherProviderSnapshotNeedsWeather(snapshot, "touchAlternativeRightValueShows", 32)) { return true; }
-        if (weatherProviderSnapshotNeedsWeather(snapshot, "touchAlternativeFourthValueShows", -2)) { return true; }
-        return false;
-    }
-
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "leftValueShows", 11)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "middleValueShows", 29)) { return true; }
-    if (weatherProviderSnapshotNeedsWeather(snapshot, "rightValueShows", 6)) { return true; }
-    return weatherProviderSnapshotNeedsWeather(snapshot, "fourthValueShows", 10);
 }
 
 function weatherProviderToNumber(value) as Number? {
@@ -553,12 +496,6 @@ function weatherProviderLoadGarminCachedLocation() as Array<Float>? {
     var currentConditions = Application.Storage.getValue("current_conditions") as Dictionary?;
     if (currentConditions == null) { return null; }
     return weatherProviderNormalizeLocation(currentConditions.get("observationLocationPosition") as Array?);
-}
-
-function weatherProviderLoadStateLocation() as Array<Float>? {
-    var state = weatherProviderLoadState();
-    if (state == null) { return null; }
-    return weatherProviderNormalizeLocation(state.get("location") as Array?);
 }
 
 function weatherProviderTruncateString(value as String?, maxLength as Number) as String? {

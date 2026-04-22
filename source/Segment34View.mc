@@ -338,7 +338,7 @@ class Segment34View extends WatchUi.WatchFace {
             Application.Properties.setValue("touchAlternativeActive", true);
         }
         refreshBottomRowState();
-        persistWeatherProviderSettingsSnapshot();
+        weatherProviderScheduleImmediateRefreshIfNeeded();
         lastUpdate = null;
         WatchUi.requestUpdate();
     }
@@ -1707,38 +1707,12 @@ class Segment34View extends WatchUi.WatchFace {
         propAodRightFieldShows = getValueOrDefault("aodRightFieldShows", -2) as Number;
         propNotificationCountShows = getValueOrDefault("notificationCountShows", 14) as Number;
         propWeekOffset = getValueOrDefault("weekOffset", 0) as Number;
-        persistWeatherProviderSettingsSnapshot();
 
         var propTheme = propBitmapA & 0x1F;
         themeColors = setColorTheme(propTheme);
         refreshBottomRowState();
         initializeWeatherData();
 
-    }
-
-    hidden function persistWeatherProviderSettingsSnapshot() as Void {
-        weatherProviderStoreSettingsSnapshot({
-            "weatherProvider" => (propBitmapB >> 17) & 0x1,
-            "sunriseFieldShows" => propSunriseFieldShows,
-            "sunsetFieldShows" => propSunsetFieldShows,
-            "weatherLine1Shows" => propWeatherLine1Shows,
-            "weatherLine2Shows" => propWeatherLine2Shows,
-            "dateFieldShows" => propDateFieldShows,
-            "leftValueShows" => propLeftValueShows,
-            "middleValueShows" => propMiddleValueShows,
-            "rightValueShows" => propRightValueShows,
-            "fourthValueShows" => propFourthValueShows,
-            "touchAlternativeActive" => (((runtimeBitmap >> 9) & 0x1) == 1),
-            "touchAlternativeLeftValueShows" => touchAlternativeBottomRow[1],
-            "touchAlternativeMiddleValueShows" => touchAlternativeBottomRow[2],
-            "touchAlternativeRightValueShows" => touchAlternativeBottomRow[3],
-            "touchAlternativeFourthValueShows" => touchAlternativeBottomRow[4],
-            "bottomFieldShows" => propBottomFieldShows,
-            "bottomField2Shows" => getBottomField2Shows(),
-            "aodFieldShows" => propAodFieldShows,
-            "aodRightFieldShows" => propAodRightFieldShows,
-            "notificationCountShows" => propNotificationCountShows
-        });
     }
 
     hidden function getAltitudeValue() as Float? {
