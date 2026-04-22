@@ -2,6 +2,7 @@ import Toybox.Application;
 import Toybox.Background;
 import Toybox.Lang;
 import Toybox.Position;
+import Toybox.System;
 import Toybox.Time;
 import Toybox.Weather;
 using Toybox.Position;
@@ -15,7 +16,7 @@ const WEATHER_PROVIDER_TEMPORAL_EVENT_PENDING_KEY = "weather_provider_temporal_e
 const WEATHER_PROVIDER_OPEN_METEO_NAME = "open_meteo_best_match";
 const WEATHER_SNAPSHOT_VERSION = 2;
 const WEATHER_PROVIDER_FETCH_INTERVAL_S = 1800;
-const WEATHER_PROVIDER_STALE_AFTER_S = 10800;
+const WEATHER_PROVIDER_STALE_AFTER_S = 28800;
 const WEATHER_PROVIDER_IMMEDIATE_GUARD_S = 300;
 const WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE = "device";
 const WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE = "garmin_cache";
@@ -198,6 +199,32 @@ function weatherProviderSetScheduledRefreshPending(pending as Boolean) as Void {
     Application.Storage.setValue(WEATHER_PROVIDER_TEMPORAL_EVENT_PENDING_KEY, pending);
 }
 
+function weatherProviderHasImmediateRefreshScheduled() as Boolean {
+    var registered = Background.getTemporalEventRegisteredTime();
+    if (registered == null) { return false; }
+
+    if (registered instanceof Time.Moment) {
+        return true;
+    }
+
+    return (registered as Time.Duration).value() <= WEATHER_PROVIDER_IMMEDIATE_GUARD_S;
+}
+
+function weatherProviderLogSchedulingFailure(operation as String, error) as Void {
+    var errorText = "unknown";
+    if (error != null) {
+        if (error instanceof String) {
+            errorText = error as String;
+        } else {
+            try {
+                errorText = error.toString();
+            } catch(e) {}
+        }
+    }
+
+    System.println("Open-Meteo scheduling failure: operation=" + operation + ", error=" + errorText);
+}
+
 function weatherProviderDeleteScheduledRefresh() as Void {
     if (!weatherProviderHasScheduledRefresh()) { return; }
 
@@ -211,12 +238,18 @@ function weatherProviderScheduleNextRefresh() as Void {
     try {
         Background.registerForTemporalEvent(new Time.Duration(WEATHER_PROVIDER_FETCH_INTERVAL_S));
         weatherProviderSetScheduledRefreshPending(true);
-    } catch(e) {}
+    } catch(e) {
+        weatherProviderLogSchedulingFailure("next_refresh", e);
+    }
 }
 
 function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
     if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
         weatherProviderDeleteScheduledRefresh();
+        return;
+    }
+
+    if (weatherProviderHasImmediateRefreshScheduled()) {
         return;
     }
 
@@ -239,10 +272,13 @@ function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
         Background.registerForTemporalEvent(Time.now());
         weatherProviderSetScheduledRefreshPending(true);
     } catch(e) {
+        weatherProviderLogSchedulingFailure("immediate_refresh_now", e);
         try {
             Background.registerForTemporalEvent(new Time.Duration(WEATHER_PROVIDER_IMMEDIATE_GUARD_S));
             weatherProviderSetScheduledRefreshPending(true);
-        } catch(e2) {}
+        } catch(e2) {
+            weatherProviderLogSchedulingFailure("immediate_refresh_fallback", e2);
+        }
     }
 }
 

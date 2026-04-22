@@ -14,7 +14,10 @@ class Segment34App extends Application.AppBase {
 
     // onStart() is called on application start up
     function onStart(state as Dictionary?) as Void {
-        scheduleWeatherRefresh();
+        // Foreground startup continues through getInitialView() -> onSettingsChanged(),
+        // which schedules weather refresh after the view and properties are ready.
+        // Avoid doing that work here; on fenix847mm firmware 21.39 this early path
+        // can crash before settings-backed symbols are stable.
     }
 
     // onStop() is called when your application is exiting
