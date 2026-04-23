@@ -2033,10 +2033,6 @@ class Segment34View extends WatchUi.WatchFace {
         return ((propBitmapB >> 17) & 0x1) == WEATHER_PROVIDER_OPEN_METEO;
     }
 
-    hidden function rememberGarminWeatherLocation(weather) as Void {
-        weatherProviderStoreGarminCachedLocationFromWeather(weather);
-    }
-
     hidden function buildForecastWeatherFromSnapshotEntry(entry as Dictionary?, location as Position.Location or Null) as ForecastWeather {
         var forecast = new ForecastWeather();
         if (entry == null) { return forecast; }
@@ -2185,14 +2181,12 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
             if (useOpenMeteoProvider()) {
                 applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-                weatherProviderPrimeGarminLocationCache();
                 scheduleImmediateCustomWeatherRefreshIfNeeded();
             } else {
                 try { weatherCondition = readWeatherData(); } catch(e) {}
                 if (weatherCondition == null) {
                     if(Toybox has :Weather && Weather has :getCurrentConditions) {
                         weatherCondition = Weather.getCurrentConditions();
-                        rememberGarminWeatherLocation(weatherCondition);
                     }
                 }
             }
@@ -2209,11 +2203,9 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
             if (useOpenMeteoProvider()) {
                 applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-                weatherProviderPrimeGarminLocationCache();
                 scheduleImmediateCustomWeatherRefreshIfNeeded();
             } else if(Toybox has :Weather && Weather has :getCurrentConditions) {
                 weatherCondition = Weather.getCurrentConditions();
-                rememberGarminWeatherLocation(weatherCondition);
             }
         }
         cachedTempUnit = getTempUnit();
@@ -2228,7 +2220,6 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
         if (useOpenMeteoProvider()) {
             applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-            weatherProviderPrimeGarminLocationCache();
             scheduleImmediateCustomWeatherRefreshIfNeeded();
             cachedTempUnit = getTempUnit();
             updateForecastChanges();
@@ -2248,7 +2239,6 @@ class Segment34View extends WatchUi.WatchFace {
         var hf = null;
         if (shouldFetchCurrentConditions) {
             cc = Weather.getCurrentConditions();
-            rememberGarminWeatherLocation(cc);
             lastCurrentConditionsFetch = now;
         }
         if (shouldFetchHourlyForecast) {
@@ -2280,7 +2270,6 @@ class Segment34View extends WatchUi.WatchFace {
         if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
         if (useOpenMeteoProvider()) {
             applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-            weatherProviderPrimeGarminLocationCache();
             scheduleImmediateCustomWeatherRefreshIfNeeded();
             cachedTempUnit = getTempUnit();
             updateForecastChanges();
@@ -2300,7 +2289,6 @@ class Segment34View extends WatchUi.WatchFace {
         var hf = null;
         if (shouldFetchCurrentConditions) {
             cc = Weather.getCurrentConditions();
-            rememberGarminWeatherLocation(cc);
             lastCurrentConditionsFetch = now;
         }
         if (shouldFetchHourlyForecast) {
@@ -2403,7 +2391,6 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         if (cc != null) {
-            rememberGarminWeatherLocation(cc);
             var newCcHash = computeCcHash(cc);
 
             if (lastCcHash == null || lastCcHash != newCcHash) {

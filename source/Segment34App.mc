@@ -52,6 +52,7 @@ class Segment34App extends Application.AppBase {
     }
 
     function onBackgroundData(data) as Void {
+        weatherProviderApplyBackgroundPayload(data);
         if (mView != null) {
             mView.onWeatherDataChanged();
         }
@@ -59,6 +60,8 @@ class Segment34App extends Application.AppBase {
     }
 
     hidden function scheduleWeatherRefresh() as Void {
+        weatherProviderDeleteLegacyLocationData();
+
         if (!weatherProviderUsesOpenMeteo()) {
             weatherProviderDeleteScheduledRefresh();
             return;
@@ -68,8 +71,6 @@ class Segment34App extends Application.AppBase {
             weatherProviderDeleteScheduledRefresh();
             return;
         }
-
-        weatherProviderPrimeGarminLocationCache();
 
         if (mView != null) {
             mView.scheduleImmediateCustomWeatherRefreshIfNeeded();

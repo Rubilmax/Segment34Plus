@@ -17,38 +17,22 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
     }
 
     function onTemporalEvent() as Void {
-        weatherProviderSetScheduledRefreshPending(false);
         weatherProviderScheduleNextRefresh();
 
         var now = Time.now().value();
-        var lastSuccessAt = null;
         var resolvedLocation = resolveWeatherLocation();
         var location = resolvedLocation.get("location") as Array?;
         var locationSource = resolvedLocation.get("source") as String?;
 
         if (location == null) {
-            weatherProviderStoreState(weatherProviderBuildState(
-                WEATHER_PROVIDER_OPEN_METEO_NAME,
+            Background.exit(weatherProviderBuildBackgroundFailurePayload(
+                WEATHER_PROVIDER_BACKGROUND_RESULT_LOCATION_UNAVAILABLE,
                 now,
-                lastSuccessAt,
-                -1,
-                WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE,
-                WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE,
-                null
+                null,
+                WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE
             ));
-            Background.exit({"weatherUpdated" => false});
             return;
         }
-
-        weatherProviderStoreState(weatherProviderBuildState(
-            WEATHER_PROVIDER_OPEN_METEO_NAME,
-            now,
-            lastSuccessAt,
-            null,
-            null,
-            locationSource,
-            location
-        ));
 
         var options = {
             :method => Communications.HTTP_REQUEST_METHOD_GET,
@@ -57,8 +41,7 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
                 "fetchedAt" => now,
                 "location" => location,
                 "locationSource" => locationSource,
-                "lastAttemptAt" => now,
-                "lastSuccessAt" => lastSuccessAt
+                "lastAttemptAt" => now
             }
         };
 
@@ -75,8 +58,12 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
                 -1,
                 options.get(:context) as Dictionary
             );
-            persistFailureState(-1, WEATHER_PROVIDER_ERROR_REQUEST_FAILED, options.get(:context) as Dictionary);
-            Background.exit({"weatherUpdated" => false});
+            Background.exit(weatherProviderBuildBackgroundFailurePayload(
+                WEATHER_PROVIDER_BACKGROUND_RESULT_REQUEST_FAILED,
+                now,
+                -1,
+                locationSource
+            ));
         }
     }
 
@@ -85,7 +72,6 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
         var location = responseContext.get("location") as Array?;
         var locationSource = responseContext.get("locationSource") as String?;
         var lastAttemptAt = weatherProviderToNumber(responseContext.get("lastAttemptAt"));
-        var lastSuccessAt = weatherProviderToNumber(responseContext.get("lastSuccessAt"));
 
         if (responseCode == 200 && data instanceof Dictionary) {
             var snapshot = weatherProviderBuildSnapshotFromOpenMeteoResponse(
@@ -94,37 +80,38 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
                 weatherProviderToNumber(responseContext.get("fetchedAt")) as Number
             );
             if (snapshot != null) {
-                weatherProviderStoreSnapshot(snapshot);
-                weatherProviderStoreState(weatherProviderBuildState(
-                    WEATHER_PROVIDER_OPEN_METEO_NAME,
-                    lastAttemptAt,
+                var successPayload = weatherProviderBuildBackgroundSuccessPayload(
+                    snapshot,
+                    lastAttemptAt as Number,
                     Time.now().value(),
-                    null,
-                    null,
-                    locationSource,
-                    location
-                ));
-                Background.exit({"weatherUpdated" => true});
-                return;
+                    locationSource
+                );
+                if (successPayload != null) {
+                    // Known limitation: background storage writes are currently unavailable for
+                    // this flow, so the snapshot must be passed back through Background.exit()
+                    // and persisted later in AppBase.onBackgroundData(). If multiple background
+                    // runs happen while the foreground app is inactive, only the latest payload
+                    // is delivered, so a later failure can overwrite an earlier success.
+                    Background.exit(successPayload);
+                    return;
+                }
             }
         }
 
+        var failureReason = WEATHER_PROVIDER_BACKGROUND_RESULT_INVALID_RESPONSE;
         var errorMessage = WEATHER_PROVIDER_ERROR_INVALID_RESPONSE;
         if (responseCode != 200) {
-            errorMessage = WEATHER_PROVIDER_ERROR_REQUEST_FAILED + " (" + responseCode.format("%d") + ")";
+            failureReason = WEATHER_PROVIDER_BACKGROUND_RESULT_REQUEST_FAILED;
+            errorMessage = weatherProviderBuildBackgroundErrorMessage(failureReason, responseCode);
         }
 
         logOpenMeteoRequestFailure(errorMessage, responseCode, responseContext);
-        weatherProviderStoreState(weatherProviderBuildState(
-            WEATHER_PROVIDER_OPEN_METEO_NAME,
-            lastAttemptAt,
-            lastSuccessAt,
+        Background.exit(weatherProviderBuildBackgroundFailurePayload(
+            failureReason,
+            lastAttemptAt as Number,
             responseCode,
-            errorMessage,
-            locationSource,
-            location
+            locationSource
         ));
-        Background.exit({"weatherUpdated" => false});
     }
 
     hidden function resolveWeatherLocation() as Dictionary {
@@ -175,18 +162,6 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             "location" => null,
             "source" => WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE
         };
-    }
-
-    hidden function persistFailureState(responseCode as Number, message as String, context as Dictionary) as Void {
-        weatherProviderStoreState(weatherProviderBuildState(
-            WEATHER_PROVIDER_OPEN_METEO_NAME,
-            weatherProviderToNumber(context.get("lastAttemptAt")),
-            weatherProviderToNumber(context.get("lastSuccessAt")),
-            responseCode,
-            message,
-            context.get("locationSource") as String?,
-            context.get("location") as Array?
-        ));
     }
 
     hidden function logOpenMeteoRequestFailure(message as String, responseCode as Number, context as Dictionary) as Void {
