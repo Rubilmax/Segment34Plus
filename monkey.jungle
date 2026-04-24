@@ -1,5 +1,5 @@
 project.manifest = manifest.xml
-project.typecheck = 1
+project.typecheck = 2
 project.optimization = 3p
 
 # =============================================================================
