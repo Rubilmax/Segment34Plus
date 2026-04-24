@@ -118,7 +118,8 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
         try {
             var info = Position.getInfo();
             if (info != null && info has :position && info.position != null) {
-                var degrees = info.position.toDegrees() as Array?;
+                var devicePosition = info.position as Location;
+                var degrees = devicePosition.toDegrees() as Array?;
                 if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
                     return {
                         "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],
@@ -132,7 +133,8 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             try {
                 var activityInfo = Activity.getActivityInfo();
                 if (activityInfo != null && activityInfo.currentLocation != null) {
-                    var degrees = activityInfo.currentLocation.toDegrees() as Array?;
+                    var activityLocation = activityInfo.currentLocation as Location;
+                    var degrees = activityLocation.toDegrees() as Array?;
                     if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
                         return {
                             "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],
@@ -147,7 +149,8 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             try {
                 var currentConditions = Weather.getCurrentConditions();
                 if (currentConditions != null && currentConditions.observationLocationPosition != null) {
-                    var degrees = currentConditions.observationLocationPosition.toDegrees() as Array?;
+                    var cachedLocation = currentConditions.observationLocationPosition as Location;
+                    var degrees = cachedLocation.toDegrees() as Array?;
                     if (degrees != null && degrees.size() >= 2 && degrees[0] != null && degrees[1] != null) {
                         return {
                             "location" => [(degrees[0] as Number).toFloat(), (degrees[1] as Number).toFloat()],

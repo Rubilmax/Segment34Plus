@@ -7,48 +7,79 @@ import Toybox.Time;
 import Toybox.Weather;
 using Toybox.Position;
 
+// The background weather service and the foreground watch face share this helper
+// surface, so every exported weather-provider symbol must be linked into the
+// background process explicitly.
+(:background)
 const WEATHER_PROVIDER_GARMIN = 0;
+(:background)
 const WEATHER_PROVIDER_OPEN_METEO = 1;
+(:background)
 const WEATHER_PROVIDER_STATE_KEY = "weather_provider_state_v1";
+(:background)
 const WEATHER_SNAPSHOT_KEY = "weather_snapshot_v2";
+(:background)
 const WEATHER_PROVIDER_LEGACY_GARMIN_LOCATION_KEY = "garmin_weather_location_v1";
+(:background)
 const WEATHER_PROVIDER_OPEN_METEO_NAME = "open_meteo_best_match";
+(:background)
 const WEATHER_SNAPSHOT_VERSION = 2;
+(:background)
 const WEATHER_PROVIDER_FETCH_INTERVAL_S = 1800;
+(:background)
 const WEATHER_PROVIDER_STALE_AFTER_S = 28800;
+(:background)
 const WEATHER_PROVIDER_IMMEDIATE_GUARD_S = 300;
+(:background)
 const WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT = 32;
 // A 32-hour hourly window can spill into a third local calendar day late in the day.
+(:background)
 const WEATHER_PROVIDER_FORECAST_DAYS = 3;
+(:background)
 const WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE = "device";
+(:background)
 const WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE = "garmin_cache";
+(:background)
 const WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE = "unavailable";
+(:background)
 const WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE = "Location unavailable";
+(:background)
 const WEATHER_PROVIDER_ERROR_INVALID_RESPONSE = "Invalid response";
+(:background)
 const WEATHER_PROVIDER_ERROR_REQUEST_FAILED = "Request failed";
+(:background)
 const WEATHER_PROVIDER_OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast";
+(:background)
 const WEATHER_PROVIDER_BACKGROUND_PAYLOAD_VERSION = 1;
+(:background)
 const WEATHER_PROVIDER_BACKGROUND_RESULT_SUCCESS = 0;
+(:background)
 const WEATHER_PROVIDER_BACKGROUND_RESULT_LOCATION_UNAVAILABLE = 1;
+(:background)
 const WEATHER_PROVIDER_BACKGROUND_RESULT_INVALID_RESPONSE = 2;
+(:background)
 const WEATHER_PROVIDER_BACKGROUND_RESULT_REQUEST_FAILED = 3;
 
+(:background)
 function weatherProviderGetSelection() as Number {
     var provider = Application.Properties.getValue("weatherProvider");
     if (provider == null) { return WEATHER_PROVIDER_GARMIN; }
     return provider as Number;
 }
 
+(:background)
 function weatherProviderUsesOpenMeteo() as Boolean {
     return weatherProviderGetSelection() == WEATHER_PROVIDER_OPEN_METEO;
 }
 
+(:background)
 function weatherProviderGetPropertyOrDefault(key as String, defaultValue) {
     var value = Application.Properties.getValue(key);
     if (value == null) { return defaultValue; }
     return value;
 }
 
+(:background)
 function weatherProviderIsWeatherSourceId(id as Number) as Boolean {
     if (id == 20 || id == 39 || id == 40 || (id >= 43 && id <= 55) || (id >= 63 && id <= 79)) {
         return true;
@@ -56,10 +87,12 @@ function weatherProviderIsWeatherSourceId(id as Number) as Boolean {
     return false;
 }
 
+(:background)
 function weatherProviderPropertyNeedsWeather(key as String, defaultValue as Number) as Boolean {
     return weatherProviderIsWeatherSourceId(weatherProviderGetPropertyOrDefault(key, defaultValue) as Number);
 }
 
+(:background)
 function weatherProviderIsWeatherRequired() as Boolean {
     if (weatherProviderPropertyNeedsWeather("sunriseFieldShows", 39)) { return true; }
     if (weatherProviderPropertyNeedsWeather("sunsetFieldShows", 40)) { return true; }
@@ -87,16 +120,19 @@ function weatherProviderIsWeatherRequired() as Boolean {
     return weatherProviderPropertyNeedsWeather("fourthValueShows", 10);
 }
 
+(:background)
 function weatherProviderToNumber(value) as Number? {
     if (value == null) { return null; }
     return value.toNumber();
 }
 
+(:background)
 function weatherProviderToFloat(value) as Float? {
     if (value == null) { return null; }
     return value.toFloat();
 }
 
+(:background)
 function weatherProviderToString(value) as String? {
     if (value == null) { return null; }
     if (value instanceof String) {
@@ -105,6 +141,7 @@ function weatherProviderToString(value) as String? {
     return value.toString();
 }
 
+(:background)
 function weatherProviderNormalizeLocation(location as Array?) as Array<Float>? {
     if (location == null || location.size() < 2 || location[0] == null || location[1] == null) {
         return null;
@@ -112,6 +149,7 @@ function weatherProviderNormalizeLocation(location as Array?) as Array<Float>? {
     return [(location[0] as Number).toFloat(), (location[1] as Number).toFloat()];
 }
 
+(:background)
 function weatherProviderDeleteLegacyLocationData() as Void {
     Application.Storage.deleteValue(WEATHER_PROVIDER_LEGACY_GARMIN_LOCATION_KEY);
 
@@ -131,6 +169,7 @@ function weatherProviderDeleteLegacyLocationData() as Void {
     ));
 }
 
+(:background)
 function weatherProviderBuildLocation(location as Array?) as Position.Location or Null {
     var normalized = weatherProviderNormalizeLocation(location);
     if (normalized == null) { return null; }
@@ -141,10 +180,12 @@ function weatherProviderBuildLocation(location as Array?) as Position.Location o
     });
 }
 
+(:background)
 function weatherProviderLoadState() as Dictionary? {
     return Application.Storage.getValue(WEATHER_PROVIDER_STATE_KEY) as Dictionary?;
 }
 
+(:background)
 function weatherProviderLoadOpenMeteoState() as Dictionary? {
     var state = weatherProviderLoadState();
     if (state == null) { return null; }
@@ -152,10 +193,12 @@ function weatherProviderLoadOpenMeteoState() as Dictionary? {
     return state;
 }
 
+(:background)
 function weatherProviderStoreState(state as Dictionary) as Void {
     Application.Storage.setValue(WEATHER_PROVIDER_STATE_KEY, state);
 }
 
+(:background)
 function weatherProviderBuildState(provider as String, lastAttemptAt as Number?, lastSuccessAt as Number?, lastErrorCode as Number?, lastErrorMessage as String?, locationSource as String?) as Dictionary {
     return {
         "provider" => provider,
@@ -167,6 +210,7 @@ function weatherProviderBuildState(provider as String, lastAttemptAt as Number?,
     };
 }
 
+(:background)
 function weatherProviderLoadSnapshotRaw() as Dictionary? {
     var snapshot = Application.Storage.getValue(WEATHER_SNAPSHOT_KEY) as Dictionary?;
     if (snapshot == null) { return null; }
@@ -175,6 +219,7 @@ function weatherProviderLoadSnapshotRaw() as Dictionary? {
     return snapshot;
 }
 
+(:background)
 function weatherProviderLoadSnapshot() as Dictionary? {
     var snapshot = weatherProviderLoadSnapshotRaw();
     if (snapshot == null) { return null; }
@@ -186,14 +231,17 @@ function weatherProviderLoadSnapshot() as Dictionary? {
     return snapshot;
 }
 
+(:background)
 function weatherProviderStoreSnapshot(snapshot as Dictionary) as Void {
     Application.Storage.setValue(WEATHER_SNAPSHOT_KEY, snapshot);
 }
 
+(:background)
 function weatherProviderHasScheduledRefresh() as Boolean {
     return Background.getTemporalEventRegisteredTime() != null;
 }
 
+(:background)
 function weatherProviderHasImmediateRefreshScheduled() as Boolean {
     var registered = Background.getTemporalEventRegisteredTime();
     if (registered == null) { return false; }
@@ -205,6 +253,7 @@ function weatherProviderHasImmediateRefreshScheduled() as Boolean {
     return (registered as Time.Duration).value() <= WEATHER_PROVIDER_IMMEDIATE_GUARD_S;
 }
 
+(:background)
 function weatherProviderLogSchedulingFailure(operation as String, error) as Void {
     var errorText = "unknown";
     if (error != null) {
@@ -220,6 +269,7 @@ function weatherProviderLogSchedulingFailure(operation as String, error) as Void
     System.println("Open-Meteo scheduling failure: operation=" + operation + ", error=" + errorText);
 }
 
+(:background)
 function weatherProviderDeleteScheduledRefresh() as Void {
     if (!weatherProviderHasScheduledRefresh()) { return; }
 
@@ -228,6 +278,7 @@ function weatherProviderDeleteScheduledRefresh() as Void {
     } catch(e) {}
 }
 
+(:background)
 function weatherProviderScheduleNextRefresh() as Void {
     try {
         Background.registerForTemporalEvent(new Time.Duration(WEATHER_PROVIDER_FETCH_INTERVAL_S));
@@ -236,6 +287,7 @@ function weatherProviderScheduleNextRefresh() as Void {
     }
 }
 
+(:background)
 function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
     if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
         weatherProviderDeleteScheduledRefresh();
@@ -273,8 +325,10 @@ function weatherProviderScheduleImmediateRefreshIfNeeded() as Void {
     }
 }
 
+(:background)
 function weatherProviderBuildOpenMeteoParams(location as Array?) as Dictionary {
     var normalized = weatherProviderNormalizeLocation(location);
+    if (normalized == null) { return {}; }
     return {
         "latitude" => (normalized[0] as Float).format("%.6f"),
         "longitude" => (normalized[1] as Float).format("%.6f"),
@@ -288,19 +342,23 @@ function weatherProviderBuildOpenMeteoParams(location as Array?) as Dictionary {
     };
 }
 
+(:background)
 function weatherProviderGetArrayValue(values as Array?, index as Number) {
     if (values == null || index < 0 || index >= values.size()) { return null; }
     return values[index];
 }
 
+(:background)
 function weatherProviderGetArrayNumber(values as Array?, index as Number) as Number? {
     return weatherProviderToNumber(weatherProviderGetArrayValue(values, index));
 }
 
+(:background)
 function weatherProviderGetArrayFloat(values as Array?, index as Number) as Float? {
     return weatherProviderToFloat(weatherProviderGetArrayValue(values, index));
 }
 
+(:background)
 function weatherProviderGetLocalDayStart(timestamp as Number, utcOffsetSeconds as Number) as Number {
     var localTimestamp = timestamp + utcOffsetSeconds;
     var remainder = localTimestamp % 86400;
@@ -310,6 +368,7 @@ function weatherProviderGetLocalDayStart(timestamp as Number, utcOffsetSeconds a
     return localTimestamp - remainder;
 }
 
+(:background)
 function weatherProviderFindNearestHourlyIndex(times as Array?, target as Number?, maxDiffSeconds as Number) as Number {
     if (times == null || target == null) { return -1; }
 
@@ -332,6 +391,7 @@ function weatherProviderFindNearestHourlyIndex(times as Array?, target as Number
     return bestIdx;
 }
 
+(:background)
 function weatherProviderFindDailyIndexForTime(times as Array?, timestamp as Number?, utcOffsetSeconds as Number) as Number {
     if (times == null || timestamp == null) { return -1; }
 
@@ -347,6 +407,7 @@ function weatherProviderFindDailyIndexForTime(times as Array?, timestamp as Numb
     return -1;
 }
 
+(:background)
 function weatherProviderGetForecastHour(timestamp as Number, utcOffsetSeconds as Number) as Number {
     var localTimestamp = timestamp + utcOffsetSeconds;
     var remainder = localTimestamp % 86400;
@@ -356,6 +417,7 @@ function weatherProviderGetForecastHour(timestamp as Number, utcOffsetSeconds as
     return (remainder / 3600).toNumber();
 }
 
+(:background)
 function weatherProviderWmoToGarminCondition(wmoCode as Number?) as Number {
     if (wmoCode == null) { return 53; }
 
@@ -385,21 +447,25 @@ function weatherProviderWmoToGarminCondition(wmoCode as Number?) as Number {
     return 53;
 }
 
+(:background)
 function weatherProviderGetDailyNumber(daily as Dictionary?, key as String, index as Number) as Number? {
     if (daily == null) { return null; }
     return weatherProviderGetArrayNumber(daily.get(key) as Array?, index);
 }
 
+(:background)
 function weatherProviderGetHourlyNumber(hourly as Dictionary?, key as String, index as Number) as Number? {
     if (hourly == null) { return null; }
     return weatherProviderGetArrayNumber(hourly.get(key) as Array?, index);
 }
 
+(:background)
 function weatherProviderGetHourlyFloat(hourly as Dictionary?, key as String, index as Number) as Float? {
     if (hourly == null) { return null; }
     return weatherProviderGetArrayFloat(hourly.get(key) as Array?, index);
 }
 
+(:background)
 function weatherProviderLastFailureWasLocationUnavailable(state as Dictionary?) as Boolean {
     if (state == null) { return false; }
 
@@ -407,6 +473,7 @@ function weatherProviderLastFailureWasLocationUnavailable(state as Dictionary?) 
     return message != null && message.equals(WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE);
 }
 
+(:background)
 function weatherProviderBuildSnapshotFromOpenMeteoResponse(data as Dictionary, location as Array?, fetchedAt as Number) as Dictionary? {
     var normalizedLocation = weatherProviderNormalizeLocation(location);
     if (normalizedLocation == null) { return null; }
@@ -493,18 +560,21 @@ function weatherProviderBuildSnapshotFromOpenMeteoResponse(data as Dictionary, l
     };
 }
 
+(:background)
 function weatherProviderEncodeBackgroundLocationSource(source as String?) as Number {
     if (source == WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE) { return 0; }
     if (source == WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE) { return 1; }
     return 2;
 }
 
+(:background)
 function weatherProviderDecodeBackgroundLocationSource(code as Number?) as String {
     if (code == 0) { return WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE; }
     if (code == 1) { return WEATHER_PROVIDER_LOCATION_SOURCE_GARMIN_CACHE; }
     return WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE;
 }
 
+(:background)
 function weatherProviderEncodeBackgroundCurrentEntry(entry as Dictionary?) as Array? {
     if (entry == null) { return null; }
 
@@ -522,6 +592,7 @@ function weatherProviderEncodeBackgroundCurrentEntry(entry as Dictionary?) as Ar
     ];
 }
 
+(:background)
 function weatherProviderEncodeBackgroundHourlyEntry(entry as Dictionary?) as Array? {
     if (entry == null) { return null; }
 
@@ -540,6 +611,7 @@ function weatherProviderEncodeBackgroundHourlyEntry(entry as Dictionary?) as Arr
     ];
 }
 
+(:background)
 function weatherProviderEncodeBackgroundSnapshot(snapshot as Dictionary?) as Dictionary? {
     if (snapshot == null) { return null; }
 
@@ -575,6 +647,7 @@ function weatherProviderEncodeBackgroundSnapshot(snapshot as Dictionary?) as Dic
     };
 }
 
+(:background)
 function weatherProviderDecodeBackgroundCurrentEntry(values as Array?) as Dictionary? {
     if (values == null) { return null; }
 
@@ -592,6 +665,7 @@ function weatherProviderDecodeBackgroundCurrentEntry(values as Array?) as Dictio
     };
 }
 
+(:background)
 function weatherProviderDecodeBackgroundHourlyEntry(values as Array?, utcOffsetSeconds as Number) as Dictionary? {
     if (values == null) { return null; }
 
@@ -614,6 +688,7 @@ function weatherProviderDecodeBackgroundHourlyEntry(values as Array?, utcOffsetS
     };
 }
 
+(:background)
 function weatherProviderDecodeBackgroundSnapshot(snapshot as Dictionary?) as Dictionary? {
     if (snapshot == null) { return null; }
 
@@ -651,6 +726,7 @@ function weatherProviderDecodeBackgroundSnapshot(snapshot as Dictionary?) as Dic
     };
 }
 
+(:background)
 function weatherProviderBuildBackgroundSuccessPayload(snapshot as Dictionary, lastAttemptAt as Number, lastSuccessAt as Number, locationSource as String?) as Dictionary? {
     var encodedSnapshot = weatherProviderEncodeBackgroundSnapshot(snapshot);
     if (encodedSnapshot == null) { return null; }
@@ -665,6 +741,7 @@ function weatherProviderBuildBackgroundSuccessPayload(snapshot as Dictionary, la
     };
 }
 
+(:background)
 function weatherProviderBuildBackgroundFailurePayload(reason as Number, lastAttemptAt as Number, responseCode as Number?, locationSource as String?) as Dictionary {
     return {
         "v" => WEATHER_PROVIDER_BACKGROUND_PAYLOAD_VERSION,
@@ -675,6 +752,7 @@ function weatherProviderBuildBackgroundFailurePayload(reason as Number, lastAtte
     };
 }
 
+(:background)
 function weatherProviderBuildBackgroundErrorMessage(reason as Number, responseCode as Number?) as String {
     if (reason == WEATHER_PROVIDER_BACKGROUND_RESULT_LOCATION_UNAVAILABLE) {
         return WEATHER_PROVIDER_ERROR_LOCATION_UNAVAILABLE;
@@ -691,6 +769,7 @@ function weatherProviderBuildBackgroundErrorMessage(reason as Number, responseCo
     return WEATHER_PROVIDER_ERROR_REQUEST_FAILED;
 }
 
+(:background)
 function weatherProviderApplyBackgroundPayload(data) as Boolean {
     if (!(data instanceof Dictionary)) { return false; }
 
@@ -752,6 +831,7 @@ function weatherProviderApplyBackgroundPayload(data) as Boolean {
     return false;
 }
 
+(:background)
 function weatherProviderTruncateString(value as String?, maxLength as Number) as String? {
     if (value == null) { return null; }
     if (value.length() <= maxLength) { return value; }

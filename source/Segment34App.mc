@@ -4,9 +4,11 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
+(:background)
 class Segment34App extends Application.AppBase {
     
-    var mView;
+    (:typecheck(disableBackgroundCheck))
+    var mView as Segment34View or Null;
     
     function initialize() {
         AppBase.initialize();
@@ -25,17 +27,22 @@ class Segment34App extends Application.AppBase {
     }
 
     // Return the initial view of your application here
+    // AppBase is shared with the background process, but this callback is
+    // foreground-only and intentionally wires up UI classes.
+    (:typecheck(disableBackgroundCheck))
     function getInitialView() {
-        mView = new Segment34View();
+        var view = new Segment34View();
+        mView = view;
         onSettingsChanged();
-        var delegate = new Segment34Delegate(mView);
-        return [mView, delegate];
+        var delegate = new Segment34Delegate(view);
+        return [view, delegate];
     }
 
     function getServiceDelegate() as [System.ServiceDelegate] {
         return [new Segment34WeatherServiceDelegate()];
     }
 
+    (:typecheck(disableBackgroundCheck))
     function onSettingsChanged() as Void {
         if (mView != null) {
             mView.onSettingsChanged();
@@ -44,6 +51,7 @@ class Segment34App extends Application.AppBase {
         WatchUi.requestUpdate();
     }
 
+    (:typecheck(disableBackgroundCheck))
     function onStorageChanged() as Void {
         if (mView != null) {
             mView.onWeatherDataChanged();
@@ -51,6 +59,7 @@ class Segment34App extends Application.AppBase {
         WatchUi.requestUpdate();
     }
 
+    (:typecheck(disableBackgroundCheck))
     function onBackgroundData(data) as Void {
         weatherProviderApplyBackgroundPayload(data);
         if (mView != null) {
@@ -59,6 +68,7 @@ class Segment34App extends Application.AppBase {
         WatchUi.requestUpdate();
     }
 
+    (:typecheck(disableBackgroundCheck))
     hidden function scheduleWeatherRefresh() as Void {
         weatherProviderDeleteLegacyLocationData();
 
