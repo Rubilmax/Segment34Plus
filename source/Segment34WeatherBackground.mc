@@ -129,7 +129,7 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
     }
 
     hidden function exitBackgroundSuccessPayloadWithHourlyFallbacks(snapshot as Dictionary, lastAttemptAt as Number, successAt as Number, locationSource as String?) as Boolean {
-        var hourlyLimit = WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT;
+        var hourlyLimit = weatherProviderGetHourlyForecastLimit();
         while (hourlyLimit >= WEATHER_PROVIDER_BACKGROUND_MIN_HOURLY_LIMIT) {
             if (tryExitBackgroundSuccessPayload(
                 snapshot,

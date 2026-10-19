@@ -41,4 +41,5 @@
     <font id="smol" filename="smol.fnt" antialias="false" />
     <font id="storre" filename="storre.fnt" antialias="false" />
     <font id="xsmol" filename="xsmol.fnt" antialias="false" />
+    <font id="weather_compact" filename="weather_compact.fnt" antialias="false" />
 </fonts>

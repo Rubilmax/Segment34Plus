@@ -315,7 +315,7 @@
     <string id="settings_weather_conditions" scope="settings">Conditions météo</string>
     <string id="settings_weather_conditions_temperature" scope="settings">Conditions météo, Température</string>
     <string id="settings_weather_conditions_feelslike" scope="settings">Conditions météo, Ressenti</string>
-    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Conditions météo, Ressenti, Prévision</string>
+    <string id="settings_weather_conditions_feelslike_forecast" scope="settings">Prévisions dangereuses, heures de début-fin</string>
     <string id="settings_daily_high_temperature" scope="settings">Température maximale quotidienne</string>
     <string id="settings_daily_low_temperature" scope="settings">Température minimale quotidienne</string>
     <string id="settings_temperature" scope="settings">Température</string>
@@ -421,4 +421,6 @@
     <string id="settings_temperature_uv_wind" scope="settings">Température, Indice UV, Vent</string>
     <string id="settings_cgm_glucose_trend" scope="settings">CGM Glycémie + Tendance</string>
     <string id="settings_cgm_age" scope="settings">CGM Âge (minutes)</string>
+    <string id="WEATHER_STORM">ORAGE</string>
+    <string id="settings_wind_precipitation_uv_humidity" scope="settings">Vent, ressenti min-max du jour, UV, humidité</string>
 </strings>

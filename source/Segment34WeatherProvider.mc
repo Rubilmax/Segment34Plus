@@ -31,7 +31,7 @@ const WEATHER_PROVIDER_STALE_AFTER_S = 64800;
 (:background)
 const WEATHER_PROVIDER_IMMEDIATE_GUARD_S = 300;
 (:background)
-const WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT = 36;
+const WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT = 72;
 (:background)
 const WEATHER_PROVIDER_DETAILED_HOURLY_FORECAST_LIMIT = 8;
 (:background)
@@ -385,12 +385,27 @@ function weatherProviderBuildOpenMeteoParams(location as Array?) as Dictionary {
         "timezone" => "auto",
         "timeformat" => "unixtime",
         "forecast_days" => WEATHER_PROVIDER_FORECAST_DAYS.format("%d"),
-        "forecast_hours" => WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT.format("%d"),
+        "forecast_hours" => weatherProviderGetHourlyForecastLimit().format("%d"),
         "wind_speed_unit" => "ms",
         "current" => "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation_probability,uv_index",
-        "hourly" => "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,uv_index",
-        "daily" => "temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset"
+        "hourly" => "temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,uv_index",
+        "daily" => "temperature_2m_max,temperature_2m_min,apparent_temperature_min,apparent_temperature_max,uv_index_max,sunrise,sunset"
     };
+}
+
+(:background)
+function weatherProviderForecastLimitForMemory(backgroundMemory as Number, lowMemoryWatch as Boolean) as Number {
+    return backgroundMemory <= 32768 || lowMemoryWatch ? 36 : WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT;
+}
+
+(:background, :NoWeatherCache)
+function weatherProviderGetHourlyForecastLimit() as Number {
+    return weatherProviderForecastLimitForMemory(System.getSystemStats().totalMemory, true);
+}
+
+(:background, :WeatherCache)
+function weatherProviderGetHourlyForecastLimit() as Number {
+    return weatherProviderForecastLimitForMemory(System.getSystemStats().totalMemory, false);
 }
 
 (:background)
@@ -503,7 +518,7 @@ function weatherProviderWmoToGarminCondition(wmoCode as Number?) as Number {
     if (wmoCode == 82) { return 26; }
     if (wmoCode == 85) { return 48; }
     if (wmoCode == 86) { return 17; }
-    if (wmoCode == 95) { return 6; }
+    if (wmoCode == 95 || wmoCode == 97) { return 6; }
     if (wmoCode == 96) { return 12; }
     if (wmoCode == 99) { return 10; }
 
@@ -583,6 +598,7 @@ function weatherProviderBuildSnapshotFromOpenMeteoResponse(data as Dictionary, l
 
     var nearestHourlyIdx = weatherProviderFindNearestHourlyIndex(hourlyTimes, currentTime, 1800);
     var currentDayIdx = weatherProviderFindDailyIndexForTime(dailyTimes, currentTime, utcOffsetSeconds as Number);
+    var hasCurrentDay = currentDayIdx >= 0;
     if (currentDayIdx < 0) { currentDayIdx = 0; }
 
     var currentUv = weatherProviderToFloat(current.get("uv_index"));
@@ -610,34 +626,22 @@ function weatherProviderBuildSnapshotFromOpenMeteoResponse(data as Dictionary, l
         "windSpeed" => weatherProviderToFloat(current.get("wind_speed_10m")),
         "highTemperature" => weatherProviderGetDailyNumber(daily, "temperature_2m_max", currentDayIdx),
         "lowTemperature" => weatherProviderGetDailyNumber(daily, "temperature_2m_min", currentDayIdx),
-        "uvIndex" => currentUv
+        "uvIndex" => currentUv,
+        "dailyFeelsLike" => hasCurrentDay ? [
+            weatherProviderGetHourlyFloat(daily, "apparent_temperature_min", currentDayIdx),
+            weatherProviderGetHourlyFloat(daily, "apparent_temperature_max", currentDayIdx),
+            weatherProviderGetLocalDayStart(currentTime as Number, utcOffsetSeconds as Number)
+        ] : null
     };
 
-    var hourlySnapshot = [];
-    var hourlyStartIdx = nearestHourlyIdx;
-    if (hourlyStartIdx < 0) { hourlyStartIdx = 0; }
-    var hourlyEndIdx = hourlyStartIdx + WEATHER_PROVIDER_HOURLY_FORECAST_LIMIT;
-    if (hourlyEndIdx > hourlyTimes.size()) {
-        hourlyEndIdx = hourlyTimes.size();
+    // Keep columns compact while the parsed response is alive on the background heap.
+    var hourlyStartIdx = 0;
+    while (hourlyStartIdx + 1 < hourlyTimes.size()) {
+        var nextTime = weatherProviderGetArrayNumber(hourlyTimes, hourlyStartIdx + 1);
+        if (nextTime == null || nextTime > (currentTime as Number)) { break; }
+        hourlyStartIdx++;
     }
-
-    for (var i = hourlyStartIdx; i < hourlyEndIdx; i++) {
-        var forecastTime = weatherProviderToNumber(hourlyTimes[i]);
-        if (forecastTime == null) { continue; }
-
-        hourlySnapshot.add({
-            "forecastTime" => forecastTime,
-            "forecastHour" => weatherProviderGetForecastHour(forecastTime, utcOffsetSeconds as Number),
-            "condition" => weatherProviderWmoToGarminCondition(weatherProviderGetHourlyNumber(hourly, "weather_code", i)),
-            "temperature" => weatherProviderGetHourlyNumber(hourly, "temperature_2m", i),
-            "feelsLikeTemperature" => weatherProviderGetHourlyFloat(hourly, "apparent_temperature", i),
-            "precipitationChance" => weatherProviderGetHourlyNumber(hourly, "precipitation_probability", i),
-            "relativeHumidity" => weatherProviderGetHourlyNumber(hourly, "relative_humidity_2m", i),
-            "windBearing" => weatherProviderGetHourlyNumber(hourly, "wind_direction_10m", i),
-            "windSpeed" => weatherProviderGetHourlyFloat(hourly, "wind_speed_10m", i),
-            "uvIndex" => weatherProviderGetHourlyFloat(hourly, "uv_index", i)
-        });
-    }
+    var hourlyColumns = weatherProviderBuildHourlyColumns(hourly, hourlyTimes, hourlyStartIdx, weatherProviderGetHourlyForecastLimit());
 
     return {
         "version" => WEATHER_SNAPSHOT_VERSION,
@@ -648,8 +652,60 @@ function weatherProviderBuildSnapshotFromOpenMeteoResponse(data as Dictionary, l
         "utcOffsetSeconds" => utcOffsetSeconds,
         "current" => currentSnapshot,
         "sunEvents" => sunEvents,
-        "hourly" => hourlySnapshot
+        "hourly" => [],
+        "hourlyColumns" => hourlyColumns
     };
+}
+
+(:background)
+function weatherProviderBuildHourlyColumns(hourly as Dictionary, times as Array, start as Number, limit as Number) as Array {
+    var firstTime = weatherProviderGetArrayNumber(times, start);
+    if (firstTime == null) { return []; }
+    var lastTime = firstTime;
+    for (var last = times.size() - 1; last >= start; last--) {
+        var value = weatherProviderGetArrayNumber(times, last);
+        if (value != null) { lastTime = value; break; }
+    }
+    var count = ((lastTime - firstTime) / 3600).toNumber() + 1;
+    if (count > limit) { count = limit; }
+    var detailCount = count < WEATHER_PROVIDER_DETAILED_HOURLY_FORECAST_LIMIT ? count : WEATHER_PROVIDER_DETAILED_HOURLY_FORECAST_LIMIT;
+    var columns = [firstTime, count, detailCount, [], [], [], [], [], [], [], []];
+    var keys = ["temperature_2m", "precipitation_probability", "relative_humidity_2m", "wind_direction_10m", "wind_speed_10m", "uv_index"];
+    var sourceIdx = start;
+    for (var i = 0; i < count; i++) {
+        var expectedTime = (firstTime as Number) + i * 3600;
+        var sourceTime = weatherProviderGetArrayNumber(times, sourceIdx);
+        while (sourceIdx < times.size() && (sourceTime == null || sourceTime < expectedTime)) {
+            sourceIdx++;
+            sourceTime = weatherProviderGetArrayNumber(times, sourceIdx);
+        }
+        var validTime = sourceTime == expectedTime;
+        (columns[3] as Array).add(validTime ? weatherProviderWmoToGarminCondition(weatherProviderGetHourlyNumber(hourly, "weather_code", sourceIdx)) : null);
+        if (i < detailCount) {
+            // Column four stays reserved for legacy hourly feels-like data.
+            for (var j = 0; j < keys.size(); j++) {
+                (columns[j + 5] as Array).add(validTime ? weatherProviderGetHourlyFloat(hourly, keys[j] as String, sourceIdx) : null);
+            }
+        }
+    }
+    return columns;
+}
+
+(:background)
+function weatherProviderLimitHourlyColumns(columns as Array, limit as Number) as Array {
+    var count = weatherProviderGetBackgroundHourlyColumnCount(columns);
+    if (limit <= 0 || count <= 0) { return []; }
+    if (count <= limit) { return columns; }
+    var details = weatherProviderGetArrayNumber(columns, 2);
+    if (details == null || details > limit) { details = limit; }
+    var limited = [columns[0], limit, details];
+    for (var i = 3; i < columns.size(); i++) {
+        var values = columns[i] as Array;
+        var valueLimit = i == 3 ? limit : details as Number;
+        if (valueLimit > values.size()) { valueLimit = values.size(); }
+        limited.add(values.slice(0, valueLimit));
+    }
+    return limited;
 }
 
 (:background)
@@ -680,7 +736,8 @@ function weatherProviderEncodeBackgroundCurrentEntry(entry as Dictionary?) as Ar
         weatherProviderToFloat(entry.get("windSpeed")),
         weatherProviderToNumber(entry.get("highTemperature")),
         weatherProviderToNumber(entry.get("lowTemperature")),
-        weatherProviderToFloat(entry.get("uvIndex"))
+        weatherProviderToFloat(entry.get("uvIndex")),
+        entry.get("dailyFeelsLike") as Array?
     ];
 }
 
@@ -709,7 +766,6 @@ function weatherProviderEncodeBackgroundHourlyEntries(hourlyEntries as Array?, h
         if (startTime == null) { startTime = forecastTime; }
 
         conditions.add(weatherProviderToNumber(entry.get("condition")));
-        feelsLikeTemperatures.add(weatherProviderToFloat(entry.get("feelsLikeTemperature")));
 
         if (count < WEATHER_PROVIDER_DETAILED_HOURLY_FORECAST_LIMIT) {
             temperatures.add(weatherProviderToNumber(entry.get("temperature")));
@@ -772,7 +828,10 @@ function weatherProviderEncodeBackgroundSnapshotWithHourlyLimit(snapshot as Dict
         return null;
     }
 
-    var hourly = weatherProviderEncodeBackgroundHourlyEntries(snapshot.get("hourly") as Array?, hourlyLimit);
+    var columns = snapshot.get("hourlyColumns") as Array?;
+    var hourly = columns == null
+        ? weatherProviderEncodeBackgroundHourlyEntries(snapshot.get("hourly") as Array?, hourlyLimit)
+        : weatherProviderLimitHourlyColumns(columns, hourlyLimit);
 
     var timezone = weatherProviderToString(snapshot.get("timezone"));
     if (timezone == null) { timezone = "GMT"; }
@@ -803,7 +862,8 @@ function weatherProviderDecodeBackgroundCurrentEntry(values as Array?) as Dictio
         "windSpeed" => weatherProviderGetArrayFloat(values, 6),
         "highTemperature" => weatherProviderGetArrayNumber(values, 7),
         "lowTemperature" => weatherProviderGetArrayNumber(values, 8),
-        "uvIndex" => weatherProviderGetArrayFloat(values, 9)
+        "uvIndex" => weatherProviderGetArrayFloat(values, 9),
+        "dailyFeelsLike" => weatherProviderGetArrayValue(values, 10) as Array?
     };
 }
 

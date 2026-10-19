@@ -1,7 +1,7 @@
 info face="LED" size=20 bold=0 italic=0 smooth=1 spacing=1,1
-common lineHeight=20 base=20 scaleW=1317 scaleH=20 pages=1
+common lineHeight=20 base=20 scaleW=1349 scaleH=20 pages=1
 page id=0 file="led_lines.png"
-chars count=11
+chars count=87
 char id=48 x=0 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
 char id=49 x=18 y=0 width=8 height=20 xoffset=3 yoffset=0 xadvance=18 page=0
 char id=50 x=30 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
@@ -93,3 +93,7 @@ char id=9679 x=1255 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=
 char id=9829 x=1273 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
 char id=10084 x=1289 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
 char id=8776 x=1303 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
+
+char id=57344 x=1319 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0
+
+char id=193 x=1335 y=0 width=14 height=20 xoffset=0 yoffset=0 xadvance=18 page=0

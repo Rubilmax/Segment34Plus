@@ -8,9 +8,6 @@ import Toybox.Weather;
 import Toybox.Complications;
 using Toybox.Position;
 
-const WEATHER_CYCLE_FEELS_LIKE_THRESHOLD_C = 5.0f;
-const WEATHER_GROUP_UNKNOWN = 4;
-
 function normalizeWeatherCondition(condition as Number, resourceCount as Number) as Number {
     if (condition < 0 || condition >= resourceCount) { return 53; }
     return condition;
@@ -124,11 +121,10 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var propSunsetFieldShows as Number = 40;
     hidden var propWeatherLine1Shows as Number = 78;
     hidden var propWeatherLine2Shows as Number = 79;
-    hidden var cachedHourlyForecast as Array<ForecastWeather> = [];
-    hidden var cachedForecastChange as Array? = null;
-    hidden var cachedForecastSecondChange as Array? = null;
-    hidden var cachedForecastThirdChange as Array? = null;
-    hidden var cachedForecastFourthChange as Array? = null;
+    hidden var cachedHourlyForecast as Array = [];
+    hidden var cachedHazardWindows as Array = [];
+    hidden var forecastUtcOffsetSeconds as Number? = null;
+    (:initialized) hidden var fontWeatherCompact as WatchUi.FontResource;
     hidden var propNotificationCountShows as Number = 14;
     hidden var propWeekOffset as Number = 0;
     hidden var touchAlternativeBottomRow as Array<Number> = [4, 12, 2, 32, -2];
@@ -148,7 +144,6 @@ class Segment34View extends WatchUi.WatchFace {
     const currentConditionsUpdateIntervalS = 300;
     const hourlyForecastUpdateIntervalS = 900;
     const weatherCycleIntervalS = 4;
-    const weatherCycleMaxChanges = 3;
 
     // Pre-computed background strings to avoid per-frame string concatenation
     hidden var bgStrings as Array<String> = ["", "#", "##", "###", "####", "#####"];
@@ -363,6 +358,7 @@ class Segment34View extends WatchUi.WatchFace {
             selectedRes = resReadable;
         }
         fontSmallData = Application.loadResource(selectedRes);
+        fontWeatherCompact = Application.loadResource(Rez.Fonts.weather_compact);
     }
 
     (:MIP)
@@ -1038,10 +1034,8 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Draw Lines above clock
-        dc.setColor(values[:dataAboveLine1Color], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(centerX, yn2, fontSmallData, values[:dataAboveLine1], Graphics.TEXT_JUSTIFY_CENTER);
-        dc.setColor(values[:dataAboveLine2Color], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(centerX, yn1, fontSmallData, values[:dataAboveLine2], Graphics.TEXT_JUSTIFY_CENTER);        
+        drawWeatherLine(dc, yn2, values[:dataAboveLine1], values[:dataAboveLine1Color]);
+        drawWeatherLine(dc, yn1, values[:dataAboveLine2], values[:dataAboveLine2Color]);
 
         // Draw Clock
         dc.setColor(themeColors[clockBg], Graphics.COLOR_TRANSPARENT);
@@ -1163,10 +1157,8 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         // Draw Lines above clock (shifted up by one row)
-        dc.setColor(values[:dataAboveLine1Color], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(centerX, yn2, fontSmallData, values[:dataAboveLine1], Graphics.TEXT_JUSTIFY_CENTER);
-        dc.setColor(values[:dataAboveLine2Color], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(centerX, yn1, fontSmallData, values[:dataAboveLine2], Graphics.TEXT_JUSTIFY_CENTER);
+        drawWeatherLine(dc, yn2, values[:dataAboveLine1], values[:dataAboveLine1Color]);
+        drawWeatherLine(dc, yn1, values[:dataAboveLine2], values[:dataAboveLine2Color]);
 
         // Draw date line ABOVE clock (at yn0)
         dc.setColor(themeColors[date], Graphics.COLOR_TRANSPARENT);
@@ -2170,22 +2162,6 @@ class Segment34View extends WatchUi.WatchFace {
         return weatherCondition;
     }
 
-    hidden function getActiveForecastChange() as Array? {
-        return cachedForecastChange;
-    }
-
-    hidden function getActiveForecastSecondChange() as Array? {
-        return cachedForecastSecondChange;
-    }
-
-    hidden function getActiveForecastThirdChange() as Array? {
-        return cachedForecastThirdChange;
-    }
-
-    hidden function getActiveForecastFourthChange() as Array? {
-        return cachedForecastFourthChange;
-    }
-
     hidden function toNumberOrNull(value) as Number? {
         if (value == null) { return null; }
         return value.toNumber();
@@ -2228,6 +2204,7 @@ class Segment34View extends WatchUi.WatchFace {
         forecast.lowTemperature = toNumberOrNull(entry.get("lowTemperature"));
         forecast.feelsLikeTemperature = toFloatOrNull(entry.get("feelsLikeTemperature"));
         forecast.relativeHumidity = toNumberOrNull(entry.get("relativeHumidity"));
+        forecast.dailyFeelsLike = entry.get("dailyFeelsLike") as Array?;
 
         var uv = toFloatOrNull(entry.get("uvIndex"));
         if (uv != null && uv >= 0.0f) {
@@ -2237,112 +2214,11 @@ class Segment34View extends WatchUi.WatchFace {
         return forecast;
     }
 
-    hidden function buildForecastWeatherFromSnapshotColumns(columns as Array?, index as Number, utcOffsetSeconds as Number, location as Position.Location or Null) as ForecastWeather? {
-        var count = weatherProviderGetBackgroundHourlyColumnCount(columns);
-        if (count <= 0 || index < 0 || index >= count) { return null; }
-
-        var startTime = weatherProviderGetArrayNumber(columns, 0);
-        var detailCount = weatherProviderGetArrayNumber(columns, 2);
-        if (startTime == null) { return null; }
-        if (detailCount == null) { detailCount = 0; }
-
-        var forecastTime = (startTime as Number) + (index * 3600);
-        var forecast = new ForecastWeather();
-        forecast.observationLocationPosition = location;
-        forecast.forecastTime = forecastTime;
-        forecast.forecastHour = weatherProviderGetForecastHour(forecastTime, utcOffsetSeconds);
-        forecast.condition = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(columns, 3) as Array?, index);
-        forecast.feelsLikeTemperature = weatherProviderGetArrayFloat(weatherProviderGetArrayValue(columns, 4) as Array?, index);
-
-        if (index < (detailCount as Number)) {
-            forecast.temperature = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(columns, 5) as Array?, index);
-            forecast.precipitationChance = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(columns, 6) as Array?, index);
-            forecast.relativeHumidity = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(columns, 7) as Array?, index);
-            forecast.windBearing = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(columns, 8) as Array?, index);
-            forecast.windSpeed = weatherProviderGetArrayFloat(weatherProviderGetArrayValue(columns, 9) as Array?, index);
-
-            var uv = weatherProviderGetArrayFloat(weatherProviderGetArrayValue(columns, 10) as Array?, index);
-            if (uv != null && uv >= 0.0f) { forecast.uvIndex = uv; }
-        }
-
-        return forecast;
-    }
-
-    hidden function copyWeatherToSnapshot(snapshot as ForecastWeather, weather) as Void {
-        if (weather == null) { return; }
-
-        if (weather.observationLocationPosition != null) { snapshot.observationLocationPosition = weather.observationLocationPosition; }
-        if (weather.precipitationChance != null) { snapshot.precipitationChance = weather.precipitationChance; }
-        if (weather.temperature != null) { snapshot.temperature = weather.temperature.toNumber(); }
-        if (weather.windBearing != null) { snapshot.windBearing = weather.windBearing.toNumber(); }
-        if (weather.windSpeed != null) { snapshot.windSpeed = weather.windSpeed.toFloat(); }
-        if (weather.highTemperature != null) { snapshot.highTemperature = weather.highTemperature.toNumber(); }
-        if (weather.lowTemperature != null) { snapshot.lowTemperature = weather.lowTemperature.toNumber(); }
-        if (weather.feelsLikeTemperature != null) { snapshot.feelsLikeTemperature = weather.feelsLikeTemperature.toFloat(); }
-        if (weather.relativeHumidity != null) { snapshot.relativeHumidity = weather.relativeHumidity.toNumber(); }
-        if (weather.condition != null) { snapshot.condition = weather.condition.toNumber(); }
-        if (weather has :uvIndex && weather.uvIndex != null && weather.uvIndex.toFloat() >= 0.0f) {
-            snapshot.uvIndex = weather.uvIndex.toFloat();
-        }
-        if (weather has :forecastTime && weather.forecastTime != null) {
-            snapshot.forecastTime = weather.forecastTime.toNumber();
-        }
-        if (weather has :forecastHour && weather.forecastHour != null) {
-            snapshot.forecastHour = weather.forecastHour.toNumber();
-        }
-    }
-
-    hidden function buildMergedForecastWeather(forecast as ForecastWeather or Null) as ForecastWeather {
-        var snapshot = new ForecastWeather();
-        copyWeatherToSnapshot(snapshot, weatherCondition);
-        copyWeatherToSnapshot(snapshot, forecast);
-        if (forecast != null) {
-            // A forecast event must not present the current feels-like value as a
-            // future measurement when that field is missing from the forecast.
-            if (forecast.feelsLikeTemperature == null) {
-                snapshot.feelsLikeTemperature = null;
-            }
-            if (snapshot.condition != null) {
-                snapshot.condition = normalizeWeatherCondition(snapshot.condition as Number, cachedWeatherResIds.size());
-            }
-        }
-        return snapshot;
-    }
-
-    hidden function buildForecastWeatherFromLive(entry) as ForecastWeather {
-        var forecast = new ForecastWeather();
-        if (entry == null) { return forecast; }
-
-        if (entry.forecastTime != null) {
-            forecast.forecastTime = entry.forecastTime.value();
-            forecast.forecastHour = Time.Gregorian.info(entry.forecastTime, Time.FORMAT_SHORT).hour;
-        }
-
-        forecast.condition = toNumberOrNull(entry.condition);
-        forecast.temperature = toNumberOrNull(entry.temperature);
-        forecast.windBearing = toNumberOrNull(entry.windBearing);
-        forecast.windSpeed = toFloatOrNull(entry.windSpeed);
-        forecast.precipitationChance = toNumberOrNull(entry.precipitationChance);
-
-        if (entry has :highTemperature) { forecast.highTemperature = toNumberOrNull(entry.highTemperature); }
-        if (entry has :lowTemperature) { forecast.lowTemperature = toNumberOrNull(entry.lowTemperature); }
-        if (entry has :feelsLikeTemperature) { forecast.feelsLikeTemperature = toFloatOrNull(entry.feelsLikeTemperature); }
-        if (entry has :relativeHumidity) { forecast.relativeHumidity = toNumberOrNull(entry.relativeHumidity); }
-        if (entry has :uvIndex) {
-            var uv = toFloatOrNull(entry.uvIndex);
-            if (uv != null && uv >= 0.0f) { forecast.uvIndex = uv; }
-        }
-
-        return forecast;
-    }
-
     hidden function clearCustomWeatherData() as Void {
         weatherCondition = null;
         cachedHourlyForecast = [];
-        cachedForecastChange = null;
-        cachedForecastSecondChange = null;
-        cachedForecastThirdChange = null;
-        cachedForecastFourthChange = null;
+        cachedHazardWindows = [];
+        forecastUtcOffsetSeconds = null;
         openMeteoAppliedSnapshotFetchedAt = null;
     }
 
@@ -2373,11 +2249,13 @@ class Segment34View extends WatchUi.WatchFace {
             var current = snapshot.get("current") as Dictionary?;
             var currentWeather = buildForecastWeatherFromSnapshotEntry(current, location);
             weatherCondition = currentWeather;
+            forecastUtcOffsetSeconds = weatherProviderToNumber(snapshot.get("utcOffsetSeconds"));
 
             var hourly = snapshot.get("hourly") as Array?;
             if (hourly != null) {
                 for (var i = 0; i < hourly.size(); i++) {
-                    cachedHourlyForecast.add(buildForecastWeatherFromSnapshotEntry(hourly[i] as Dictionary?, location));
+                    var entry = hourly[i] as Dictionary?;
+                    cachedHourlyForecast.add(entry == null ? [null, null] : [entry.get("forecastTime"), entry.get("condition")]);
                 }
             }
             if (cachedHourlyForecast.size() == 0) {
@@ -2386,8 +2264,9 @@ class Segment34View extends WatchUi.WatchFace {
                 var hourlyColumnCount = weatherProviderGetBackgroundHourlyColumnCount(hourlyColumns);
                 if (utcOffsetSeconds != null && hourlyColumnCount > 0) {
                     for (var j = 0; j < hourlyColumnCount; j++) {
-                        var forecast = buildForecastWeatherFromSnapshotColumns(hourlyColumns, j, utcOffsetSeconds as Number, location);
-                        if (forecast != null) { cachedHourlyForecast.add(forecast); }
+                        var start = weatherProviderGetArrayNumber(hourlyColumns, 0);
+                        var condition = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(hourlyColumns, 3) as Array?, j);
+                        cachedHourlyForecast.add([start == null ? null : start + j * 3600, condition]);
                     }
                 }
             }
@@ -2402,31 +2281,6 @@ class Segment34View extends WatchUi.WatchFace {
     public function scheduleImmediateCustomWeatherRefreshIfNeeded() as Void {
         if (!useOpenMeteoProvider()) { return; }
         weatherProviderScheduleImmediateRefreshIfNeeded();
-    }
-
-    (:WeatherCache)
-    hidden function buildForecastWeatherFromStored(entry) as ForecastWeather {
-        var forecast = new ForecastWeather();
-        if (entry == null) { return forecast; }
-
-        forecast.forecastTime = toNumberOrNull(entry.get("forecastTime"));
-        forecast.forecastHour = toNumberOrNull(entry.get("forecastHour"));
-        forecast.condition = toNumberOrNull(entry.get("condition"));
-        forecast.temperature = toNumberOrNull(entry.get("temperature"));
-        forecast.windBearing = toNumberOrNull(entry.get("windBearing"));
-        forecast.windSpeed = toFloatOrNull(entry.get("windSpeed"));
-        forecast.precipitationChance = toNumberOrNull(entry.get("precipitationChance"));
-        forecast.highTemperature = toNumberOrNull(entry.get("highTemperature"));
-        forecast.lowTemperature = toNumberOrNull(entry.get("lowTemperature"));
-        forecast.feelsLikeTemperature = toFloatOrNull(entry.get("feelsLikeTemperature"));
-        forecast.relativeHumidity = toNumberOrNull(entry.get("relativeHumidity"));
-
-        var uv = toFloatOrNull(entry.get("uvIndex"));
-        if (uv != null && uv >= 0.0f) {
-            forecast.uvIndex = uv;
-        }
-
-        return forecast;
     }
 
     (:WeatherCache)
@@ -2573,7 +2427,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (hf != null) {
             if (hf != null && hf.size() > 0) {
                 for (var i = 0; i < hf.size(); i++) {
-                    cachedHourlyForecast.add(buildForecastWeatherFromLive(hf[i]));
+                    cachedHourlyForecast.add([hf[i].forecastTime == null ? null : hf[i].forecastTime.value(), hf[i].condition]);
                 }
                 return;
             }
@@ -2583,7 +2437,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (hfData == null) { return; }
 
         for (var i = 0; i < hfData.size(); i++) {
-            cachedHourlyForecast.add(buildForecastWeatherFromStored(hfData[i]));
+            cachedHourlyForecast.add([hfData[i].get("forecastTime"), hfData[i].get("condition")]);
         }
     }
 
@@ -2600,7 +2454,7 @@ class Segment34View extends WatchUi.WatchFace {
         if (hf == null || hf.size() == 0) { return; }
 
         for (var i = 0; i < hf.size(); i++) {
-            cachedHourlyForecast.add(buildForecastWeatherFromLive(hf[i]));
+            cachedHourlyForecast.add([hf[i].forecastTime == null ? null : hf[i].forecastTime.value(), hf[i].condition]);
         }
     }
 
@@ -2770,7 +2624,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function shouldRefreshWeatherLine(complicationType as Number) as Boolean {
-        if (complicationType == 79) { return hasWeatherCycleForecastChanges(); }
+        if (complicationType == 79) { return cachedHazardWindows.size() > 1; }
         return false;
     }
 
@@ -2780,14 +2634,7 @@ class Segment34View extends WatchUi.WatchFace {
         }
 
         if (complicationType == 79) {
-            var cycleState = getWeatherCycleState(
-                getActiveWeatherCondition(),
-                getActiveForecastChange(),
-                getActiveForecastSecondChange(),
-                getActiveForecastThirdChange(),
-                getActiveForecastFourthChange()
-            );
-            return [cycleState[0], getWeatherPhaseColor(cycleState[1] as Number)];
+            return getWeatherCycleState();
         }
 
         return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
@@ -3286,14 +3133,8 @@ class Segment34View extends WatchUi.WatchFace {
             val = getCgmAge();
         } else if(complicationType == 73) { // Weather condition, Feels like
             val = formatWeatherConditionFeelsLike(getActiveWeatherCondition());
-        } else if(complicationType == 79) { // Weather condition, Feels like, Until when
-            val = formatWeatherCycleValue(
-                getActiveWeatherCondition(),
-                getActiveForecastChange(),
-                getActiveForecastSecondChange(),
-                getActiveForecastThirdChange(),
-                getActiveForecastFourthChange()
-            );
+        } else if(complicationType == 79) { // Hazard forecast, start and end hours
+            val = getWeatherCycleState()[0] as String;
         } else if(complicationType == 74) { // Feels like
             val = getFeelsLike(false);
         } else if(complicationType == 75) { // Hours to next sun event
@@ -3310,12 +3151,16 @@ class Segment34View extends WatchUi.WatchFace {
             var precip = getPrecip();
             var uv = getUVIndex();
             val = join([wind, precip, uv]);
-        } else if(complicationType == 78) { // Wind, Precipitation chance, UV Index, Humidity
+        } else if(complicationType == 78) { // Wind, daily feels-like range, UV Index, Humidity
             var wind = getWind();
-            var precip = getPrecip();
+            var range = getDailyFeelsLike();
             var uv = getUVIndex();
             var humidity = getHumidity();
-            val = join([wind, precip, uv, humidity]);
+            var fields = [wind, range, uv, humidity];
+            for (var i = 0; i < fields.size(); i++) {
+                if (fields[i].length() == 0) { continue; }
+                val += val.length() == 0 ? fields[i] : " " + fields[i];
+            }
         }
 
         return val;
@@ -3537,387 +3382,41 @@ class Segment34View extends WatchUi.WatchFace {
         return ((elapsed / weatherCycleIntervalS).toNumber() % phaseCount);
     }
 
-    hidden function blendWeatherColorChannel(baseChannel as Number, accentChannel as Number, accentPercent as Number) as Number {
-        return Math.round(((baseChannel * (100 - accentPercent)) + (accentChannel * accentPercent)) / 100.0).toNumber();
+    hidden function getForecastUtcOffset() as Number {
+        return forecastUtcOffsetSeconds != null ? forecastUtcOffsetSeconds as Number : System.getClockTime().timeZoneOffset;
     }
 
-    hidden function getWeatherPhaseColor(accentPercent as Number) as Graphics.ColorType {
-        var baseColor = themeColors[dataVal];
-        if (accentPercent <= 0) { return baseColor; }
-
-        var accentColor = themeColors[clock];
-        var red = blendWeatherColorChannel((baseColor >> 16) & 0xFF, (accentColor >> 16) & 0xFF, accentPercent);
-        var green = blendWeatherColorChannel((baseColor >> 8) & 0xFF, (accentColor >> 8) & 0xFF, accentPercent);
-        var blue = blendWeatherColorChannel(baseColor & 0xFF, accentColor & 0xFF, accentPercent);
-
-        return (red << 16) | (green << 8) | blue;
-    }
-
-    hidden function getWeatherCycleAccentPercent(phase as Number) as Number {
-        if (phase <= 0) { return 0; }
-        if (phase == 1) { return 40; }
-        if (phase == 2) { return 70; }
-        if (phase == 3) { return 80; }
-        return 90;
-    }
-
-    hidden function getWeatherCycleChangeCount(activeChange as Array?, activeSecondChange as Array?, activeThirdChange as Array?, activeFourthChange as Array?) as Number {
-        if (getForecastEventWeather(activeChange) == null) { return 0; }
-        if (getForecastEventWeather(activeSecondChange) == null) { return 1; }
-        if (getForecastEventWeather(activeThirdChange) == null) { return 2; }
-        if (getForecastEventWeather(activeFourthChange) == null) { return 3; }
-        return 4;
-    }
-
-    hidden function getWeatherCycleEventForPhase(phase as Number, activeChange as Array?, activeSecondChange as Array?, activeThirdChange as Array?, activeFourthChange as Array?) as Array? {
-        if (phase == 1) { return activeChange; }
-        if (phase == 2) { return activeSecondChange; }
-        if (phase == 3) { return activeThirdChange; }
-        if (phase == 4) { return activeFourthChange; }
-        return null;
-    }
-
-    hidden function getWeatherCycleState(activeWeather as ForecastWeather or Null, activeChange as Array?, activeSecondChange as Array?, activeThirdChange as Array?, activeFourthChange as Array?) as Array {
-        var changeCount = getWeatherCycleChangeCount(activeChange, activeSecondChange, activeThirdChange, activeFourthChange);
-        if (changeCount == 0) {
-            return [formatWeatherConditionFeelsLike(activeWeather), 0];
-        }
-
-        // Current conditions are the first phase when available, followed by
-        // every retained forecast event. The current phase points to the first
-        // event's start. Forecast-only fallback data still starts at event one.
-        var hasCurrentWeather = activeWeather != null && activeWeather.condition != null;
-        var phase = getWeatherPhase(hasCurrentWeather ? changeCount + 1 : changeCount);
-        if (hasCurrentWeather && phase == 0) {
-            return [
-                formatWeatherConditionFeelsLike(activeWeather) + formatForecastPointer(getForecastEventPointer(activeChange, 1)),
-                getWeatherCycleAccentPercent(phase)
-            ];
-        }
-
-        var forecastPhase = hasCurrentWeather ? phase : phase + 1;
-        var event = getWeatherCycleEventForPhase(forecastPhase, activeChange, activeSecondChange, activeThirdChange, activeFourthChange);
-        var displayWeather = getForecastEventWeather(event);
-        if (displayWeather == null) {
-            return [formatWeatherConditionFeelsLike(activeWeather), 0];
-        }
-
-        return [formatWeatherConditionFeelsLike(displayWeather) + formatForecastPointer(getForecastEventPointer(event, 2)), getWeatherCycleAccentPercent(forecastPhase)];
-    }
-
-    hidden function getWeatherCycleValue(activeWeather as ForecastWeather or Null, activeChange as Array?, activeSecondChange as Array?, activeThirdChange as Array?, activeFourthChange as Array?) as String {
-        return getWeatherCycleState(activeWeather, activeChange, activeSecondChange, activeThirdChange, activeFourthChange)[0] as String;
-    }
-
-    hidden function getWeatherGroup(condition as Number) as Number {
-        condition = normalizeWeatherCondition(condition, cachedWeatherResIds.size());
-        if (condition == 53) { return WEATHER_GROUP_UNKNOWN; }
-        if (condition == 0 || condition == 1 || condition == 2 || condition == 5 || condition == 20 || condition == 22 || condition == 23 || condition == 40 || condition == 52) { return 0; }
-        if (condition == 3 || condition == 11 || condition == 14 || condition == 15 || condition == 24 || condition == 25 || condition == 26 || condition == 27 || condition == 31 || condition == 45) { return 2; }
-        if (condition == 4 || condition == 7 || condition == 16 || condition == 17 || condition == 18 || condition == 19 || condition == 21 || condition == 34 || condition == 43 || condition == 44 || condition == 46 || condition == 47 || condition == 48 || condition == 49 || condition == 50 || condition == 51) { return 3; }
-        return 1;
-    }
-
-    hidden function getForecastEventHour(forecast as ForecastWeather or Null) as Number {
-        if (forecast == null) { return -1; }
-        var forecastHour = forecast.forecastHour;
-        if (forecastHour == null) { return -1; }
-        return forecastHour as Number;
-    }
-
-    hidden function buildForecastEvent(forecast as ForecastWeather or Null) as Array? {
-        if (forecast == null) { return null; }
-        return [buildMergedForecastWeather(forecast), getForecastEventHour(forecast), -1];
-    }
-
-    hidden function collectFeelsLikeExcursions(candidates as Array, startIdx as Number, endIdx as Number, group as Number, baseline as Float?, now as Number) as Void {
-        if (startIdx > endIdx) { return; }
-
-        var searchStart = startIdx;
-        var activeBaseline = baseline;
-        var prerequisiteCandidateIdx = -1;
-
-        if (activeBaseline == null) {
-            for (var baselineIdx = searchStart; baselineIdx <= endIdx; baselineIdx++) {
-                var baselineForecast = cachedHourlyForecast[baselineIdx];
-                var baselineTime = baselineForecast.forecastTime;
-                if (baselineTime != null && (baselineTime as Number) <= now) { continue; }
-                if (baselineForecast.condition == null) { return; }
-                if (getWeatherGroup(baselineForecast.condition as Number) != group) { return; }
-                if (baselineForecast.feelsLikeTemperature == null) { continue; }
-
-                activeBaseline = baselineForecast.feelsLikeTemperature as Float;
-                searchStart = baselineIdx + 1;
-                break;
-            }
-        }
-
-        while (activeBaseline != null && searchStart <= endIdx) {
-            var excursionForecast = null;
-            var excursionValue = null;
-            var excursionDelta = -1.0f;
-            var excursionIdx = -1;
-
-            for (var i = searchStart; i <= endIdx; i++) {
-                var forecast = cachedHourlyForecast[i];
-                var forecastTime = forecast.forecastTime;
-                if (forecastTime != null && (forecastTime as Number) <= now) { continue; }
-                if (forecast.condition == null) { break; }
-                if (getWeatherGroup(forecast.condition as Number) != group) { break; }
-                if (forecast.feelsLikeTemperature == null) { continue; }
-
-                var forecastFeelsLike = forecast.feelsLikeTemperature as Float;
-                var delta = forecastFeelsLike - (activeBaseline as Float);
-                if (delta < 0.0f) { delta = -delta; }
-                if (delta > excursionDelta) {
-                    excursionForecast = forecast;
-                    excursionValue = forecastFeelsLike;
-                    excursionDelta = delta;
-                    excursionIdx = i;
-                }
-            }
-
-            if (excursionForecast == null || excursionValue == null || excursionDelta < WEATHER_CYCLE_FEELS_LIKE_THRESHOLD_C) {
-                break;
-            }
-
-            var candidateIdx = candidates.size();
-            candidates.add([excursionForecast, excursionIdx, excursionDelta, false, prerequisiteCandidateIdx]);
-            prerequisiteCandidateIdx = candidateIdx;
-            activeBaseline = excursionValue as Float;
-            searchStart = excursionIdx + 1;
-        }
-    }
-
-    hidden function buildForecastTimeline(baseCondition as Number, baseFeelsLike as Float?, startIdx as Number, includeBaseEvent as Boolean) as Array {
-        var timeline = [null, null, null, null];
-        var conditionCandidates = [];
-        var feelsLikeCandidates = [];
-        var previousGroup = getWeatherGroup(baseCondition);
-        var segmentStartIdx = startIdx + 1;
-        var segmentBaseline = baseFeelsLike;
-        var finalForecastHour = -1;
-        var finalForecastIdx = -1;
-        var firstOmittedConditionHour = -1;
-        var now = Time.now().value();
-
-        if (includeBaseEvent && startIdx >= 0 && startIdx < cachedHourlyForecast.size()) {
-            conditionCandidates.add([cachedHourlyForecast[startIdx], startIdx, false]);
-        }
-
-        for (var i = startIdx + 1; i < cachedHourlyForecast.size(); i++) {
-            var forecast = cachedHourlyForecast[i];
-            var forecastTime = forecast.forecastTime;
-            if (forecastTime != null && (forecastTime as Number) <= now) { continue; }
-            var forecastHour = getForecastEventHour(forecast);
-            if (forecastHour >= 0) {
-                finalForecastHour = forecastHour;
-                finalForecastIdx = i;
-            }
-            var condition = forecast.condition;
-            if (condition == null) {
-                if (previousGroup >= 0 && previousGroup != WEATHER_GROUP_UNKNOWN) {
-                    collectFeelsLikeExcursions(feelsLikeCandidates, segmentStartIdx, i - 1, previousGroup, segmentBaseline, now);
-                }
-                // A missing condition is a hard boundary. The next known row
-                // establishes a new baseline rather than implying a transition.
-                previousGroup = -1;
-                segmentStartIdx = i + 1;
-                segmentBaseline = null;
-                continue;
-            }
-
-            var group = getWeatherGroup(condition as Number);
-            if (previousGroup < 0) {
-                // Do not promote an unknown row encountered inside a missing-data
-                // gap into a displayed state.
-                if (group != WEATHER_GROUP_UNKNOWN) {
-                    previousGroup = group;
-                    segmentStartIdx = i + 1;
-                    segmentBaseline = (forecast.feelsLikeTemperature == null) ? null : forecast.feelsLikeTemperature as Float;
-                } else {
-                    segmentStartIdx = i + 1;
-                    segmentBaseline = null;
-                }
-                continue;
-            }
-            if (group == previousGroup) { continue; }
-
-            if (previousGroup != WEATHER_GROUP_UNKNOWN) {
-                collectFeelsLikeExcursions(feelsLikeCandidates, segmentStartIdx, i - 1, previousGroup, segmentBaseline, now);
-            }
-            if (conditionCandidates.size() == weatherCycleMaxChanges) {
-                firstOmittedConditionHour = forecastHour;
-            }
-            conditionCandidates.add([forecast, i, false]);
-            previousGroup = group;
-            segmentStartIdx = i + 1;
-            segmentBaseline = (group == WEATHER_GROUP_UNKNOWN || forecast.feelsLikeTemperature == null)
-                ? null
-                : forecast.feelsLikeTemperature as Float;
-        }
-
-        if (previousGroup >= 0 && previousGroup != WEATHER_GROUP_UNKNOWN) {
-            collectFeelsLikeExcursions(
-                feelsLikeCandidates,
-                segmentStartIdx,
-                cachedHourlyForecast.size() - 1,
-                previousGroup,
-                segmentBaseline,
-                now
-            );
-        }
-
-        // Condition changes always take precedence over temperature-only
-        // excursions when the four display slots are contested.
-        var selectedCandidates = [];
-        var conditionLimit = conditionCandidates.size();
-        if (conditionLimit > weatherCycleMaxChanges) { conditionLimit = weatherCycleMaxChanges; }
-        for (var conditionIdx = 0; conditionIdx < conditionLimit; conditionIdx++) {
-            selectedCandidates.add(conditionCandidates[conditionIdx]);
-        }
-
-        while (selectedCandidates.size() < weatherCycleMaxChanges) {
-            var strongestIdx = -1;
-            var strongestDelta = -1.0f;
-            var availableSlots = weatherCycleMaxChanges - selectedCandidates.size();
-            for (var feelsLikeIdx = 0; feelsLikeIdx < feelsLikeCandidates.size(); feelsLikeIdx++) {
-                var feelsLikeCandidate = feelsLikeCandidates[feelsLikeIdx] as Array;
-                if (feelsLikeCandidate[3] as Boolean) { continue; }
-
-                var requiredSlots = 0;
-                var requiredIdx = feelsLikeIdx;
-                while (requiredIdx >= 0) {
-                    var requiredCandidate = feelsLikeCandidates[requiredIdx] as Array;
-                    if (!(requiredCandidate[3] as Boolean)) { requiredSlots = requiredSlots + 1; }
-                    requiredIdx = requiredCandidate[4] as Number;
-                }
-                if (requiredSlots > availableSlots) { continue; }
-
-                var candidateDelta = feelsLikeCandidate[2] as Float;
-                if (candidateDelta > strongestDelta) {
-                    strongestIdx = feelsLikeIdx;
-                    strongestDelta = candidateDelta;
-                }
-            }
-
-            if (strongestIdx < 0) { break; }
-
-            // Add the winning candidate's unselected prerequisites first so
-            // every retained delta is measured from a state that is displayed.
-            var requiredChain = [];
-            var selectedFeelsLikeIdx = strongestIdx;
-            while (selectedFeelsLikeIdx >= 0) {
-                var selectedFeelsLikeCandidate = feelsLikeCandidates[selectedFeelsLikeIdx] as Array;
-                if (!(selectedFeelsLikeCandidate[3] as Boolean)) {
-                    requiredChain.add(selectedFeelsLikeIdx);
-                }
-                selectedFeelsLikeIdx = selectedFeelsLikeCandidate[4] as Number;
-            }
-
-            for (var chainIdx = requiredChain.size() - 1; chainIdx >= 0; chainIdx--) {
-                var chainCandidateIdx = requiredChain[chainIdx] as Number;
-                var chainCandidate = feelsLikeCandidates[chainCandidateIdx] as Array;
-                chainCandidate[3] = true;
-                selectedCandidates.add([chainCandidate[0], chainCandidate[1], true]);
-            }
-        }
-
-        // The display order remains chronological after priority selection.
-        for (var sortEnd = selectedCandidates.size() - 1; sortEnd > 0; sortEnd--) {
-            for (var sortIdx = 0; sortIdx < sortEnd; sortIdx++) {
-                var leftCandidate = selectedCandidates[sortIdx] as Array;
-                var rightCandidate = selectedCandidates[sortIdx + 1] as Array;
-                if ((leftCandidate[1] as Number) > (rightCandidate[1] as Number)) {
-                    selectedCandidates[sortIdx] = rightCandidate;
-                    selectedCandidates[sortIdx + 1] = leftCandidate;
-                }
-            }
-        }
-
-        for (var selectedIdx = 0; selectedIdx < selectedCandidates.size(); selectedIdx++) {
-            var selectedCandidate = selectedCandidates[selectedIdx] as Array;
-            var selectedForecast = selectedCandidate[0] as ForecastWeather;
-            timeline[selectedIdx] = buildForecastEvent(selectedForecast);
-
-            // Every event describes the state until the next selected event,
-            // including temperature extrema within the same weather group.
-            if (selectedIdx > 0) {
-                var previousChange = timeline[selectedIdx - 1] as Array;
-                previousChange[2] = getForecastEventHour(selectedForecast);
-            }
-        }
-
-        if (selectedCandidates.size() > 0) {
-            var finalCandidate = selectedCandidates[selectedCandidates.size() - 1] as Array;
-            var finalChange = timeline[selectedCandidates.size() - 1] as Array;
-            var finalPointerHour = -1;
-            if (conditionCandidates.size() > weatherCycleMaxChanges) {
-                finalPointerHour = firstOmittedConditionHour;
-            } else if ((finalCandidate[1] as Number) < finalForecastIdx) {
-                finalPointerHour = finalForecastHour;
-            }
-            finalChange[2] = finalPointerHour;
-        }
-
-        return timeline;
+    hidden function getWeatherCycleState() as Array {
+        if (cachedHazardWindows.size() == 0) { return ["", themeColors[dataVal]]; }
+        var event = cachedHazardWindows[getWeatherPhase(cachedHazardWindows.size())] as Array;
+        var family = event[0] as Number;
+        var label = family == 6 ? Application.loadResource(Rez.Strings.WEATHER_STORM)
+            : Application.loadResource(cachedWeatherResIds[family]);
+        var offset = getForecastUtcOffset();
+        return [label + " " + weatherFormatHazardHours(event[1] as Number, event[2] as Number, offset),
+            weatherHazardDayColor(event[1] as Number, Time.now().value(), offset)];
     }
 
     hidden function updateForecastChanges() as Void {
-        cachedForecastChange = null;
-        cachedForecastSecondChange = null;
-        cachedForecastThirdChange = null;
-        cachedForecastFourthChange = null;
+        cachedHazardWindows = weatherBuildHazardWindows(cachedHourlyForecast, Time.now().value());
+    }
 
-        if (cachedHourlyForecast.size() == 0) { return; }
+    hidden function getDailyFeelsLike() as String {
+        var activeWeather = getActiveWeatherCondition();
+        if (!useOpenMeteoProvider() || activeWeather == null || !(activeWeather has :dailyFeelsLike)) { return ""; }
+        return weatherFormatDailyFeelsLike(activeWeather.dailyFeelsLike, Time.now().value(), getForecastUtcOffset(), cachedTempUnit);
+    }
 
-        var timeline = null;
-        if (weatherCondition != null && weatherCondition.condition != null) {
-            var baseFeelsLike = (weatherCondition.feelsLikeTemperature == null) ? null : weatherCondition.feelsLikeTemperature as Float;
-            timeline = buildForecastTimeline(weatherCondition.condition as Number, baseFeelsLike, -1, false);
-        } else {
-            // When current conditions cannot establish a baseline, use the first
-            // usable future row and display it as the first forecast event.
-            var now = Time.now().value();
-            for (var i = 0; i < cachedHourlyForecast.size(); i++) {
-                var forecast = cachedHourlyForecast[i];
-                var forecastTime = forecast.forecastTime;
-                if (forecastTime != null && (forecastTime as Number) <= now) { continue; }
-                if (forecast.condition == null) { continue; }
-                if (getWeatherGroup(forecast.condition as Number) == WEATHER_GROUP_UNKNOWN) { continue; }
-
-                var baseFeelsLike = (forecast.feelsLikeTemperature == null) ? null : forecast.feelsLikeTemperature as Float;
-                timeline = buildForecastTimeline(forecast.condition as Number, baseFeelsLike, i, true);
-                break;
-            }
+    hidden function drawWeatherLine(dc as Dc, y as Number, value as String, color as Graphics.ColorType) as Void {
+        var width = screenWidth - 2 * marginX;
+        if (screenWidth == screenHeight) {
+            var dy = y + dc.getFontHeight(fontSmallData) / 2 - centerY;
+            width = 2 * Math.sqrt(centerX * centerX - dy * dy).toNumber() - 2 * marginX;
         }
-
-        if (timeline == null) { return; }
-        cachedForecastChange = timeline[0];
-        cachedForecastSecondChange = timeline[1];
-        cachedForecastThirdChange = timeline[2];
-        cachedForecastFourthChange = timeline[3];
-    }
-
-    hidden function hasWeatherCycleForecastChanges() as Boolean {
-        return getForecastEventWeather(getActiveForecastChange()) != null;
-    }
-
-    hidden function formatForecastPointer(hour as Number?) as String {
-        if (hour == null || hour < 0) { return ""; }
-        return "  c" + formatHour(hour) + "H";
-    }
-
-    hidden function getForecastEventWeather(event as Array?) as ForecastWeather or Null {
-        if (event == null || event.size() == 0) { return null; }
-        if (event[0] == null) { return null; }
-        return event[0] as ForecastWeather;
-    }
-
-    hidden function getForecastEventPointer(event as Array?, pointerIndex as Number) as Number? {
-        if (event == null || event.size() <= pointerIndex) { return null; }
-        if (event[pointerIndex] == null) { return null; }
-        return event[pointerIndex] as Number;
+        var font = dc.getTextWidthInPixels(value, fontSmallData) <= width ? fontSmallData : fontWeatherCompact;
+        var offsetY = (dc.getFontHeight(fontSmallData) - dc.getFontHeight(font)) / 2;
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(centerX, y + offsetY, font, value, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     hidden function formatWeatherConditionForWeather(activeWeather as ForecastWeather or Null, includePrecipitation as Boolean) as String {
@@ -3957,10 +3456,6 @@ class Segment34View extends WatchUi.WatchFace {
             formatWeatherConditionForWeather(activeWeather, false),
             formatFeelsLikeForWeather(activeWeather, false)
         ]);
-    }
-
-    hidden function formatWeatherCycleValue(activeWeather as ForecastWeather or Null, activeChange as Array?, activeSecondChange as Array?, activeThirdChange as Array?, activeFourthChange as Array?) as String {
-        return getWeatherCycleValue(activeWeather, activeChange, activeSecondChange, activeThirdChange, activeFourthChange);
     }
 
     hidden function getWeatherCondition(includePrecipitation as Boolean) as String {
@@ -4569,6 +4064,7 @@ class ForecastWeather {
     public var uvIndex as Lang.Float or Null;
     public var forecastTime as Lang.Number or Null;
     public var forecastHour as Lang.Number or Null;
+    public var dailyFeelsLike as Array?;
 }
 
 (:WeatherCache)
