@@ -64,7 +64,7 @@ https://github.com/Rubilmax/Segment34Plus/blob/main/FAQ.md
 
 `Open-Meteo` uses Open-Meteo's `/v1/forecast` endpoint with automatic best-model selection for the current location. It keeps the existing weather fields and forecast cycling while letting Open-Meteo choose the most suitable forecast model behind the scenes.
 
-The Open-Meteo provider uses automatic location only. The watch face resolves the current position from the device when available, then falls back to Garmin Weather's current observation location when that is available. If a refresh fails for any reason, the last saved Open-Meteo forecast remains on screen until a newer refresh succeeds or the normal 18-hour cache window expires.
+The Open-Meteo provider uses automatic location only. The watch face resolves the current position from the device when available, then falls back to Garmin Weather's current observation location when that is available. Available Garmin Weather fills in while the first Open-Meteo refresh is pending. If a refresh fails, the last saved Open-Meteo forecast remains on screen until a newer refresh succeeds or the 18-hour cache window expires.
 
 Attribution: weather data for the custom provider is delivered by Open-Meteo using its automatic best-model selection across supported forecast models.
 
@@ -76,11 +76,13 @@ The cycling forecast shows rain/drizzle, storms, snow/mix, ice, hail, fog, wind 
 
 Each hazard window appears for four seconds as `RAIN 10-15H`, with 24-hour local times without leading zeros. Overnight windows stay together, such as `RAIN 22-3H`. The starting day sets the color: white today, light peach tomorrow, peach the following day, then peach-orange. The line is blank when no hazards are forecast.
 
-Open-Meteo retains up to 72 rolling forecast hours, or 36 hours on watches with a 32KB background heap or a 96KB watchface budget. Background payload limits can shorten this further. Garmin Weather uses the hourly forecast it supplies. Only the first eight Open-Meteo hours retain detailed values; the full window retains weather conditions. Wind hazards rely on condition codes, without additional speed thresholds.
+Open-Meteo retains up to 72 rolling forecast hours on devices with larger memory budgets, including the fēnix 8 and fēnix 9. These devices retain detailed values for the first eight hours. Watches with a 32 KB background heap or a 96 KB watch face budget retain up to 36 hours of weather conditions and the same current and daily fields. Background payload limits can shorten either window. Garmin Weather uses the hourly forecast it supplies. Wind hazards rely on condition codes, without additional speed thresholds.
 
 ## Development checks
 
-Run `make test` to compile and run weather regression tests in the Connect IQ simulator. `make sim` builds the default fēnix 8 47mm simulator executable.
+Run `make test DEVICE=fr265` or `make test DEVICE=fenix6` for the weather and startup regression tests in the Connect IQ simulator. `make sim` builds the fēnix 8 47mm simulator executable by default. `make iq` exports the signed package. These two targets use Node.js and the pinned Monkey C optimizer so release builds fit older watches. Use Connect IQ SDK 9.3 or later and install the manifest’s device definitions in SDK Manager.
+
+Device profiles live in `monkey.jungle`. A profile that excludes `WeatherCache` uses the compact forecast and skips the persistent Garmin Weather cache. A profile that excludes `NoWeatherCache` enables that cache and uses the larger Open-Meteo forecast when the device reports enough background memory. On MIP watches with a tight foreground heap, the clock loads the original glyphs individually so both clock styles fit.
 
 ## IQ Store Listing
 

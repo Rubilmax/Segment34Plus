@@ -20,7 +20,7 @@ function hazardFamilies(logger as Test.Logger) as Boolean {
 
 (:test)
 function hazardWindowsBridgeOneHour(logger as Test.Logger) as Boolean {
-    var windows = weatherBuildHazardWindows([[0, 14], [3600, 3], [7200, 0], [10800, 15], [14400, 6], [18000, 12]], 0);
+    var windows = weatherBuildHazardWindows([[0, 14], [3600, 3], [7200, 0], [10800, 15], [14400, 6], [18000, 12]], 0, null);
     Test.assertEqual(windows.size(), 2);
     Test.assertEqual(windows[0][0], 3);
     Test.assertEqual(windows[0][1], 0);
@@ -28,21 +28,25 @@ function hazardWindowsBridgeOneHour(logger as Test.Logger) as Boolean {
     Test.assertEqual(windows[1][0], 6);
     Test.assertEqual(windows[1][1], 14400);
     Test.assertEqual(windows[1][2], 21600);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 0], [7200, 20], [10800, 3]], 0).size(), 2);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 0], [7200, 20], [10800, 3]], 0, null).size(), 2);
     return true;
 }
 
 (:test)
 function hazardWindowsRespectMissingData(logger as Test.Logger) as Boolean {
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, null], [7200, 3]], 0).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 53], [7200, 3]], 0).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [null, 0], [7200, 3]], 0).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [7200, 3]], 0).size(), 2);
-    var current = weatherBuildHazardWindows([[0, 3], [3600, 3], [7200, 3]], 5400);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, null], [7200, 3]], 0, null).size(), 2);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 53], [7200, 3]], 0, null).size(), 2);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [null, 0], [7200, 3]], 0, null).size(), 2);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [7200, 3]], 0, null).size(), 2);
+    var current = weatherBuildHazardWindows([[0, 3], [3600, 3], [7200, 3]], 5400, null);
     Test.assertEqual(current[0][1], 3600);
     Test.assertEqual(current[0][2], 10800);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 0], [3600, 20]], 0).size(), 0);
-    Test.assertEqual(weatherBuildHazardWindows([], 0).size(), 0);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 0], [3600, 20]], 0, null).size(), 0);
+    Test.assertEqual(weatherBuildHazardWindows([], 0, null).size(), 0);
+    var packed = weatherBuildHazardWindows([3, null, 3, 0, 20, 3], 3600, 3600);
+    Test.assertEqual(packed.size(), 3);
+    Test.assertEqual(packed[0][1], 3600);
+    Test.assertEqual(packed[2][2], 25200);
     return true;
 }
 
@@ -102,6 +106,11 @@ function weatherCompactColumns(logger as Test.Logger) as Boolean {
     Test.assertEqual((columns[4] as Array).size(), 0);
     Test.assertEqual((columns[3] as Array)[0], 14);
     Test.assertEqual((columns[5] as Array)[3], 4.0f);
+    var compact = weatherProviderBuildHourlyColumns(hourly, [0, 3600, 7200, 10800], 0, 36);
+    Test.assertEqual(compact[1], 4);
+    Test.assertEqual(compact[2], 0);
+    Test.assertEqual((compact[3] as Array)[3], (columns[3] as Array)[3]);
+    Test.assertEqual(compact.size(), 5);
     var gap = weatherProviderBuildHourlyColumns(hourly, [0, 3600, 10800, 14400], 0, 72);
     Test.assert((gap[3] as Array)[2] == null);
     Test.assertEqual((gap[3] as Array)[3], 0);
@@ -165,10 +174,12 @@ function weatherViewRendersForecast(logger as Test.Logger) as Boolean {
         });
         var view = new Segment34View();
         var settings = System.getDeviceSettings();
-        var options = {:width => settings.screenWidth, :height => settings.screenHeight};
+        // A short native-color buffer fits older watch heaps and supports anti-aliased fonts.
+        var options = {:width => settings.screenWidth, :height => 48};
         var bitmap = Graphics has :createBufferedBitmap ? Graphics.createBufferedBitmap(options).get()
             : new Graphics.BufferedBitmap(options);
         view.onShow();
+        view.onUpdate(bitmap.getDc());
         view.onUpdate(bitmap.getDc());
         view.onHide();
         logger.debug("Forecast rendered; free memory: " + System.getSystemStats().freeMemory);
@@ -180,5 +191,43 @@ function weatherViewRendersForecast(logger as Test.Logger) as Boolean {
             Application.Properties.setValue(savedKeys[j] as String, savedProperties[savedKeys[j]]);
         }
     }
+    return true;
+}
+
+(:test)
+function weatherColdStartAndReinstall(logger as Test.Logger) as Boolean {
+    var savedSnapshot = Application.Storage.getValue(WEATHER_SNAPSHOT_KEY);
+    var settings = System.getDeviceSettings();
+    var options = {:width => settings.screenWidth, :height => 48};
+    var bitmap = Graphics has :createBufferedBitmap ? Graphics.createBufferedBitmap(options).get()
+        : new Graphics.BufferedBitmap(options);
+    try {
+        for (var install = 0; install < 2; install++) {
+            weatherProviderDeleteSnapshot();
+            var view = new Segment34View();
+            var dc = bitmap.getDc();
+            view.onLayout(dc);
+            view.onShow();
+            view.onUpdate(dc);
+            view.onUpdate(dc);
+            view.onEnterSleep();
+            view.onUpdate(dc);
+            view.onExitSleep();
+            view.onUpdate(dc);
+            view.onHide();
+        }
+    } finally {
+        if (savedSnapshot != null) {
+            Application.Storage.setValue(WEATHER_SNAPSHOT_KEY, savedSnapshot);
+        }
+    }
+
+    Test.assertEqual(weatherProviderGetPropertyOrDefault("missingTestProperty", 24), 24);
+    Test.assert(weatherProviderNormalizeLocation([91.0f, 0.0f]) == null);
+    Test.assert(weatherProviderNormalizeLocation([null, 0.0f]) == null);
+    Test.assert(weatherProviderNormalizeLocation([90.0f, 180.0f]) != null);
+    Test.assert(weatherProviderIsSnapshotFresh(100, 100));
+    Test.assert(!weatherProviderIsSnapshotFresh(100, 99));
+    Test.assert(!weatherProviderIsSnapshotFresh(100, 100 + WEATHER_PROVIDER_STALE_AFTER_S));
     return true;
 }

@@ -405,7 +405,7 @@
     <string id="settings_week_number_offset" scope="settings">Wochennummer Offset (0 = normal)</string>
     <string id="settings_show_clock_background" scope="settings">Zeige Uhr-Hintergrund</string>
     <string id="settings_show_data_fields_background" scope="settings">Zeige Datenfeld-Hintergrund</string>
-    <string id="settings_show_notification_count" scope="settings">Zeige Benachrichtigungsanzahl</string>
+    <string id="settings_notification_field_shows" scope="settings">Benachrichtigungsfeld zeigt</string>
     <string id="settings_show_stress_body_battery" scope="settings">Zeige Stress (orange) u. Body Batt. (blau) Balken</string>
     <string id="settings_left_bar_shows" scope="settings">Linker Balken zeigt</string>
     <string id="settings_right_bar_shows" scope="settings">Rechter Balken zeigt</string>

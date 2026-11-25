@@ -19,20 +19,19 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
     }
 
     function onTemporalEvent() as Void {
-        if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
-            weatherProviderDeleteScheduledRefresh();
-            exitBackgroundPayload(null);
-            return;
-        }
-
-        weatherProviderScheduleNextRefresh();
-
+        // The foreground owns registration because older watches can fail to read settings here.
         var now = Time.now().value();
         var resolvedLocation = resolveWeatherLocation();
         var location = resolvedLocation.get("location") as Array?;
         var locationSource = resolvedLocation.get("source") as String?;
 
         if (location == null) {
+            // Give a new install one quick retry while the watch acquires a location.
+            var registration = Background.getTemporalEventRegisteredTime();
+            var interval = registration instanceof Time.Duration
+                ? WEATHER_PROVIDER_FETCH_INTERVAL_S
+                : WEATHER_PROVIDER_IMMEDIATE_GUARD_S;
+            weatherProviderScheduleNextRefresh(interval);
             exitBackgroundPayload(weatherProviderBuildBackgroundFailurePayload(
                 WEATHER_PROVIDER_BACKGROUND_RESULT_LOCATION_UNAVAILABLE,
                 now,
@@ -42,8 +41,9 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             return;
         }
 
+        weatherProviderScheduleNextRefresh(WEATHER_PROVIDER_FETCH_INTERVAL_S);
+
         var requestContext = {
-            "fetchedAt" => now,
             "location" => location,
             "locationSource" => locationSource,
             "lastAttemptAt" => now
@@ -83,7 +83,6 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
         pendingRequestContext = null;
         if (responseContext == null) {
             responseContext = {
-                "fetchedAt" => Time.now().value(),
                 "location" => null,
                 "locationSource" => WEATHER_PROVIDER_LOCATION_SOURCE_UNAVAILABLE,
                 "lastAttemptAt" => Time.now().value()
@@ -95,20 +94,22 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
         if (lastAttemptAt == null) { lastAttemptAt = Time.now().value(); }
 
         if (responseCode == 200 && data instanceof Dictionary) {
-            var snapshot = weatherProviderBuildSnapshotFromOpenMeteoResponse(
-                data as Dictionary,
-                location,
-                weatherProviderToNumber(responseContext.get("fetchedAt")) as Number
-            );
-            if (snapshot != null) {
-                if (exitBackgroundSuccessPayloadWithHourlyFallbacks(
+            try {
+                var snapshot = weatherProviderBuildSnapshotFromOpenMeteoResponse(
+                    data as Dictionary,
+                    location,
+                    lastAttemptAt
+                );
+                if (snapshot != null && exitBackgroundSuccessPayloadWithHourlyFallbacks(
                     snapshot,
-                    lastAttemptAt as Number,
+                    lastAttemptAt,
                     Time.now().value(),
                     locationSource
                 )) {
                     return;
                 }
+            } catch (e) {
+                System.println("Open-Meteo response decode failure: " + e);
             }
         }
 
@@ -216,7 +217,7 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
             } catch(e) {}
         }
 
-        if (Weather has :getCurrentConditions) {
+        if (Toybox has :Weather && Weather has :getCurrentConditions) {
             try {
                 var currentConditions = Weather.getCurrentConditions();
                 if (currentConditions != null && currentConditions.observationLocationPosition != null) {

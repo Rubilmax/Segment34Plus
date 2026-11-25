@@ -23,21 +23,26 @@ function hrIsHeartRateComplication(complicationType as Number) as Boolean {
     return complicationType == 10;
 }
 
-function hrReadCurrentHeartRateSample() as Number? {
-    var sample = null;
+function hrReadActivityHeartRateSample() as Number? {
     try {
-        var activityInfo = Activity.getActivityInfo();
-        if (activityInfo != null && activityInfo has :currentHeartRate) {
-            sample = activityInfo.currentHeartRate;
+        var info = Activity.getActivityInfo();
+        if (info != null && info has :currentHeartRate) {
+            var sample = info.currentHeartRate;
+            if (sample != null && sample > 0) { return sample; }
         }
-    } catch(e) {}
+    } catch (e) {}
+    return null;
+}
 
+function hrReadCurrentHeartRateSample() as Number? {
+    var sample = hrReadActivityHeartRateSample();
     if (sample == null && (ActivityMonitor has :getHeartRateHistory)) {
         try {
             var history = ActivityMonitor.getHeartRateHistory(1, true);
             if (history != null) {
                 var hist = history.next();
-                if (hist != null && hist has :heartRate && hist.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
+                if (hist != null && hist has :heartRate && hist.heartRate != null
+                    && hist.heartRate > 0 && hist.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
                     sample = hist.heartRate;
                 }
             }
@@ -49,7 +54,8 @@ function hrReadCurrentHeartRateSample() as Number? {
 
 function hrGetCurrentHeartRateSample() as Number? {
     var nowMs = System.getTimer();
-    if (hrCachedSampleValid && (nowMs - hrCachedSampleTimestampMs) < HR_SAMPLE_CACHE_INTERVAL_MS) {
+    var sampleAge = nowMs - hrCachedSampleTimestampMs;
+    if (hrCachedSampleValid && sampleAge >= 0 && sampleAge < HR_SAMPLE_CACHE_INTERVAL_MS) {
         return hrCachedSample;
     }
 
@@ -158,8 +164,10 @@ function hrGetDisplayValueColor(complicationType as Number, defaultColor as Grap
         return defaultColor;
     }
 
+    var sample = hrGetCurrentHeartRateSample();
+    if (sample == null) { return defaultColor; }
     var maxHeartRate = hrGetMaxHeartRate();
-    var accentPercent = hrGetFadePercent(hrGetCurrentHeartRateSample(), hrGetFadeStartBpm(maxHeartRate), maxHeartRate);
+    var accentPercent = hrGetFadePercent(sample, hrGetFadeStartBpm(maxHeartRate), maxHeartRate);
     if (accentPercent <= 0) {
         return defaultColor;
     }

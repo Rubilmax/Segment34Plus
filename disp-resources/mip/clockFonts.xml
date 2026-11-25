@@ -1,0 +1,27 @@
+<fonts>
+    <!-- Keep the same glyphs available individually when a full font exceeds the watch heap. -->
+    <font id="segment0" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="0" />
+    <font id="segment1" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="1" />
+    <font id="segment2" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="2" />
+    <font id="segment3" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="3" />
+    <font id="segment4" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="4" />
+    <font id="segment5" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="5" />
+    <font id="segment6" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="6" />
+    <font id="segment7" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="7" />
+    <font id="segment8" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="8" />
+    <font id="segment9" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="9" />
+    <font id="segmentBackground" filename="../../resources/fonts/segments80.fnt" antialias="false" filter="#" />
+    <font id="segmentColon" filename="../../resources/fonts/segments80.fnt" antialias="false" filter=":" />
+    <font id="segmentAlt0" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="0" />
+    <font id="segmentAlt1" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="1" />
+    <font id="segmentAlt2" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="2" />
+    <font id="segmentAlt3" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="3" />
+    <font id="segmentAlt4" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="4" />
+    <font id="segmentAlt5" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="5" />
+    <font id="segmentAlt6" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="6" />
+    <font id="segmentAlt7" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="7" />
+    <font id="segmentAlt8" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="8" />
+    <font id="segmentAlt9" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="9" />
+    <font id="segmentAltBackground" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter="#" />
+    <font id="segmentAltColon" filename="../../resources/fonts/segments80_2.fnt" antialias="false" filter=":" />
+</fonts>

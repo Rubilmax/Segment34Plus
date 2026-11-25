@@ -18,15 +18,15 @@ function weatherHazardFamily(condition as Number?) as Number {
     return 0;
 }
 
-// Rows: [UTC timestamp, condition]. Windows: [family, inclusive start, exclusive end].
-function weatherBuildHazardWindows(rows as Array, now as Number) as Array {
+// Garmin and older snapshots use [UTC timestamp, condition] rows. Compact snapshots
+// keep only the condition column and an hourly start time. Both yield the same windows.
+function weatherBuildHazardWindows(hours as Array, now as Number, start as Number?) as Array {
     var windows = [];
     var active = null as Array?;
     var previousTime = null as Number?;
     var standardHours = 0;
-    for (var i = 0; i < rows.size(); i++) {
-        var row = rows[i] as Array;
-        var time = row[0] as Number?;
+    for (var i = 0; i < hours.size(); i++) {
+        var time = start == null ? (hours[i] as Array)[0] as Number? : start + i * 3600;
         if (time == null) {
             active = null;
             previousTime = null;
@@ -38,7 +38,8 @@ function weatherBuildHazardWindows(rows as Array, now as Number) as Array {
             standardHours = 0;
         }
         previousTime = time;
-        var family = weatherHazardFamily(row[1] as Number?);
+        var condition = start == null ? (hours[i] as Array)[1] as Number? : weatherProviderGetArrayNumber(hours, i);
+        var family = weatherHazardFamily(condition);
         if (family > 0) {
             if (active != null && active[0] == family && standardHours <= 1) {
                 active[2] = time + 3600;

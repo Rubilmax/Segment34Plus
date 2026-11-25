@@ -1,6 +1,7 @@
 project.manifest = manifest.xml
 project.typecheck = 2
 project.optimization = 3p
+base.sourcePath = source
 
 # =============================================================================
 # EXPLICIT DEVICE ENTRIES
@@ -25,6 +26,21 @@ descentmk2s.resourcePath = resources;disp-resources/mip;size-resources/s240
 
 fr245.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
 fr245.resourcePath = resources;disp-resources/mip;size-resources/s240
+
+vivoactive3m.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
+vivoactive3m.resourcePath = resources;disp-resources/mip;size-resources/s240
+
+fr645m.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
+fr645m.resourcePath = resources;disp-resources/mip;size-resources/s240
+
+fenix5xplus.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
+fenix5xplus.resourcePath = resources;disp-resources/mip;size-resources/s240
+
+fenix5splus.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
+fenix5splus.resourcePath = resources;disp-resources/mip;size-resources/s240
+
+fenix5plus.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
+fenix5plus.resourcePath = resources;disp-resources/mip;size-resources/s240
 
 fr245m.excludeAnnotations = Round260;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;WeatherCache;Square
 fr245m.resourcePath = resources;disp-resources/mip;size-resources/s240
@@ -106,6 +122,9 @@ fenix7pronowifi.resourcePath = resources;disp-resources/mip;size-resources/s260
 fenix8solar47mm.excludeAnnotations = Round240;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
 fenix8solar47mm.resourcePath = resources;disp-resources/mip;size-resources/s260
 
+fenix9prosolar47mm.excludeAnnotations = Round240;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
+fenix9prosolar47mm.resourcePath = resources;disp-resources/mip;size-resources/s260
+
 # -----------------------------------------------------------------------------
 # 280x280 MIP DEVICES
 # -----------------------------------------------------------------------------
@@ -134,12 +153,18 @@ fenix8solar51mm.resourcePath = resources;disp-resources/mip;size-resources/s280
 enduro3.excludeAnnotations = Round240;Round260;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
 enduro3.resourcePath = resources;disp-resources/mip;size-resources/s280
 
+fenix9prosolar51mm.excludeAnnotations = Round240;Round260;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
+fenix9prosolar51mm.resourcePath = resources;disp-resources/mip;size-resources/s280
+
+enduro4.excludeAnnotations = Round240;Round260;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
+enduro4.resourcePath = resources;disp-resources/mip;size-resources/s280
+
 # -----------------------------------------------------------------------------
-# 260x260 AMOLED DEVICES
+# 260x260 MIP TOUCH DEVICES
 # -----------------------------------------------------------------------------
 
-vivoactive4.excludeAnnotations = Round240;Round280;Round360;Round390;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
-vivoactive4.resourcePath = resources;disp-resources/amoled;size-resources/s260
+vivoactive4.excludeAnnotations = Round240;Round280;Round360;Round390;Round416;Round454;AMOLED;InstinctCrossover;NoWeatherCache;Square
+vivoactive4.resourcePath = resources;disp-resources/mip;size-resources/s260
 
 # -----------------------------------------------------------------------------
 # 360x360 AMOLED DEVICES
@@ -158,11 +183,26 @@ fr265s.resourcePath = resources;disp-resources/amoled;size-resources/s360
 venu.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 venu.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
+venud.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+venud.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
 vivoactive5.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 vivoactive5.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
 fr165.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 fr165.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+fr70.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+fr70.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+fr170m.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+fr170m.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+fr170.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+fr170.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+d2air.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+d2air.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
 fr165m.excludeAnnotations = Round240;Round260;Round280;Round360;Round416;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 fr165m.resourcePath = resources;disp-resources/amoled;size-resources/s390
@@ -231,6 +271,15 @@ fr265.resourcePath = resources;disp-resources/amoled;size-resources/s390
 fenix843mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 fenix843mm.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
+fenix9pro43mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+fenix9pro43mm.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+fenix943mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+fenix943mm.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
+approachs7243mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
+approachs7243mm.resourcePath = resources;disp-resources/amoled;size-resources/s390
+
 fenixe.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round454;MIP;InstinctCrossover;NoWeatherCache;Square
 fenixe.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
@@ -238,7 +287,7 @@ instinct3amoled50mm.excludeAnnotations = Round240;Round260;Round280;Round360;Rou
 instinct3amoled50mm.resourcePath = resources;disp-resources/amoled;size-resources/s390
 
 # -----------------------------------------------------------------------------
-# 454x454 AMOLED DEVICES
+# 454x454 and 466x466 AMOLED DEVICES
 # -----------------------------------------------------------------------------
 
 venu3.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
@@ -249,6 +298,24 @@ epix2pro51mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
 
 fenix847mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
 fenix847mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+marq3.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+marq3.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+fenix9pro51mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+fenix9pro51mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+fenix9pro47mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+fenix9pro47mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+fenix947mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+fenix947mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+d2mach2pro.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+d2mach2pro.resourcePath = resources;disp-resources/amoled;size-resources/s454
+
+approachs7247mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
+approachs7247mm.resourcePath = resources;disp-resources/amoled;size-resources/s454
 
 fenix8pro47mm.excludeAnnotations = Round240;Round260;Round280;Round360;Round390;Round416;MIP;InstinctCrossover;NoWeatherCache;Square
 fenix8pro47mm.resourcePath = resources;disp-resources/amoled;size-resources/s454

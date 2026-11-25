@@ -1,5 +1,4 @@
 import Toybox.Application;
-import Toybox.Background;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
@@ -14,18 +13,6 @@ class Segment34App extends Application.AppBase {
         AppBase.initialize();
     }
 
-    // onStart() is called on application start up
-    function onStart(state as Dictionary?) as Void {
-        // Foreground startup continues through getInitialView() -> onSettingsChanged(),
-        // which schedules weather refresh after the view and properties are ready.
-        // Avoid doing that work here; on fenix847mm firmware 21.39 this early path
-        // can crash before settings-backed symbols are stable.
-    }
-
-    // onStop() is called when your application is exiting
-    function onStop(state as Dictionary?) as Void {
-    }
-
     // Return the initial view of your application here
     // AppBase is shared with the background process, but this callback is
     // foreground-only and intentionally wires up UI classes.
@@ -33,7 +20,6 @@ class Segment34App extends Application.AppBase {
     function getInitialView() {
         var view = new Segment34View();
         mView = view;
-        onSettingsChanged();
         var delegate = new Segment34Delegate(view);
         return [view, delegate];
     }
@@ -46,9 +32,9 @@ class Segment34App extends Application.AppBase {
     function onSettingsChanged() as Void {
         if (mView != null) {
             mView.onSettingsChanged();
+        } else if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
+            weatherProviderDeleteScheduledRefresh();
         }
-        scheduleWeatherRefresh();
-        WatchUi.requestUpdate();
     }
 
     (:typecheck(disableBackgroundCheck))
@@ -61,15 +47,9 @@ class Segment34App extends Application.AppBase {
 
     (:typecheck(disableBackgroundCheck))
     function onBackgroundData(data) as Void {
-        if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) {
-            weatherProviderDeleteScheduledRefresh();
-            weatherProviderDeleteSnapshot();
-            weatherProviderDeleteState();
-            return;
-        }
-
         var applied = false;
         try {
+            if (!weatherProviderUsesOpenMeteo() || !weatherProviderIsWeatherRequired()) { return; }
             applied = weatherProviderApplyBackgroundPayload(data);
         } catch(e) {
             System.println("Open-Meteo background payload apply failure: " + e);
@@ -84,32 +64,6 @@ class Segment34App extends Application.AppBase {
         }
         WatchUi.requestUpdate();
     }
-
-    (:typecheck(disableBackgroundCheck))
-    hidden function scheduleWeatherRefresh() as Void {
-        weatherProviderDeleteLegacyLocationData();
-
-        if (!weatherProviderUsesOpenMeteo()) {
-            weatherProviderDeleteScheduledRefresh();
-            weatherProviderDeleteSnapshot();
-            weatherProviderDeleteState();
-            return;
-        }
-
-        if (!weatherProviderIsWeatherRequired()) {
-            weatherProviderDeleteScheduledRefresh();
-            weatherProviderDeleteSnapshot();
-            weatherProviderDeleteState();
-            return;
-        }
-
-        if (mView != null) {
-            mView.scheduleImmediateCustomWeatherRefreshIfNeeded();
-        } else {
-            weatherProviderScheduleImmediateRefreshIfNeeded();
-        }
-    }
-
 }
 
 function getApp() as Segment34App {

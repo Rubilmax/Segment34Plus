@@ -38,14 +38,15 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden var fontMoon as WatchUi.FontResource;
     hidden var fontIcons as WatchUi.FontResource;
-    (:initialized) hidden var fontClock as WatchUi.FontResource;
+    (:initialized) hidden var fontClock as WatchUi.FontResource?;
+    (:MIP) hidden var clockGlyphFonts as Array?;
     (:initialized) hidden var fontClockOutline as WatchUi.FontResource;
     (:initialized) hidden var fontLabel as WatchUi.FontResource;
     (:initialized) hidden var fontTinyData as WatchUi.FontResource;
     (:initialized) hidden var fontSmallData as WatchUi.FontResource;
-    (:initialized) hidden var fontLargeData as WatchUi.FontResource;
+    (:initialized) hidden var fontLargeData as WatchUi.FontResource?;
     (:initialized) hidden var fontAODData as WatchUi.FontResource;
-    (:initialized) hidden var fontBottomData as WatchUi.FontResource;
+    (:initialized) hidden var fontBottomData as WatchUi.FontResource?;
     (:initialized) hidden var fontBattery as WatchUi.FontResource;
     hidden var weekNames as Array<String>?;
     hidden var monthNames as Array<String>?;
@@ -78,6 +79,7 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var cachedComplicationValues as Dictionary = {};
     hidden var cachedTempUnit as String = "C";
     hidden var openMeteoAppliedSnapshotFetchedAt as Number? = null;
+    hidden var openMeteoSunEvents as Array? = null;
 
     (:WeatherCache) hidden var lastHfTime as Number? = null;
     (:WeatherCache) hidden var lastCcHash as Number? = null;
@@ -87,7 +89,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     // runtimeBitmap: visible[0], cachedStressDataValid[1], cachedBBDataValid[2], canBurnIn[3],
     // isSleeping[4], isWeatherRequired[5], isLowMem[6], reserved[7],
-    // hasComplications[8], touchAlternativeActive[9], clockBgCompact[10],
+    // reserved[8], touchAlternativeActive[9], clockBgCompact[10],
     // lastWeatherPhasePlusOne[11:30]
     hidden var runtimeBitmap as Number = 1;
     // layoutBitmap: fieldSpaceingAdj[0:4], barBottomAdj[5:9], bottomFiveAdj[10:14],
@@ -122,9 +124,10 @@ class Segment34View extends WatchUi.WatchFace {
     hidden var propWeatherLine1Shows as Number = 78;
     hidden var propWeatherLine2Shows as Number = 79;
     hidden var cachedHourlyForecast as Array = [];
+    hidden var cachedHourlyStart as Number?;
     hidden var cachedHazardWindows as Array = [];
     hidden var forecastUtcOffsetSeconds as Number? = null;
-    (:initialized) hidden var fontWeatherCompact as WatchUi.FontResource;
+    hidden var fontWeatherCompact as WatchUi.FontResource?;
     hidden var propNotificationCountShows as Number = 14;
     hidden var propWeekOffset as Number = 0;
     hidden var touchAlternativeBottomRow as Array<Number> = [4, 12, 2, 32, -2];
@@ -205,21 +208,12 @@ class Segment34View extends WatchUi.WatchFace {
 
     function initialize() {
         WatchFace.initialize();
-        hrResetState();
-        cachedComplicationValues = {};
-        lastCurrentConditionsFetch = null;
-        lastHourlyForecastFetch = null;
-        openMeteoAppliedSnapshotFetchedAt = null;
-        runtimeBitmap = 0x1;
-        layoutBitmap = 0;
+        var settings = System.getDeviceSettings();
+        screenHeight = settings.screenHeight;
+        screenWidth = settings.screenWidth;
+        configureBurnInProtection(settings);
+        updateProperties(settings.is24Hour);
 
-        if(System.getDeviceSettings() has :requiresBurnInProtection && System.getDeviceSettings().requiresBurnInProtection) {
-            runtimeBitmap |= 0x8;
-        }
-        updateProperties();
-        
-        screenHeight = Toybox.System.getDeviceSettings().screenHeight;
-        screenWidth = Toybox.System.getDeviceSettings().screenWidth;
         fontMoon = Application.loadResource(Rez.Fonts.moon);
         fontIcons = Application.loadResource(Rez.Fonts.icons);
         centerX = Math.round(screenWidth / 2);
@@ -228,8 +222,17 @@ class Segment34View extends WatchUi.WatchFace {
         marginX = Math.round(screenWidth / 20);
 
         refreshLoadedResourcesAndLayout();
-        updateWeather();
     }
+
+    (:AMOLED)
+    hidden function configureBurnInProtection(settings as System.DeviceSettings) as Void {
+        if (settings has :requiresBurnInProtection && settings.requiresBurnInProtection) {
+            runtimeBitmap |= 0x8;
+        }
+    }
+
+    (:MIP)
+    hidden function configureBurnInProtection(settings as System.DeviceSettings) as Void {}
 
     hidden function refreshLoadedResourcesAndLayout() as Void {
         loadResources();
@@ -243,11 +246,6 @@ class Segment34View extends WatchUi.WatchFace {
         }
         
         halfMarginY = Math.round(marginY / 2);
-        if (Toybox has :Complications) {
-            runtimeBitmap |= 0x100;
-        } else {
-            runtimeBitmap &= ~0x100;
-        }
 
         // Cache string resources (loadResource reads from flash each call)
         cachedTextResources = [
@@ -268,13 +266,14 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function updateActiveLabels() as Void {
         var activeSlots = getActiveBottomRowSlots();
         cachedFieldWidths = getFieldWidths();
+        var compactLabels = screenWidth <= 240 && cachedFieldWidths[3] > 0;
         cachedLabels = [
             getLabelByType(propSunriseFieldShows, 1),
             getLabelByType(propSunsetFieldShows, 1),
-            getLabelByType(activeSlots[0], cachedFieldWidths[0] - 1),
-            getLabelByType(activeSlots[1], cachedFieldWidths[1] - 1),
-            getLabelByType(activeSlots[2], cachedFieldWidths[2] - 1),
-            getLabelByType(activeSlots[3], cachedFieldWidths[3] - 1)
+            getLabelByType(activeSlots[0], compactLabels ? 1 : cachedFieldWidths[0] - 1),
+            getLabelByType(activeSlots[1], compactLabels ? 1 : cachedFieldWidths[1] - 1),
+            getLabelByType(activeSlots[2], compactLabels ? 1 : cachedFieldWidths[2] - 1),
+            getLabelByType(activeSlots[3], compactLabels ? 1 : cachedFieldWidths[3] - 1)
         ];
     }
 
@@ -316,37 +315,21 @@ class Segment34View extends WatchUi.WatchFace {
 
         runtimeBitmap &= ~0x20;
         for (var i = 0; i < weatherFields.size(); i++) {
-            if (isWeatherSource(weatherFields[i])) {
+            if (weatherProviderIsWeatherSourceId(weatherFields[i])) {
                 runtimeBitmap |= 0x20;
                 break;
             }
         }
     }
 
-    public function refreshBottomRowState() as Void {
-        var wasWeatherRequired = ((runtimeBitmap >> 5) & 0x1) == 1;
-        updateActiveLabels();
-        refreshWeatherRequirement();
-        if (screenWidth != null) {
-            calculateLayout();
-            if (((runtimeBitmap >> 5) & 0x1) == 1 && !wasWeatherRequired) {
-                initializeWeatherData();
-            }
-        }
-    }
-
     public function toggleTouchAlternative() as Void {
-        if (((runtimeBitmap >> 9) & 0x1) == 1) {
-            runtimeBitmap &= ~0x200;
-            Application.Properties.setValue("touchAlternativeActive", false);
-        } else {
-            runtimeBitmap |= 0x200;
-            Application.Properties.setValue("touchAlternativeActive", true);
+        var active = (runtimeBitmap & 0x200) == 0;
+        try {
+            Application.Properties.setValue("touchAlternativeActive", active);
+        } catch (e) {
+            return;
         }
-        refreshBottomRowState();
-        weatherProviderScheduleImmediateRefreshIfNeeded();
-        lastUpdate = null;
-        WatchUi.requestUpdate();
+        onSettingsChanged();
     }
 
     hidden function loadSmallFont(resDefault, resReadable, resLines) as Void {
@@ -358,7 +341,6 @@ class Segment34View extends WatchUi.WatchFace {
             selectedRes = resReadable;
         }
         fontSmallData = Application.loadResource(selectedRes);
-        fontWeatherCompact = Application.loadResource(Rez.Fonts.weather_compact);
     }
 
     (:MIP)
@@ -368,25 +350,74 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function loadAodFallbackResources() as Void {
         if (screenWidth == 260) {
             fontClockOutline = fontClock;
-            fontAODData = fontBottomData;
+            fontAODData = fontBottomData as WatchUi.FontResource;
         }
         if (drawAODPattern == null) {
             drawAODPattern = Application.loadResource(Rez.Drawables.aod) as BitmapResource;
         }
     }
 
+    (:MIP)
+    hidden function loadMipClockFont(style as Number, primary as ResourceId, alternate as ResourceId) as Void {
+        fontClock = null;
+        if (System.getSystemStats().freeMemory >= 32768) {
+            fontClock = Application.loadResource(style == 0 ? primary : alternate) as WatchUi.FontResource;
+            clockGlyphFonts = null;
+        } else if (style == 0) {
+            clockGlyphFonts = [
+                Rez.Fonts.segment0, Rez.Fonts.segment1, Rez.Fonts.segment2, Rez.Fonts.segment3, Rez.Fonts.segment4,
+                Rez.Fonts.segment5, Rez.Fonts.segment6, Rez.Fonts.segment7, Rez.Fonts.segment8, Rez.Fonts.segment9,
+                Rez.Fonts.segmentBackground, Rez.Fonts.segmentColon
+            ];
+        } else {
+            clockGlyphFonts = [
+                Rez.Fonts.segmentAlt0, Rez.Fonts.segmentAlt1, Rez.Fonts.segmentAlt2, Rez.Fonts.segmentAlt3, Rez.Fonts.segmentAlt4,
+                Rez.Fonts.segmentAlt5, Rez.Fonts.segmentAlt6, Rez.Fonts.segmentAlt7, Rez.Fonts.segmentAlt8, Rez.Fonts.segmentAlt9,
+                Rez.Fonts.segmentAltBackground, Rez.Fonts.segmentAltColon
+            ];
+        }
+    }
+
+    (:MIP)
+    hidden function drawClockText(dc as Dc, text as String) as Void {
+        var glyphFonts = clockGlyphFonts;
+        if (glyphFonts == null) {
+            dc.drawText(baseX, baseY, fontClock, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            return;
+        }
+
+        var advance = screenWidth == 240 ? 44 : (screenWidth == 260 ? 46 : 48);
+        var glyphs = text.toCharArray();
+        var x = baseX - (advance * glyphs.size()) / 2 + (advance - 46) / 2;
+        var justify = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
+        var background = glyphs[0] == '#' ? Application.loadResource(glyphFonts[10]) : null;
+        for (var i = 0; i < glyphs.size(); i++) {
+            if (background != null) {
+                dc.drawText(x, baseY, background, "#", justify);
+            } else {
+                var glyph = glyphs[i];
+                var index = glyph == ':' ? 11 : glyph.toNumber() - 48;
+                var font = Application.loadResource(glyphFonts[index]);
+                dc.drawText(x, baseY, font, glyph.toString(), justify);
+                font = null;
+            }
+            x += advance;
+        }
+    }
+
+    (:AMOLED)
+    hidden function drawClockText(dc as Dc, text as String) as Void {
+        dc.drawText(baseX, baseY, fontClock, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
     (:Round240)
     hidden function loadResources() as Void {
         var propClockFont = (propBitmapA >> 8) & 0x1;
-        if(propClockFont == 0) {
-            fontClock = Application.loadResource(Rez.Fonts.segments80narrow);
-        } else {
-            fontClock = Application.loadResource(Rez.Fonts.segments80narrow_2);
-        }
+        loadMipClockFont(propClockFont, Rez.Fonts.segments80narrow, Rez.Fonts.segments80narrow_2);
         fontTinyData = Application.loadResource(Rez.Fonts.smol);
         loadSmallFont(Rez.Fonts.led_small, Rez.Fonts.led_small_readable, Rez.Fonts.led_small_lines);
-        fontLargeData = Application.loadResource(Rez.Fonts.led);
-        fontBottomData = Application.loadResource(Rez.Fonts.led_small);
+        fontLargeData = clockGlyphFonts == null ? Application.loadResource(Rez.Fonts.led) : null;
+        fontBottomData = clockGlyphFonts == null ? Application.loadResource(Rez.Fonts.led_small) : null;
         fontLabel = Application.loadResource(Rez.Fonts.xsmol);
         fontBattery = fontTinyData;
 
@@ -409,11 +440,7 @@ class Segment34View extends WatchUi.WatchFace {
     (:Round260)
     hidden function loadResources() as Void {
         var propClockFont = (propBitmapA >> 8) & 0x1;
-        if(propClockFont == 0) {
-            fontClock = Application.loadResource(Rez.Fonts.segments80);
-        } else {
-            fontClock = Application.loadResource(Rez.Fonts.segments80_2);
-        }
+        loadMipClockFont(propClockFont, Rez.Fonts.segments80, Rez.Fonts.segments80_2);
         fontTinyData = Application.loadResource(Rez.Fonts.smol);
         loadSmallFont(Rez.Fonts.led_small, Rez.Fonts.led_small_readable, Rez.Fonts.led_small_lines);
         fontLargeData = Application.loadResource(Rez.Fonts.led);
@@ -439,11 +466,7 @@ class Segment34View extends WatchUi.WatchFace {
     (:Round280)
     hidden function loadResources() as Void {
         var propClockFont = (propBitmapA >> 8) & 0x1;
-        if(propClockFont == 0) {
-            fontClock = Application.loadResource(Rez.Fonts.segments80wide);
-        } else {
-            fontClock = Application.loadResource(Rez.Fonts.segments80wide_2);
-        }
+        loadMipClockFont(propClockFont, Rez.Fonts.segments80wide, Rez.Fonts.segments80wide_2);
         fontTinyData = Application.loadResource(Rez.Fonts.storre);
         loadSmallFont(Rez.Fonts.led_small, Rez.Fonts.led_small_readable, Rez.Fonts.led_small_lines);
         fontLargeData = Application.loadResource(Rez.Fonts.led);
@@ -687,37 +710,55 @@ class Segment34View extends WatchUi.WatchFace {
         marginY = 17;
     }
 
-    hidden function computeDisplayValues(now as Gregorian.Info) as Dictionary {
-        var values = {};
-        var sysStats = System.getSystemStats();
+    hidden function updateDisplayValues(now as Gregorian.Info) as Void {
+        var values = cachedValues;
+        var isSleeping = (runtimeBitmap & 0x10) != 0;
+        var aodStyle = (propBitmapA >> 15) & 0x3;
+        var minimalAod = (runtimeBitmap & 0x18) == 0x18 && aodStyle != 2;
+        if (minimalAod && aodStyle != 1) {
+            cachedValues = {};
+            return;
+        }
+
         var activeSlots = getActiveBottomRowSlots();
-        var isSleeping = ((runtimeBitmap >> 4) & 0x1) == 1;
-        var displayTypes = [
+        var displayTypes = minimalAod ? [propAodFieldShows, propAodRightFieldShows] : [
             propSunriseFieldShows, propSunsetFieldShows,
             propWeatherLine1Shows, propWeatherLine2Shows,
             propDateFieldShows, propNotificationCountShows,
-            activeSlots[0], activeSlots[1],
-            activeSlots[2], activeSlots[3],
-            propBottomFieldShows, propAodFieldShows,
-            propAodRightFieldShows, getBottomField2Shows()
+            activeSlots[0], activeSlots[1], activeSlots[2], activeSlots[3],
+            propBottomFieldShows, getBottomField2Shows()
         ];
-        var needsActivityInfo = anyComplicationNeedsActivityInfo(displayTypes)
-            || iconNeedsActivityInfo(propIcon1)
-            || iconNeedsActivityInfo(propIcon2)
-            || barNeedsActivityInfo(propLeftBarShows)
-            || barNeedsActivityInfo(propRightBarShows);
-        var actInfo = null;
-        if (needsActivityInfo) {
-            try {
-                actInfo = ActivityMonitor.getInfo();
-            } catch(e) {}
+        // The native history iterator needs room before the rest of the values are allocated.
+        for (var field = 0; field < displayTypes.size(); field++) {
+            if (hrIsHeartRateComplication(displayTypes[field])) {
+                hrGetCurrentHeartRateSample();
+                break;
+            }
         }
+
+        var sysStats = System.getSystemStats();
         cachedSysStats = sysStats;
         refreshCache = {};
+        cachedTempUnit = getTempUnit();
         runtimeBitmap &= ~0x6;
-
-        // From updateSlowData logic
         values[:dataClock] = getClockData(now);
+
+        var needsActivityInfo = anyComplicationNeedsActivityInfo(displayTypes)
+            || (!minimalAod && (
+                iconNeedsActivityInfo(propIcon1) || iconNeedsActivityInfo(propIcon2)
+                || barNeedsActivityInfo(propLeftBarShows) || barNeedsActivityInfo(propRightBarShows)
+            ));
+        var actInfo = null;
+        if (needsActivityInfo) {
+            try { actInfo = ActivityMonitor.getInfo(); } catch (e) {}
+        }
+
+        if (minimalAod) {
+            values[:dataAODLeft] = getDisplayValueByType(propAodFieldShows, 10, now, actInfo, sysStats);
+            values[:dataAODRight] = getDisplayValueByType(propAodRightFieldShows, 5, now, actInfo, sysStats);
+            return;
+        }
+
         values[:dataMoon] = moonPhase(now);
         values[:dataLabelTopLeft] = cachedLabels[0];
         values[:dataLabelTopRight] = cachedLabels[1];
@@ -754,8 +795,6 @@ class Segment34View extends WatchUi.WatchFace {
         values[:dataIcon1] = getIconState(propIcon1, actInfo);
         values[:dataIcon2] = getIconState(propIcon2, actInfo);
         values[:dataBattery] = getBattData(sysStats);
-        values[:dataAODLeft] = getDisplayValueByType(propAodFieldShows, 10, now, actInfo, sysStats);
-        values[:dataAODRight] = getDisplayValueByType(propAodRightFieldShows, 5, now, actInfo, sysStats);
         values[:dataLeftBar] = getBarData(propLeftBarShows, actInfo);
         values[:dataRightBar] = getBarData(propRightBarShows, actInfo);
 
@@ -766,7 +805,6 @@ class Segment34View extends WatchUi.WatchFace {
             values[:dataSeconds] = now.sec.format("%02d");
         }
 
-        return values;
     }
 
     // Load your resources here
@@ -789,57 +827,45 @@ class Segment34View extends WatchUi.WatchFace {
         var isVisible = (runtimeBitmap & 0x1) != 0;
         if(!isVisible) { return; }
 
-        var now = Time.Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var unix_timestamp = Time.now().value();
+        var moment = Time.now();
+        var now = Time.Gregorian.info(moment, Time.FORMAT_SHORT);
+        var unix_timestamp = moment.value();
         var isSleeping = ((runtimeBitmap >> 4) & 0x1) == 1;
         var canBurnIn = ((runtimeBitmap >> 3) & 0x1) == 1;
         var lastWeatherPhase = ((runtimeBitmap >> 11) & 0xFFFFF) - 1;
 
-        if(now.sec % 60 == 0 or lastSlowUpdate == null or unix_timestamp - lastSlowUpdate >= 60) {
-            lastSlowUpdate = unix_timestamp;
-            updateWeather();
+        var minute = unix_timestamp / fullUpdateIntervalS;
+        var refreshWeather = lastSlowUpdate != minute;
+        var firstFrame = lastSlowUpdate == null;
+        if (refreshWeather && !firstFrame) {
+            updateWeather(unix_timestamp, false);
         }
 
-        var phaseBucket = ((unix_timestamp - wakeTimestamp) / weatherCycleIntervalS).toNumber();
-        if(lastUpdate == null or unix_timestamp - lastUpdate >= fullUpdateIntervalS) {
-            lastUpdate = unix_timestamp;
-            cachedValues = computeDisplayValues(now);
-            if (phaseBucket > 1048574) { phaseBucket = 1048574; }
+        var phaseBucket = getWeatherPhaseBucket(unix_timestamp);
+        if (lastUpdate != minute) {
+            lastUpdate = minute;
+            updateDisplayValues(now);
+            refreshCache = {};
             runtimeBitmap = (runtimeBitmap & 0x7FF) | ((phaseBucket + 1) << 11);
         } else {
-            // Between full refreshes, only repaint time-driven data and phased weather text.
-            // The rest of the complications are allowed to stay cached until the next minute tick.
-            cachedValues[:dataClock] = getClockData(now);
-            if(isSleeping) {
-                cachedValues[:dataSeconds] = "";
-            } else {
-                cachedValues[:dataSeconds] = now.sec.format("%02d");
-            }
+            cachedValues[:dataSeconds] = isSleeping ? "" : now.sec.format("%02d");
 
-            // Only type 79 lines phase-cycle. Recomputing a non-79 line here would be
-            // pointless and would dereference the null activityInfo passed below.
-            var refreshLine1 = shouldRefreshWeatherLine(propWeatherLine1Shows);
-            var refreshLine2 = shouldRefreshWeatherLine(propWeatherLine2Shows);
+            // Hazard lines share the same four-second rotation.
+            var showForecast = !isSleeping || !canBurnIn || ((propBitmapA >> 15) & 0x3) == 2;
+            var refreshLine1 = showForecast && shouldRefreshWeatherLine(propWeatherLine1Shows);
+            var refreshLine2 = showForecast && shouldRefreshWeatherLine(propWeatherLine2Shows);
             if ((refreshLine1 || refreshLine2) && phaseBucket != lastWeatherPhase) {
-                if (phaseBucket > 1048574) { phaseBucket = 1048574; }
                 runtimeBitmap = (runtimeBitmap & 0x7FF) | ((phaseBucket + 1) << 11);
 
-                var sysStats = cachedSysStats;
-                if (sysStats == null) {
-                    sysStats = System.getSystemStats();
-                    cachedSysStats = sysStats;
-                }
-
+                var aboveLine = getWeatherCycleState();
                 if (refreshLine1) {
-                    var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, null, sysStats);
-                    cachedValues[:dataAboveLine1] = aboveLine1[0];
-                    cachedValues[:dataAboveLine1Color] = aboveLine1[1];
+                    cachedValues[:dataAboveLine1] = aboveLine[0];
+                    cachedValues[:dataAboveLine1Color] = aboveLine[1];
                 }
 
                 if (refreshLine2) {
-                    var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, null, sysStats);
-                    cachedValues[:dataAboveLine2] = aboveLine2[0];
-                    cachedValues[:dataAboveLine2Color] = aboveLine2[1];
+                    cachedValues[:dataAboveLine2] = aboveLine[0];
+                    cachedValues[:dataAboveLine2Color] = aboveLine[1];
                 }
             }
 
@@ -849,6 +875,23 @@ class Segment34View extends WatchUi.WatchFace {
             drawAOD(dc, now, cachedValues);
         } else {
             drawWatchface(dc, now, false, cachedValues);
+        }
+
+        if (refreshWeather) {
+            lastSlowUpdate = minute;
+            if (firstFrame) {
+                // Keep storage and background service setup off the first drawing path.
+                var refreshValues = (runtimeBitmap & 0x20) != 0;
+                if (refreshValues) {
+                    cachedValues = {};
+                }
+                try { weatherProviderDeleteLegacyLocationData(); } catch (e) {}
+                updateWeather(unix_timestamp, true);
+                if (refreshValues) {
+                    lastUpdate = null;
+                    WatchUi.requestUpdate();
+                }
+            }
         }
     }
 
@@ -863,7 +906,6 @@ class Segment34View extends WatchUi.WatchFace {
     function onExitSleep() as Void {
         wakeTimestamp = Time.now().value();
         lastUpdate = null;
-        lastSlowUpdate = null;
         runtimeBitmap &= 0x7EF;
         hrResetState();
         WatchUi.requestUpdate();
@@ -872,7 +914,6 @@ class Segment34View extends WatchUi.WatchFace {
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() as Void {
         lastUpdate = null;
-        lastSlowUpdate = null;
         runtimeBitmap = (runtimeBitmap & 0x7FF) | 0x10;
         hrResetState();
         WatchUi.requestUpdate();
@@ -884,7 +925,7 @@ class Segment34View extends WatchUi.WatchFace {
         var previousPropBitmapA = propBitmapA;
         var previousPropBitmapB = propBitmapB;
 
-        updateProperties();
+        updateProperties(System.getDeviceSettings().is24Hour);
 
         var isOpenMeteo = useOpenMeteoProvider();
         var isWeatherRequired = ((runtimeBitmap >> 5) & 0x1) == 1;
@@ -895,18 +936,18 @@ class Segment34View extends WatchUi.WatchFace {
 
         if (resourceSettingsChanged) {
             refreshLoadedResourcesAndLayout();
-        } else if (screenWidth != null) {
+        } else {
             calculateLayout();
         }
 
         cachedComplicationValues = {};
         refreshCache = {};
         lastUpdate = null;
-        lastSlowUpdate = null;
         hrResetState();
 
         if (weatherProviderChanged || weatherRequirementChanged) {
             clearCustomWeatherData();
+            lastSlowUpdate = null;
             lastCurrentConditionsFetch = null;
             lastHourlyForecastFetch = null;
             if (!isOpenMeteo || !isWeatherRequired) {
@@ -916,31 +957,16 @@ class Segment34View extends WatchUi.WatchFace {
             }
         }
 
-        if (isWeatherRequired) {
-            if (isOpenMeteo) {
-                applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-            } else {
-                updateWeather();
-            }
-        } else {
-            clearCustomWeatherData();
-        }
-        cachedTempUnit = getTempUnit();
-        updateForecastChanges();
         WatchUi.requestUpdate();
     }
 
     public function onWeatherDataChanged() as Void {
-        if (!useOpenMeteoProvider()) {
-            return;
-        }
-        if (((runtimeBitmap >> 5) & 0x1) != 1) {
-            return;
-        }
+        if (!useOpenMeteoProvider() || (runtimeBitmap & 0x20) == 0) { return; }
 
-        applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-        cachedTempUnit = getTempUnit();
-        updateForecastChanges();
+        if (applyCustomWeatherSnapshot(loadCustomWeatherSnapshot())) {
+            updateForecastChanges();
+            lastUpdate = null;
+        }
     }
 
     (:DefaultLayout)
@@ -980,7 +1006,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
     
     hidden function calculateFieldXCoords(data_width as Float, left_edge as Number) as Void {
-        var digits = getFieldWidths();
+        var digits = cachedFieldWidths;
         var tot_digits = digits[0] + digits[1] + digits[2] + digits[3];
         if (tot_digits == 0) { return; } 
         var dw1 = Math.round(digits[0] * data_width / tot_digits);
@@ -1040,10 +1066,10 @@ class Segment34View extends WatchUi.WatchFace {
         // Draw Clock
         dc.setColor(themeColors[clockBg], Graphics.COLOR_TRANSPARENT);
         if(propShowClockBg and !aod) {
-            dc.drawText(baseX, baseY, fontClock, clockBgText, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            drawClockText(dc, clockBgText);
         }
         dc.setColor(themeColors[clock], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(baseX, baseY, fontClock, values[:dataClock], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawClockText(dc, values[:dataClock]);
 
         // Draw clock gradient
         if(drawGradient != null and themeColors[bg] == 0x000000 and !aod) {
@@ -1064,8 +1090,19 @@ class Segment34View extends WatchUi.WatchFace {
         // Draw Line below clock
         var y1 = baseY + halfClockHeight + marginY;
         dc.setColor(themeColors[date], Graphics.COLOR_TRANSPARENT);
+        var dateFont = fontSmallData;
         if(propDateAlignment == 0) {
-            dc.drawText(baseX - halfClockWidth + textSideAdj, y1, fontSmallData, values[:dataBelow], Graphics.TEXT_JUSTIFY_LEFT);
+            if (screenWidth <= 280 && propDateFieldShows == -1) {
+                var trailing = dc.getTextWidthInPixels(values[:dataNotificationsValue], fontSmallData)
+                    + dc.getTextWidthInPixels(values[:dataNotificationsSuffix], fontSmallData);
+                if (showSeconds) { trailing += dc.getTextWidthInPixels(values[:dataSeconds], fontSmallData); }
+                var dateRoom = 2 * (halfClockWidth - textSideAdj) - trailing - 2;
+                if (dc.getTextWidthInPixels(values[:dataBelow], fontSmallData) > dateRoom) {
+                    dateFont = fontTinyData;
+                }
+            }
+            var dateY = y1 + (dc.getFontHeight(fontSmallData) - dc.getFontHeight(dateFont)) / 2;
+            dc.drawText(baseX - halfClockWidth + textSideAdj, dateY, dateFont, values[:dataBelow], Graphics.TEXT_JUSTIFY_LEFT);
         } else {
             dc.drawText(baseX, y1, fontSmallData, values[:dataBelow], Graphics.TEXT_JUSTIFY_CENTER);
         }
@@ -1080,12 +1117,12 @@ class Segment34View extends WatchUi.WatchFace {
             if(!showSeconds) { // No seconds, notification on right side
                 hrDrawNotificationValue(dc, baseX + halfClockWidth - textSideAdj, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_RIGHT);
             } else {
-                var date_width = dc.getTextWidthInPixels(values[:dataBelow], fontSmallData);
+                var date_width = dc.getTextWidthInPixels(values[:dataBelow], dateFont);
                 var sec_width = dc.getTextWidthInPixels(values[:dataSeconds], fontSmallData); 
                 var date_right_edge = baseX - halfClockWidth + textSideAdj + date_width;
                 var sec_left = baseX + halfClockWidth - textSideAdj - sec_width;
                 var pos = sec_left - marginX;
-                if((sec_left - date_right_edge) < 3 * marginX) {
+                if(screenWidth <= 280 || (sec_left - date_right_edge) < 3 * marginX) {
                     pos = (date_right_edge + sec_left) / 2;
                 }
                 hrDrawNotificationValue(dc, pos, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_CENTER);
@@ -1094,13 +1131,7 @@ class Segment34View extends WatchUi.WatchFace {
             hrDrawNotificationValue(dc, baseX - halfClockWidth, y1, values[:dataNotificationsValue], values[:dataNotificationsSuffix], fontSmallData, values[:dataNotificationsColor], themeColors[notif], Graphics.TEXT_JUSTIFY_LEFT);
         }
 
-        // Draw the three bottom data fields
-        var digits = getFieldWidths();
-
-        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], values[:dataBottomLeft], digits[0], fontLargeData, values[:dataBottomLeftColor]);
-        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], values[:dataBottomMiddle], digits[1], fontLargeData, values[:dataBottomMiddleColor]);
-        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], values[:dataBottomRight], digits[2], fontLargeData, values[:dataBottomRightColor]);
-        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], values[:dataBottomFourth], digits[3], fontLargeData, values[:dataBottomFourthColor]);
+        drawBottomRow(dc, values);
 
         // Draw the 5 digit bottom field(s) and icons
         drawBottomFieldsWithIcons(dc, values);
@@ -1195,10 +1226,10 @@ class Segment34View extends WatchUi.WatchFace {
         // Draw Clock
         dc.setColor(themeColors[clockBg], Graphics.COLOR_TRANSPARENT);
         if(propShowClockBg and !aod) {
-            dc.drawText(baseX, baseY, fontClock, clockBgText, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            drawClockText(dc, clockBgText);
         }
         dc.setColor(themeColors[clock], Graphics.COLOR_TRANSPARENT);
-        dc.drawText(baseX, baseY, fontClock, values[:dataClock], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawClockText(dc, values[:dataClock]);
 
         // Draw clock gradient
         if(drawGradient != null and themeColors[bg] == 0x000000 and !aod) {
@@ -1216,12 +1247,7 @@ class Segment34View extends WatchUi.WatchFace {
         drawSideBars(dc, values);
 
         // Draw the three bottom data fields (directly below clock, no date row)
-        var digits = getFieldWidths();
-
-        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], values[:dataBottomLeft], digits[0], fontLargeData, values[:dataBottomLeftColor]);
-        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], values[:dataBottomMiddle], digits[1], fontLargeData, values[:dataBottomMiddleColor]);
-        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], values[:dataBottomRight], digits[2], fontLargeData, values[:dataBottomRightColor]);
-        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], values[:dataBottomFourth], digits[3], fontLargeData, values[:dataBottomFourthColor]);
+        drawBottomRow(dc, values);
 
         // Draw the 5 digit bottom field
         var step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
@@ -1236,7 +1262,9 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     (:MIP)
-    hidden function drawAOD(dc as Dc, now as Gregorian.Info, values as Dictionary) as Void { }
+    hidden function drawAOD(dc as Dc, now as Gregorian.Info, values as Dictionary) as Void {
+        drawWatchface(dc, now, false, values);
+    }
 
     (:AMOLED)
     hidden function drawAOD(dc as Dc, now as Gregorian.Info, values as Dictionary) as Void {
@@ -1244,13 +1272,15 @@ class Segment34View extends WatchUi.WatchFace {
         var propClockOutlineStyle = (propBitmapA >> 5) & 0x7;
         var propAodAlignment = (propBitmapA >> 17) & 0x1;
         var textSideAdj = (layoutBitmap >> 15) & 0x1F;
+        if (propAodStyle == 2) {
+            drawWatchface(dc, now, true, values);
+            drawPattern(dc, 0x000000, (now.min % 3));
+            return;
+        }
         dc.setColor(0x000000, 0x000000);
         dc.clear();
 
-        if(propAodStyle == 2) {
-            drawWatchface(dc, now, true, values);
-            drawPattern(dc, 0x000000, (now.min % 3));
-        } else if (propAodStyle == 1) {
+        if (propAodStyle == 1) {
             var clock_color = themeColors[clock];
             if(clock_color == 0x000000) { clock_color = 0x555555; }
 
@@ -1339,7 +1369,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getCachedDeviceSettings() {
-        if(!(refreshCache has :deviceSettingsLoaded)) {
+        if (!refreshCache.hasKey(:deviceSettingsLoaded)) {
             try {
                 refreshCache[:deviceSettings] = System.getDeviceSettings();
             } catch(e) {
@@ -1351,7 +1381,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getCachedActivityDetails() {
-        if(!(refreshCache has :activityDetailsLoaded)) {
+        if (!refreshCache.hasKey(:activityDetailsLoaded)) {
             try {
                 refreshCache[:activityDetails] = Activity.getActivityInfo();
             } catch(e) {
@@ -1363,7 +1393,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getCachedUserProfile() {
-        if(!(refreshCache has :userProfileLoaded)) {
+        if (!refreshCache.hasKey(:userProfileLoaded)) {
             try {
                 refreshCache[:userProfile] = UserProfile.getProfile();
             } catch(e) {
@@ -1374,38 +1404,12 @@ class Segment34View extends WatchUi.WatchFace {
         return refreshCache.get(:userProfile);
     }
 
-    hidden function getCachedOpenMeteoSnapshotForSunEvents() as Dictionary? {
-        if (refreshCache has :openMeteoSunSnapshotLoaded) {
-            return (refreshCache as Dictionary).get(:openMeteoSunSnapshot) as Dictionary?;
-        }
-
-        refreshCache[:openMeteoSunSnapshotLoaded] = true;
-        var snapshot = null;
-        try {
-            snapshot = weatherProviderLoadSnapshot();
-        } catch(e) {
-            System.println("Open-Meteo sun event snapshot load failure: " + e);
-        }
-
-        refreshCache[:openMeteoSunSnapshot] = snapshot;
-        return snapshot;
-    }
-
     hidden function getOpenMeteoSunEvents(time as Time.Moment) as Array? {
-        if (!useOpenMeteoProvider()) { return null; }
+        var sunEvents = openMeteoSunEvents;
+        var utcOffsetSeconds = forecastUtcOffsetSeconds;
+        if (sunEvents == null || utcOffsetSeconds == null) { return null; }
 
-        var snapshot = getCachedOpenMeteoSnapshotForSunEvents();
-        if (snapshot == null) {
-            return null;
-        }
-
-        var utcOffsetSeconds = weatherProviderToNumber(snapshot.get("utcOffsetSeconds"));
-        var sunEvents = snapshot.get("sunEvents") as Array?;
-        var sunEventCount = (sunEvents == null) ? 0 : sunEvents.size();
-        if (utcOffsetSeconds == null || sunEventCount == 0) {
-            return null;
-        }
-
+        var sunEventCount = sunEvents.size();
         var targetDay = weatherProviderGetLocalDayStart(time.value(), utcOffsetSeconds as Number);
         for (var i = 0; i < sunEventCount; i++) {
             var entry = sunEvents[i] as Array?;
@@ -1425,10 +1429,10 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getCachedSunEvents(time as Time.Moment, cacheKey as String) as Array? {
         if(cacheKey.equals("today")) {
-            if(refreshCache has :sunEventsTodayLoaded) { return (refreshCache as Dictionary).get(:sunEventsToday) as Array?; }
+            if(refreshCache.hasKey(:sunEventsTodayLoaded)) { return (refreshCache as Dictionary).get(:sunEventsToday) as Array?; }
             refreshCache[:sunEventsTodayLoaded] = true;
         } else {
-            if(refreshCache has :sunEventsTomorrowLoaded) { return (refreshCache as Dictionary).get(:sunEventsTomorrow) as Array?; }
+            if(refreshCache.hasKey(:sunEventsTomorrowLoaded)) { return (refreshCache as Dictionary).get(:sunEventsTomorrow) as Array?; }
             refreshCache[:sunEventsTomorrowLoaded] = true;
         }
 
@@ -1439,7 +1443,7 @@ class Segment34View extends WatchUi.WatchFace {
 
         if (events == null) {
             var activeWeather = getActiveWeatherCondition();
-            if (activeWeather != null) {
+            if (activeWeather != null && Weather has :getSunrise && Weather has :getSunset) {
                 var loc = activeWeather.observationLocationPosition;
                 if (loc != null) {
                     var sunrise = Weather.getSunrise(loc, time);
@@ -1457,6 +1461,16 @@ class Segment34View extends WatchUi.WatchFace {
             refreshCache[:sunEventsTomorrow] = events;
         }
         return events;
+    }
+
+    hidden function drawBottomRow(dc as Dc, values as Dictionary) as Void {
+        // The compact layout releases the full font after this row.
+        var font = fontLargeData == null ? Application.loadResource(Rez.Fonts.led) as WatchUi.FontResource : fontLargeData as WatchUi.FontResource;
+        var digits = cachedFieldWidths;
+        drawDataField(dc, fieldXCoords[0], fieldY, 3, values[:dataLabelBottomLeft], values[:dataBottomLeft], digits[0], font, values[:dataBottomLeftColor]);
+        drawDataField(dc, fieldXCoords[1], fieldY, 3, values[:dataLabelBottomMiddle], values[:dataBottomMiddle], digits[1], font, values[:dataBottomMiddleColor]);
+        drawDataField(dc, fieldXCoords[2], fieldY, 3, values[:dataLabelBottomRight], values[:dataBottomRight], digits[2], font, values[:dataBottomRightColor]);
+        drawDataField(dc, fieldXCoords[3], fieldY, 3, values[:dataLabelBottomFourth], values[:dataBottomFourth], digits[3], font, values[:dataBottomFourthColor]);
     }
 
     hidden function drawFieldLabel(dc as Dc, x as Number, y as Number, adjX as Number, label as String?, bgwidth as Number) as Void {
@@ -1674,15 +1688,10 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getValueOrDefault(propName as String, defaultVal as PropertyValueType) as PropertyValueType {
-        var val = Application.Properties.getValue(propName);
-        if(val == null) {
-            return defaultVal;
-        }
-        return val;
+        return weatherProviderGetPropertyOrDefault(propName, defaultVal);
     }
 
     hidden function complicationNeedsActivityInfo(complicationType as Number) as Boolean {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
         if (complicationType == 0 || complicationType == 1 || complicationType == 2 || complicationType == 3
             || complicationType == 4 || complicationType == 5 || complicationType == 9 || complicationType == 11
             || complicationType == 17 || complicationType == 18 || complicationType == 19 || complicationType == 29
@@ -1690,7 +1699,7 @@ class Segment34View extends WatchUi.WatchFace {
             return true;
         }
         if (complicationType == 6) {
-            return !hasComplications;
+            return !(Toybox has :Complications);
         }
         return false;
     }
@@ -1717,37 +1726,10 @@ class Segment34View extends WatchUi.WatchFace {
             return 900;
         }
         if (complicationType == 7 || complicationType == 8 || complicationType == 27 || complicationType == 28
-            || complicationType == 31 || complicationType == 39 || complicationType == 40 || complicationType == 76) {
+            || complicationType == 76) {
             return 3600;
         }
         return 0;
-    }
-
-    hidden function getComplicationLocationCacheKey(complicationType as Number) as String {
-        if (complicationType != 39 && complicationType != 40) {
-            return "";
-        }
-
-        var activeWeather = getActiveWeatherCondition();
-        if (activeWeather == null || activeWeather.observationLocationPosition == null) {
-            return ":noloc";
-        }
-
-        var degrees = activeWeather.observationLocationPosition.toDegrees() as Array?;
-        if (degrees == null || degrees.size() < 2 || degrees[0] == null || degrees[1] == null) {
-            return ":noloc";
-        }
-
-        return ":" + degrees[0].toFloat().format("%.4f") + ":" + degrees[1].toFloat().format("%.4f");
-    }
-
-    hidden function getComplicationValueCacheKey(complicationType as Number, width as Number, now as Gregorian.Info) as String {
-        var key = complicationType.format("%d") + ":" + width.format("%d");
-        if (complicationType == 31 || complicationType == 39 || complicationType == 40) {
-            key += ":" + formatNumberOrEmpty(now.year, "%04d") + formatNumberOrEmpty(now.month, "%02d") + formatNumberOrEmpty(now.day, "%02d");
-        }
-        key += getComplicationLocationCacheKey(complicationType);
-        return key;
     }
 
     hidden function toFloatIfNumeric(value) as Float? {
@@ -1760,23 +1742,24 @@ class Segment34View extends WatchUi.WatchFace {
         return null;
     }
 
-    hidden function getCachedComplicationValue(complicationType as Number, width as Number, now as Gregorian.Info) as String? {
+    hidden function getCachedComplicationValue(complicationType as Number, width as Number) as String? {
         var ttl = getComplicationValueCacheTtl(complicationType);
         if (ttl <= 0) { return null; }
 
-        var cacheKey = getComplicationValueCacheKey(complicationType, width, now);
+        var cacheKey = complicationType * 16 + width;
         var cachedEntry = cachedComplicationValues.get(cacheKey) as Dictionary?;
         if (cachedEntry == null) { return null; }
 
-        var cachedAt = cachedEntry.get(:timestamp) as Number?;
-        if (cachedAt == null || Time.now().value() - cachedAt >= ttl) {
+        var cachedAt = cachedEntry.get(:timestamp) as Number;
+        var age = Time.now().value() - cachedAt;
+        if (age < 0 || age >= ttl) {
             return null;
         }
 
         return cachedEntry.get(:value) as String?;
     }
 
-    hidden function cacheComplicationValue(complicationType as Number, width as Number, now as Gregorian.Info, value as String) as Void {
+    hidden function cacheComplicationValue(complicationType as Number, width as Number, value as String) as Void {
         if (value.length() == 0 || value.equals(cachedTextResources[5]) || value.equals(cachedTextResources[6])) {
             return;
         }
@@ -1784,26 +1767,26 @@ class Segment34View extends WatchUi.WatchFace {
         var ttl = getComplicationValueCacheTtl(complicationType);
         if (ttl <= 0) { return; }
 
-        cachedComplicationValues[getComplicationValueCacheKey(complicationType, width, now)] = {
+        cachedComplicationValues[complicationType * 16 + width] = {
             :timestamp => Time.now().value(),
             :value => value
         };
     }
 
     hidden function getDisplayValueByType(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as String {
-        var cachedValue = getCachedComplicationValue(complicationType, width, now);
+        var cachedValue = getCachedComplicationValue(complicationType, width);
         if (cachedValue != null) {
             return cachedValue;
         }
 
         var value = getValueByType(complicationType, width, now, activityInfo, sysStats);
-        cacheComplicationValue(complicationType, width, now, value);
+        cacheComplicationValue(complicationType, width, value);
         return value;
     }
 
-    hidden function updateProperties() as Void {
+    hidden function updateProperties(is24Hour as Boolean) as Void {
         propBitmapA = 0;
-        propBitmapA |= (getValueOrDefault("colorTheme", 0) as Number) & 0x1F;
+        propBitmapA |= (getValueOrDefault("colorTheme", 24) as Number) & 0x1F;
         propBitmapA |= ((getValueOrDefault("clockOutlineStyle", 0) as Number) & 0x7) << 5;
         propBitmapA |= ((getValueOrDefault("clockFont", 0) as Number) & 0x1) << 8;
         // Bits 9:12 are intentionally unused after removing display toggles.
@@ -1813,7 +1796,7 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapA |= ((getValueOrDefault("aodAlignment", 0) as Number) & 0x1) << 17;
         propBitmapA |= ((getValueOrDefault("dateAlignment", 0) as Number) & 0x1) << 18;
         propBitmapA |= ((getValueOrDefault("bottomFieldAlignment", 2) as Number) & 0x3) << 19;
-        propBitmapA |= ((getValueOrDefault("bottomFieldLabelAlignment", 0) as Number) & 0x3) << 21;
+        propBitmapA |= ((getValueOrDefault("bottomFieldLabelAlignment", 2) as Number) & 0x3) << 21;
         propBitmapA |= ((getValueOrDefault("hemisphere", 0) as Number) & 0x1) << 23;
         propBitmapA |= ((getValueOrDefault("hourFormat", 0) as Number) & 0x3) << 24;
         propBitmapA |= ((getValueOrDefault("tempUnit", 0) as Number) & 0x3) << 29;
@@ -1826,9 +1809,9 @@ class Segment34View extends WatchUi.WatchFace {
         propBitmapB |= ((getValueOrDefault("dateFormat", 0) as Number) & 0xF) << 7;
         propBitmapB |= ((getValueOrDefault("smallFontVariant", 2) as Number) & 0x3) << 13;
         propBitmapB |= (((getValueOrDefault("stressDynamicColor", true) as Boolean) ? 1 : 0) << 15);
-        propBitmapB |= ((System.getDeviceSettings().is24Hour ? 1 : 0) << 16);
-        propBitmapB |= ((getValueOrDefault("weatherProvider", WEATHER_PROVIDER_OPEN_METEO) as Number) & 0x1) << 17;
-        propBitmapB |= ((getValueOrDefault("fieldLayout", 11) as Number) & 0xF) << 23;
+        propBitmapB |= ((is24Hour ? 1 : 0) << 16);
+        propBitmapB |= (weatherProviderGetSelection() & 0x1) << 17;
+        propBitmapB |= ((getValueOrDefault("fieldLayout", 14) as Number) & 0xF) << 23;
 
         propSunriseFieldShows = getValueOrDefault("sunriseFieldShows", 39) as Number;
         propSunsetFieldShows = getValueOrDefault("sunsetFieldShows", 40) as Number;
@@ -1864,20 +1847,19 @@ class Segment34View extends WatchUi.WatchFace {
 
         var propTheme = propBitmapA & 0x1F;
         themeColors = setColorTheme(propTheme);
-        refreshBottomRowState();
-
+        updateActiveLabels();
+        refreshWeatherRequirement();
     }
 
     hidden function getAltitudeValue() as Float? {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
-        if(refreshCache has :altitudeValueLoaded) {
+        if(refreshCache.hasKey(:altitudeValueLoaded)) {
             return (refreshCache as Dictionary).get(:altitudeValue) as Float?;
         }
 
         var altitude = null;
 
         // 1. Best: Complications (Modern approach)
-        if (hasComplications) {
+        if (Toybox has :Complications) {
             try {
                 var comp = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_ALTITUDE));
                 if (comp != null) {
@@ -1984,11 +1966,10 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getStressData() as Number? {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
         if (((runtimeBitmap >> 1) & 0x1) == 1) { return cachedStressData; }
 
         var result = null;
-        if (hasComplications) {
+        if (Toybox has :Complications) {
             try {
                 var complication_stress = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_STRESS));
                 if (complication_stress != null && complication_stress.value != null) {
@@ -1999,7 +1980,7 @@ class Segment34View extends WatchUi.WatchFace {
             }
         }
 
-        if (result == null && (Toybox has :SensorHistory) && (Toybox.SensorHistory has :getBodyBatteryHistory) && (Toybox.SensorHistory has :getStressHistory)) {
+        if (result == null && (Toybox has :SensorHistory) && (Toybox.SensorHistory has :getStressHistory)) {
             try {
                 var st_iterator = Toybox.SensorHistory.getStressHistory({:period => 1});
                 if (st_iterator != null) {
@@ -2025,11 +2006,10 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getBBData() as Number? {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
         if (((runtimeBitmap >> 2) & 0x1) == 1) { return cachedBBData; }
 
         var result = null;
-        if (hasComplications) {
+        if (Toybox has :Complications) {
             try {
                 var complication_bb = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_BODY_BATTERY));
                 if (complication_bb != null && complication_bb.value != null) {
@@ -2040,7 +2020,7 @@ class Segment34View extends WatchUi.WatchFace {
             }
         }
 
-        if (result == null && (Toybox has :SensorHistory) && (Toybox.SensorHistory has :getBodyBatteryHistory) && (Toybox.SensorHistory has :getStressHistory)) {
+        if (result == null && (Toybox has :SensorHistory) && (Toybox.SensorHistory has :getBodyBatteryHistory)) {
             try {
                 var bb_iterator = Toybox.SensorHistory.getBodyBatteryHistory({:period => 1});
                 if (bb_iterator != null) {
@@ -2188,10 +2168,8 @@ class Segment34View extends WatchUi.WatchFace {
         return ((propBitmapB >> 17) & 0x1) == WEATHER_PROVIDER_OPEN_METEO;
     }
 
-    hidden function buildForecastWeatherFromSnapshotEntry(entry as Dictionary?, location as Position.Location or Null) as ForecastWeather {
+    hidden function buildForecastWeatherFromSnapshotEntry(entry as Dictionary, location as Position.Location) as ForecastWeather {
         var forecast = new ForecastWeather();
-        if (entry == null) { return forecast; }
-
         forecast.observationLocationPosition = location;
         forecast.forecastTime = toNumberOrNull(entry.get("forecastTime"));
         forecast.forecastHour = toNumberOrNull(entry.get("forecastHour"));
@@ -2217,8 +2195,10 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function clearCustomWeatherData() as Void {
         weatherCondition = null;
         cachedHourlyForecast = [];
+        cachedHourlyStart = null;
         cachedHazardWindows = [];
         forecastUtcOffsetSeconds = null;
+        openMeteoSunEvents = null;
         openMeteoAppliedSnapshotFetchedAt = null;
     }
 
@@ -2232,121 +2212,107 @@ class Segment34View extends WatchUi.WatchFace {
         return null;
     }
 
-    hidden function applyCustomWeatherSnapshot(snapshot as Dictionary?) as Void {
+    hidden function applyCustomWeatherSnapshot(snapshot as Dictionary?) as Boolean {
         var fetchedAt = (snapshot == null) ? null : weatherProviderToNumber(snapshot.get("fetchedAt"));
         var appliedFetchedAt = openMeteoAppliedSnapshotFetchedAt;
-        if (fetchedAt != null && appliedFetchedAt != null && fetchedAt == appliedFetchedAt && weatherCondition != null) {
-            return;
+        if (snapshot == null || fetchedAt == null) {
+            if (appliedFetchedAt == null) { return false; }
+            clearCustomWeatherData();
+            return true;
         }
+        if (fetchedAt == appliedFetchedAt) { return false; }
 
         clearCustomWeatherData();
-        if (snapshot == null) {
-            return;
-        }
 
         try {
             var location = weatherProviderBuildLocation(snapshot.get("location") as Array?);
             var current = snapshot.get("current") as Dictionary?;
-            var currentWeather = buildForecastWeatherFromSnapshotEntry(current, location);
-            weatherCondition = currentWeather;
+            if (current == null || location == null) {
+                weatherProviderDeleteSnapshot();
+                return true;
+            }
+            weatherCondition = buildForecastWeatherFromSnapshotEntry(current, location);
+            openMeteoSunEvents = snapshot.get("sunEvents") as Array?;
             forecastUtcOffsetSeconds = weatherProviderToNumber(snapshot.get("utcOffsetSeconds"));
 
             var hourly = snapshot.get("hourly") as Array?;
             if (hourly != null) {
                 for (var i = 0; i < hourly.size(); i++) {
                     var entry = hourly[i] as Dictionary?;
-                    cachedHourlyForecast.add(entry == null ? [null, null] : [entry.get("forecastTime"), entry.get("condition")]);
+                    cachedHourlyForecast.add(entry == null ? [null, null] : [
+                        weatherProviderToNumber(entry.get("forecastTime")),
+                        weatherProviderToNumber(entry.get("condition"))
+                    ]);
                 }
             }
             if (cachedHourlyForecast.size() == 0) {
                 var hourlyColumns = snapshot.get("hourlyColumns") as Array?;
-                var utcOffsetSeconds = weatherProviderToNumber(snapshot.get("utcOffsetSeconds"));
                 var hourlyColumnCount = weatherProviderGetBackgroundHourlyColumnCount(hourlyColumns);
-                if (utcOffsetSeconds != null && hourlyColumnCount > 0) {
-                    for (var j = 0; j < hourlyColumnCount; j++) {
-                        var start = weatherProviderGetArrayNumber(hourlyColumns, 0);
-                        var condition = weatherProviderGetArrayNumber(weatherProviderGetArrayValue(hourlyColumns, 3) as Array?, j);
-                        cachedHourlyForecast.add([start == null ? null : start + j * 3600, condition]);
-                    }
+                var start = weatherProviderGetArrayNumber(hourlyColumns, 0);
+                var conditions = weatherProviderGetArrayValue(hourlyColumns, 3) as Array?;
+                if (forecastUtcOffsetSeconds != null && start != null && conditions != null) {
+                    var count = conditions.size() < hourlyColumnCount ? conditions.size() : hourlyColumnCount;
+                    cachedHourlyStart = start;
+                    cachedHourlyForecast = count == conditions.size() ? conditions : conditions.slice(0, count);
                 }
             }
-            if (fetchedAt != null) { openMeteoAppliedSnapshotFetchedAt = fetchedAt; }
+            openMeteoAppliedSnapshotFetchedAt = fetchedAt;
         } catch(e) {
             clearCustomWeatherData();
             System.println("Open-Meteo snapshot apply failure: " + e);
             weatherProviderDeleteSnapshot();
         }
+        return true;
     }
 
-    public function scheduleImmediateCustomWeatherRefreshIfNeeded() as Void {
-        if (!useOpenMeteoProvider()) { return; }
-        weatherProviderScheduleImmediateRefreshIfNeeded();
-    }
+    hidden function updateWeather(now as Number, reloadSnapshot as Boolean) as Void {
+        var hasWeatherFields = (runtimeBitmap & 0x20) != 0;
+        var usesOpenMeteo = useOpenMeteoProvider();
+        if (reloadSnapshot && (!hasWeatherFields || !usesOpenMeteo)) {
+            weatherProviderDeleteScheduledRefresh();
+        }
+        if (!hasWeatherFields) { return; }
 
-    (:WeatherCache)
-    hidden function initializeWeatherData() as Void {
-        if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
-            if (useOpenMeteoProvider()) {
-                applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-                scheduleImmediateCustomWeatherRefreshIfNeeded();
-            } else {
-                try { weatherCondition = readWeatherData(); } catch(e) {}
-                if (weatherCondition == null) {
-                    if(Toybox has :Weather && Weather has :getCurrentConditions) {
-                        weatherCondition = Weather.getCurrentConditions();
-                    }
+        try {
+            var forecastChanged = false;
+            if (usesOpenMeteo) {
+                var fetchedAt = openMeteoAppliedSnapshotFetchedAt;
+                if (reloadSnapshot || (fetchedAt != null && !weatherProviderIsSnapshotFresh(fetchedAt, now))) {
+                    forecastChanged = applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
                 }
+                weatherProviderEnsureRefreshScheduled();
             }
-        }
-        cachedTempUnit = getTempUnit();
-        if (!useOpenMeteoProvider()) {
-            updateHourlyForecastData(null);
-        }
-        updateForecastChanges();
-    }
-
-    (:NoWeatherCache)
-    hidden function initializeWeatherData() as Void {
-        if (((runtimeBitmap >> 5) & 0x1) == 1 && weatherCondition == null) {
-            if (useOpenMeteoProvider()) {
-                applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-                scheduleImmediateCustomWeatherRefreshIfNeeded();
-            } else if(Toybox has :Weather && Weather has :getCurrentConditions) {
-                weatherCondition = Weather.getCurrentConditions();
+            if (openMeteoAppliedSnapshotFetchedAt == null) {
+                // Keep Garmin conditions as a cold-start fallback without allocating an hourly array on a tight heap.
+                var fetchForecast = !usesOpenMeteo || System.getSystemStats().freeMemory >= 12288;
+                forecastChanged = updateGarminWeather(now, fetchForecast) || forecastChanged;
             }
+            if (!forecastChanged && cachedHourlyForecast.size() > 0 && lastSlowUpdate != null) {
+                var offsetMinutes = getForecastUtcOffset() / 60;
+                forecastChanged = (now / 60 + offsetMinutes) / 60 != (lastSlowUpdate + offsetMinutes) / 60;
+            }
+            if (forecastChanged) { updateForecastChanges(); }
+        } catch (e) {
+            System.println("Weather refresh failure: " + e);
         }
-        cachedTempUnit = getTempUnit();
-        if (!useOpenMeteoProvider()) {
-            updateHourlyForecastData(null);
-        }
-        updateForecastChanges();
     }
 
     (:WeatherCache)
-    hidden function updateWeather() as Void {
-        if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
-        if (useOpenMeteoProvider()) {
-            applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-            scheduleImmediateCustomWeatherRefreshIfNeeded();
-            cachedTempUnit = getTempUnit();
-            updateForecastChanges();
-            return;
-        }
-        if(!(Toybox has :Weather) or !(Weather has :getCurrentConditions)) { return; }
+    hidden function updateGarminWeather(now as Number, fetchForecast as Boolean) as Boolean {
+        if (!(Toybox has :Weather) || !(Weather has :getCurrentConditions)) { return false; }
 
-        var now = Time.now().value();
-        var shouldFetchCurrentConditions = weatherCondition == null
-            || lastCurrentConditionsFetch == null
+        var shouldFetchCurrentConditions = lastCurrentConditionsFetch == null
+            || now < lastCurrentConditionsFetch
             || now - (lastCurrentConditionsFetch as Number) >= currentConditionsUpdateIntervalS;
-        var shouldFetchHourlyForecast = cachedHourlyForecast.size() == 0
-            || lastHourlyForecastFetch == null
-            || now - (lastHourlyForecastFetch as Number) >= hourlyForecastUpdateIntervalS;
+        var shouldFetchHourlyForecast = fetchForecast && (lastHourlyForecastFetch == null
+            || now < lastHourlyForecastFetch
+            || now - (lastHourlyForecastFetch as Number) >= hourlyForecastUpdateIntervalS);
 
         var cc = null;
         var hf = null;
         if (shouldFetchCurrentConditions) {
-            cc = Weather.getCurrentConditions();
             lastCurrentConditionsFetch = now;
+            cc = Weather.getCurrentConditions();
         }
         if (shouldFetchHourlyForecast) {
             lastHourlyForecastFetch = now;
@@ -2355,9 +2321,9 @@ class Segment34View extends WatchUi.WatchFace {
             }
         }
 
-        if(cc != null) {
+        if (cc != null) {
             weatherCondition = cc;
-        } else if (weatherCondition == null) {
+        } else if (shouldFetchCurrentConditions) {
             try { weatherCondition = readWeatherData(); } catch(e) {}
         }
 
@@ -2365,38 +2331,28 @@ class Segment34View extends WatchUi.WatchFace {
             try { storeWeatherData(cc, shouldFetchHourlyForecast ? hf : null); } catch(e) {}
         }
 
-        cachedTempUnit = getTempUnit();
         if (shouldFetchHourlyForecast) {
             updateHourlyForecastData(hf);
         }
-        updateForecastChanges();
+        return shouldFetchHourlyForecast;
     }
 
     (:NoWeatherCache)
-    hidden function updateWeather() as Void {
-        if (((runtimeBitmap >> 5) & 0x1) != 1) { return; }
-        if (useOpenMeteoProvider()) {
-            applyCustomWeatherSnapshot(loadCustomWeatherSnapshot());
-            scheduleImmediateCustomWeatherRefreshIfNeeded();
-            cachedTempUnit = getTempUnit();
-            updateForecastChanges();
-            return;
-        }
-        if(!(Toybox has :Weather) or !(Weather has :getCurrentConditions)) { return; }
+    hidden function updateGarminWeather(now as Number, fetchForecast as Boolean) as Boolean {
+        if (!(Toybox has :Weather) || !(Weather has :getCurrentConditions)) { return false; }
 
-        var now = Time.now().value();
-        var shouldFetchCurrentConditions = weatherCondition == null
-            || lastCurrentConditionsFetch == null
+        var shouldFetchCurrentConditions = lastCurrentConditionsFetch == null
+            || now < lastCurrentConditionsFetch
             || now - (lastCurrentConditionsFetch as Number) >= currentConditionsUpdateIntervalS;
-        var shouldFetchHourlyForecast = cachedHourlyForecast.size() == 0
-            || lastHourlyForecastFetch == null
-            || now - (lastHourlyForecastFetch as Number) >= hourlyForecastUpdateIntervalS;
+        var shouldFetchHourlyForecast = fetchForecast && (lastHourlyForecastFetch == null
+            || now < lastHourlyForecastFetch
+            || now - (lastHourlyForecastFetch as Number) >= hourlyForecastUpdateIntervalS);
 
         var cc = null;
         var hf = null;
         if (shouldFetchCurrentConditions) {
-            cc = Weather.getCurrentConditions();
             lastCurrentConditionsFetch = now;
+            cc = Weather.getCurrentConditions();
         }
         if (shouldFetchHourlyForecast) {
             lastHourlyForecastFetch = now;
@@ -2408,29 +2364,18 @@ class Segment34View extends WatchUi.WatchFace {
         if (cc != null) {
             weatherCondition = cc;
         }
-        cachedTempUnit = getTempUnit();
         if (shouldFetchHourlyForecast) {
             updateHourlyForecastData(hf);
         }
-        updateForecastChanges();
+        return shouldFetchHourlyForecast;
     }
 
     (:WeatherCache)
     hidden function updateHourlyForecastData(hfOverride as Array?) as Void {
         cachedHourlyForecast = [];
-        var hf = hfOverride;
-
-        if (hf == null && Toybox has :Weather && Weather has :getHourlyForecast) {
-            hf = Weather.getHourlyForecast();
-        }
-
-        if (hf != null) {
-            if (hf != null && hf.size() > 0) {
-                for (var i = 0; i < hf.size(); i++) {
-                    cachedHourlyForecast.add([hf[i].forecastTime == null ? null : hf[i].forecastTime.value(), hf[i].condition]);
-                }
-                return;
-            }
+        if (hfOverride != null && hfOverride.size() > 0) {
+            cacheGarminHourlyForecast(hfOverride);
+            return;
         }
 
         var hfData = Application.Storage.getValue("hourly_forecast") as Array?;
@@ -2442,34 +2387,26 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     (:NoWeatherCache)
-    hidden function updateHourlyForecastData(hfOverride as Array?) as Void {
+    hidden function updateHourlyForecastData(hf as Array?) as Void {
         cachedHourlyForecast = [];
-        var hf = hfOverride;
-
-        if (hf == null) {
-            if (!(Toybox has :Weather) || !(Weather has :getHourlyForecast)) { return; }
-            hf = Weather.getHourlyForecast();
-        }
-
-        if (hf == null || hf.size() == 0) { return; }
-
-        for (var i = 0; i < hf.size(); i++) {
-            cachedHourlyForecast.add([hf[i].forecastTime == null ? null : hf[i].forecastTime.value(), hf[i].condition]);
-        }
+        if (hf != null) { cacheGarminHourlyForecast(hf); }
     }
 
-    hidden function isWeatherSource(id as Number) as Boolean {
-        if (id == 20 || id == 39 || id == 40 || (id >= 43 && id <= 55) || (id >= 63 && id <= 70) || (id >= 73 && id <= 75) || (id >= 77 && id <= 79)) {
-            return true;
+    hidden function cacheGarminHourlyForecast(hf as Array) as Void {
+        for (var i = 0; i < hf.size(); i++) {
+            var hour = hf[i];
+            if (hour != null && hour.forecastTime != null) {
+                cachedHourlyForecast.add([hour.forecastTime.value(), hour.condition]);
+            }
         }
-        return false;
     }
 
     (:WeatherCache)
     hidden function computeCcHash(cc) as Number {
         if (cc == null) { return 0; }
         
-        var h = 17;
+        var observation = (cc has :observationTime) ? cc.observationTime : null;
+        var h = observation == null ? 17 : observation.value();
 
         var t = (cc.temperature != null) ? cc.temperature : -127;
         h = 31 * h + t;
@@ -2530,12 +2467,15 @@ class Segment34View extends WatchUi.WatchFace {
 
         if (hf == null || hf.size() == 0) { return; }
 
-        var firstForecastTime = hf[0].forecastTime.value();
+        var first = hf[0];
+        if (first == null || first.forecastTime == null) { return; }
+        var firstForecastTime = first.forecastTime.value();
 
         if (lastHfTime == null || lastHfTime != firstForecastTime) {
             var hf_data = [];
             
             for(var i=0; i<hf.size(); i++) {
+                if (hf[i] == null || hf[i].forecastTime == null) { continue; }
                 var tmp = {
                     "forecastTime" => hf[i].forecastTime.value(),
                     "forecastHour" => Time.Gregorian.info(hf[i].forecastTime, Time.FORMAT_SHORT).hour,
@@ -2564,18 +2504,20 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     (:WeatherCache)
-    hidden function readWeatherData() as StoredWeather {
-        var ret = new StoredWeather();
+    hidden function readWeatherData() as StoredWeather? {
         var now = Time.now().value();
         var cc_data = Application.Storage.getValue("current_conditions") as Dictionary<String, Application.PropertyValueType>?;
-        if(cc_data == null) { return ret; }
-        
-        var data_age_s = now - (cc_data.get("timestamp") as Number);
+        if (cc_data == null) { return null; }
+        var timestamp = weatherProviderToNumber(cc_data.get("timestamp"));
+        if (timestamp == null) { return null; }
+
+        var ret = new StoredWeather();
+        var data_age_s = now - timestamp;
         var pos = cc_data.get("observationLocationPosition") as Array?;
         if (pos != null) {
             ret.observationLocationPosition = new Position.Location({:latitude => pos[0], :longitude => pos[1], :format => :degrees});
         }
-        if(data_age_s > 0 and data_age_s < 3600) {
+        if(data_age_s >= 0 and data_age_s < 3600) {
             ret.condition = cc_data.get("condition") as Number;
             ret.highTemperature = cc_data.get("highTemperature") as Number;
             ret.lowTemperature = cc_data.get("lowTemperature") as Number;
@@ -2594,7 +2536,7 @@ class Segment34View extends WatchUi.WatchFace {
             if(hf_data == null) { return ret; }
             for(var i=0; i<hf_data.size(); i++) {
                 var forecast_age = now - (hf_data[i].get("forecastTime") as Number);
-                if(forecast_age > 0 and forecast_age < 3600) {
+                if(forecast_age >= 0 and forecast_age < 3600) {
                     ret.condition = hf_data[i].get("condition") as Number;
                     ret.temperature = hf_data[i].get("temperature") as Number;
                     ret.highTemperature = hf_data[i].get("highTemperature") as Number;
@@ -2629,12 +2571,12 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getWeatherLineDisplayState(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as Array {
-        if (!isWeatherSource(complicationType)) {
-            return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
-        }
-
         if (complicationType == 79) {
             return getWeatherCycleState();
+        }
+        // Keep the daily weather line off the deep complication path on older watches.
+        if (complicationType == 78) {
+            return [getDailyWeatherLine(), themeColors[dataVal]];
         }
 
         return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
@@ -2658,7 +2600,6 @@ class Segment34View extends WatchUi.WatchFace {
     hidden function getValueByType(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as String {
         var val = "";
         var numberFormat = "%d";
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
 
         if(complicationType == -2) { // Hidden
             return "";
@@ -2705,7 +2646,7 @@ class Segment34View extends WatchUi.WatchFace {
                 }
             }
         } else if(complicationType == 6) { // Time to Recovery (h)
-            if (hasComplications) {
+            if (Toybox has :Complications) {
                 try {
                     var complication = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_RECOVERY_TIME));
                     if (complication != null && complication.value instanceof Number) {
@@ -2815,7 +2756,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else if(complicationType == 24) { // Weekly bike distance (miles)
             val = getWeeklyDistanceFromComplication(false, 0.000621371, width);
         } else if(complicationType == 25) { // Training status
-            if (hasComplications) {
+            if (Toybox has :Complications) {
                 try {
                     var complication = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_TRAINING_STATUS));
                     if (complication != null && complication.value instanceof String) {
@@ -3006,7 +2947,7 @@ class Segment34View extends WatchUi.WatchFace {
         } else if(complicationType == 56) { // Millitary Date Time Group
             val = getDateTimeGroup();
         } else if(complicationType == 57) { // Time of the next Calendar Event
-            if (hasComplications) {
+            if (Toybox has :Complications) {
                 try {
                     var complication = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS));
                     var colon_index = null;
@@ -3037,7 +2978,7 @@ class Segment34View extends WatchUi.WatchFace {
             active_calories = (active_calories > 0) ? active_calories : 0; // Ensure active calories is not negative
             val = active_calories.format(numberFormat) + "/" + total_calories.format(numberFormat);
         } else if(complicationType == 59) { // PulseOx
-            if (hasComplications) {
+            if (Toybox has :Complications) {
                 try {
                     var complication = Complications.getComplication(new Id(Complications.COMPLICATION_TYPE_PULSE_OX));
                     if (complication != null && complication.value instanceof Number) {
@@ -3152,15 +3093,7 @@ class Segment34View extends WatchUi.WatchFace {
             var uv = getUVIndex();
             val = join([wind, precip, uv]);
         } else if(complicationType == 78) { // Wind, daily feels-like range, UV Index, Humidity
-            var wind = getWind();
-            var range = getDailyFeelsLike();
-            var uv = getUVIndex();
-            var humidity = getHumidity();
-            var fields = [wind, range, uv, humidity];
-            for (var i = 0; i < fields.size(); i++) {
-                if (fields[i].length() == 0) { continue; }
-                val += val.length() == 0 ? fields[i] : " " + fields[i];
-            }
+            val = getDailyWeatherLine();
         }
 
         return val;
@@ -3376,10 +3309,14 @@ class Segment34View extends WatchUi.WatchFace {
         }
     }
 
-    hidden function getWeatherPhase(phaseCount as Number) as Number {
-        if (phaseCount <= 1) { return 0; }
-        var elapsed = Time.now().value() - wakeTimestamp;
-        return ((elapsed / weatherCycleIntervalS).toNumber() % phaseCount);
+    hidden function getWeatherPhaseBucket(now as Number) as Number {
+        var elapsed = now - wakeTimestamp;
+        if (elapsed < 0) {
+            wakeTimestamp = now;
+            return 0;
+        }
+        var bucket = elapsed / weatherCycleIntervalS;
+        return bucket < 1048575 ? bucket : 1048574;
     }
 
     hidden function getForecastUtcOffset() as Number {
@@ -3388,7 +3325,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getWeatherCycleState() as Array {
         if (cachedHazardWindows.size() == 0) { return ["", themeColors[dataVal]]; }
-        var event = cachedHazardWindows[getWeatherPhase(cachedHazardWindows.size())] as Array;
+        var event = cachedHazardWindows[getWeatherPhaseBucket(Time.now().value()) % cachedHazardWindows.size()] as Array;
         var family = event[0] as Number;
         var label = family == 6 ? Application.loadResource(Rez.Strings.WEATHER_STORM)
             : Application.loadResource(cachedWeatherResIds[family]);
@@ -3398,7 +3335,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function updateForecastChanges() as Void {
-        cachedHazardWindows = weatherBuildHazardWindows(cachedHourlyForecast, Time.now().value());
+        cachedHazardWindows = weatherBuildHazardWindows(cachedHourlyForecast, Time.now().value(), cachedHourlyStart);
     }
 
     hidden function getDailyFeelsLike() as String {
@@ -3407,13 +3344,32 @@ class Segment34View extends WatchUi.WatchFace {
         return weatherFormatDailyFeelsLike(activeWeather.dailyFeelsLike, Time.now().value(), getForecastUtcOffset(), cachedTempUnit);
     }
 
+    hidden function getDailyWeatherLine() as String {
+        var fields = [getWind(), getDailyFeelsLike(), getUVIndex(), getHumidity()];
+        var value = "";
+        for (var i = 0; i < fields.size(); i++) {
+            if (fields[i].length() == 0) { continue; }
+            value += value.length() == 0 ? fields[i] : " " + fields[i];
+        }
+        return value;
+    }
+
     hidden function drawWeatherLine(dc as Dc, y as Number, value as String, color as Graphics.ColorType) as Void {
+        if (value.length() == 0) { return; }
         var width = screenWidth - 2 * marginX;
         if (screenWidth == screenHeight) {
             var dy = y + dc.getFontHeight(fontSmallData) / 2 - centerY;
             width = 2 * Math.sqrt(centerX * centerX - dy * dy).toNumber() - 2 * marginX;
         }
-        var font = dc.getTextWidthInPixels(value, fontSmallData) <= width ? fontSmallData : fontWeatherCompact;
+        var font = fontSmallData;
+        if (dc.getTextWidthInPixels(value, fontSmallData) > width) {
+            var compactFont = fontWeatherCompact;
+            if (compactFont == null) {
+                compactFont = Application.loadResource(Rez.Fonts.weather_compact) as WatchUi.FontResource;
+                if (fontLargeData != null) { fontWeatherCompact = compactFont; }
+            }
+            font = compactFont as WatchUi.FontResource;
+        }
         var offsetY = (dc.getFontHeight(fontSmallData) - dc.getFontHeight(font)) / 2;
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.drawText(centerX, y + offsetY, font, value, Graphics.TEXT_JUSTIFY_CENTER);
@@ -3634,7 +3590,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getNextSunEvent() as Array {
-        if(refreshCache has :nextSunEventLoaded) {
+        if(refreshCache.hasKey(:nextSunEventLoaded)) {
             return (refreshCache as Dictionary).get(:nextSunEvent) as Array;
         }
 
@@ -3667,7 +3623,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getRestCalories() as Number {
-        if(refreshCache has :restCaloriesLoaded) {
+        if(refreshCache.hasKey(:restCaloriesLoaded)) {
             return (refreshCache as Dictionary).get(:restCalories) as Number;
         }
 
@@ -3699,7 +3655,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getWeeklyDistance(activityInfo) as Number {
-        if(refreshCache has :weeklyDistanceLoaded) {
+        if(refreshCache.hasKey(:weeklyDistanceLoaded)) {
             return (refreshCache as Dictionary).get(:weeklyDistance) as Number;
         }
 
@@ -3728,8 +3684,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     hidden function getWeeklyDistanceFromComplication(isRun as Boolean, conversionFactor as Float, width as Number) as String {
         var val = "";
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
-        if (hasComplications) {
+        if (Toybox has :Complications) {
             try {
                 var compType = isRun ? Complications.COMPLICATION_TYPE_WEEKLY_RUN_DISTANCE : Complications.COMPLICATION_TYPE_WEEKLY_BIKE_DISTANCE;
                 var complication = Complications.getComplication(new Id(compType));
@@ -3746,8 +3701,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     // CGM Connect Widget helper functions
     hidden function getCgmComplicationByLabel(targetLabel as String) as Complications.Id? {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
-        if (!hasComplications) { return null; }
+        if (!(Toybox has :Complications)) { return null; }
         try {
             var iter = Complications.getComplications();
             var comp = iter.next();
@@ -3776,8 +3730,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getCgmReading() as String {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
-        if (!hasComplications) { return ""; }
+        if (!(Toybox has :Complications)) { return ""; }
         try {
             if (cgmComplicationIds[0] == null) {
                 cgmComplicationIds[0] = getCgmComplicationByLabel("CGM");
@@ -3804,8 +3757,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function getCgmAge() as String {
-        var hasComplications = ((runtimeBitmap >> 8) & 0x1) == 1;
-        if (!hasComplications) { return ""; }
+        if (!(Toybox has :Complications)) { return ""; }
         try {
             if (cgmComplicationIds[1] == null) {
                 cgmComplicationIds[1] = getCgmComplicationByLabel("CGM Age");
@@ -4015,13 +3967,27 @@ class Segment34View extends WatchUi.WatchFace {
         drawSquares(dc, values);
     }
 
+    (:MIP)
+    hidden function getBottomDataFont() as WatchUi.FontResource {
+        // Short-lived on tight heaps so weather and sensor reads can reclaim this font.
+        return fontBottomData == null
+            ? Application.loadResource(Rez.Fonts.led_small) as WatchUi.FontResource
+            : fontBottomData as WatchUi.FontResource;
+    }
+
+    (:AMOLED)
+    hidden function getBottomDataFont() as WatchUi.FontResource {
+        return fontBottomData as WatchUi.FontResource;
+    }
+
     (:Round)
     hidden function drawBottomFieldsWithIcons(dc as Dc, values as Dictionary) as Void {
         // Original single field behavior
         var iconYAdj = ((layoutBitmap >> 20) & 0x1F) - 16;
         var step_width = 0;
         if(screenHeight == 240) {
-            step_width = drawDataField(dc, centerX - 19, bottomFiveY + 3, 0, null, values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
+            step_width = drawDataField(dc, centerX - 19, bottomFiveY + 3, 0, null,
+                values[:dataBottom], 5, getBottomDataFont(), values[:dataBottomColor]);
         } else {
             step_width = drawDataField(dc, centerX, bottomFiveY, 0, null, values[:dataBottom], 5, fontBottomData, values[:dataBottomColor]);
         }
