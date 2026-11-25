@@ -2,6 +2,8 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
 
+const WEATHER_HAZARD_WINDOW_WIDTH = 3;
+
 // Positive values are canonical Garmin conditions; zero is standard, -1 is missing.
 function weatherHazardFamily(condition as Number?) as Number {
     if (condition == null || condition < 0 || condition >= 53) { return -1; }
@@ -20,39 +22,42 @@ function weatherHazardFamily(condition as Number?) as Number {
 
 // Garmin and older snapshots use [UTC timestamp, condition] rows. Compact snapshots
 // keep only the condition column and an hourly start time. Both yield the same windows.
+// Store consecutive [family, start, end] triples without one object per window.
 function weatherBuildHazardWindows(hours as Array, now as Number, start as Number?) as Array {
     var windows = [];
-    var active = null as Array?;
+    var active = -1;
     var previousTime = null as Number?;
     var standardHours = 0;
     for (var i = 0; i < hours.size(); i++) {
         var time = start == null ? (hours[i] as Array)[0] as Number? : start + i * 3600;
         if (time == null) {
-            active = null;
+            active = -1;
             previousTime = null;
             continue;
         }
         if (time + 3600 <= now) { continue; }
         if (previousTime == null || time != previousTime + 3600) {
-            active = null;
+            active = -1;
             standardHours = 0;
         }
         previousTime = time;
         var condition = start == null ? (hours[i] as Array)[1] as Number? : weatherProviderGetArrayNumber(hours, i);
         var family = weatherHazardFamily(condition);
         if (family > 0) {
-            if (active != null && active[0] == family && standardHours <= 1) {
-                active[2] = time + 3600;
+            if (active >= 0 && windows[active] == family && standardHours <= 1) {
+                windows[active + 2] = time + 3600;
             } else {
-                active = [family, time, time + 3600];
-                windows.add(active);
+                active = windows.size();
+                windows.add(family);
+                windows.add(time);
+                windows.add(time + 3600);
             }
             standardHours = 0;
         } else if (family == 0) {
             standardHours++;
-            if (standardHours > 1) { active = null; }
+            if (standardHours > 1) { active = -1; }
         } else {
-            active = null;
+            active = -1;
             standardHours = 0;
         }
     }

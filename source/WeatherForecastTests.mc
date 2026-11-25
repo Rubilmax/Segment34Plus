@@ -21,32 +21,32 @@ function hazardFamilies(logger as Test.Logger) as Boolean {
 (:test)
 function hazardWindowsBridgeOneHour(logger as Test.Logger) as Boolean {
     var windows = weatherBuildHazardWindows([[0, 14], [3600, 3], [7200, 0], [10800, 15], [14400, 6], [18000, 12]], 0, null);
-    Test.assertEqual(windows.size(), 2);
-    Test.assertEqual(windows[0][0], 3);
-    Test.assertEqual(windows[0][1], 0);
-    Test.assertEqual(windows[0][2], 14400);
-    Test.assertEqual(windows[1][0], 6);
-    Test.assertEqual(windows[1][1], 14400);
-    Test.assertEqual(windows[1][2], 21600);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 0], [7200, 20], [10800, 3]], 0, null).size(), 2);
+    Test.assertEqual(windows.size(), 6);
+    Test.assertEqual(windows[0], 3);
+    Test.assertEqual(windows[1], 0);
+    Test.assertEqual(windows[2], 14400);
+    Test.assertEqual(windows[3], 6);
+    Test.assertEqual(windows[4], 14400);
+    Test.assertEqual(windows[5], 21600);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 0], [7200, 20], [10800, 3]], 0, null).size(), 6);
     return true;
 }
 
 (:test)
 function hazardWindowsRespectMissingData(logger as Test.Logger) as Boolean {
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, null], [7200, 3]], 0, null).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 53], [7200, 3]], 0, null).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [null, 0], [7200, 3]], 0, null).size(), 2);
-    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [7200, 3]], 0, null).size(), 2);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, null], [7200, 3]], 0, null).size(), 6);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [3600, 53], [7200, 3]], 0, null).size(), 6);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [null, 0], [7200, 3]], 0, null).size(), 6);
+    Test.assertEqual(weatherBuildHazardWindows([[0, 3], [7200, 3]], 0, null).size(), 6);
     var current = weatherBuildHazardWindows([[0, 3], [3600, 3], [7200, 3]], 5400, null);
-    Test.assertEqual(current[0][1], 3600);
-    Test.assertEqual(current[0][2], 10800);
+    Test.assertEqual(current[1], 3600);
+    Test.assertEqual(current[2], 10800);
     Test.assertEqual(weatherBuildHazardWindows([[0, 0], [3600, 20]], 0, null).size(), 0);
     Test.assertEqual(weatherBuildHazardWindows([], 0, null).size(), 0);
     var packed = weatherBuildHazardWindows([3, null, 3, 0, 20, 3], 3600, 3600);
-    Test.assertEqual(packed.size(), 3);
-    Test.assertEqual(packed[0][1], 3600);
-    Test.assertEqual(packed[2][2], 25200);
+    Test.assertEqual(packed.size(), 9);
+    Test.assertEqual(packed[1], 3600);
+    Test.assertEqual(packed[8], 25200);
     return true;
 }
 
@@ -84,8 +84,7 @@ function weatherMemoryAndCompatibility(logger as Test.Logger) as Boolean {
     Test.assertEqual(weatherProviderForecastLimitForMemory(65536, false), 72);
     var legacy = weatherProviderDecodeBackgroundCurrentEntry([3, 12, 10.0f, 80, 50, 180, 2.0f, 15, 8, 1.0f]);
     Test.assert(legacy.get("dailyFeelsLike") == null);
-    legacy["dailyFeelsLike"] = [2.0f, 14.0f, 0];
-    var decoded = weatherProviderDecodeBackgroundCurrentEntry(weatherProviderEncodeBackgroundCurrentEntry(legacy));
+    var decoded = weatherProviderDecodeBackgroundCurrentEntry([3, 12, 10.0f, 80, 50, 180, 2.0f, 15, 8, 1.0f, [2.0f, 14.0f, 0]]);
     Test.assertEqual((decoded.get("dailyFeelsLike") as Array)[1], 14.0f);
     var columns = [0, 12, 8, [3, 3, 0, 0, 6, 6, 6, 6, 4, 4, 4, 4], [], [1, 2, 3, 4, 5, 6, 7, 8], [], [], [], [], []];
     var limited = weatherProviderLimitHourlyColumns(columns, 4);
@@ -103,9 +102,10 @@ function weatherCompactColumns(logger as Test.Logger) as Boolean {
     var hourly = {"weather_code" => [61, 63, 0, 65], "temperature_2m" => [1.0f, 2.0f, 3.0f, 4.0f]};
     var columns = weatherProviderBuildHourlyColumns(hourly, [0, 3600, 7200, 10800], 0, 72);
     Test.assertEqual(columns[1], 4);
+    Test.assertEqual(columns[2], 0);
     Test.assertEqual((columns[4] as Array).size(), 0);
     Test.assertEqual((columns[3] as Array)[0], 14);
-    Test.assertEqual((columns[5] as Array)[3], 4.0f);
+    Test.assertEqual(columns.size(), 5);
     var compact = weatherProviderBuildHourlyColumns(hourly, [0, 3600, 7200, 10800], 0, 36);
     Test.assertEqual(compact[1], 4);
     Test.assertEqual(compact[2], 0);
@@ -115,6 +115,8 @@ function weatherCompactColumns(logger as Test.Logger) as Boolean {
     Test.assert((gap[3] as Array)[2] == null);
     Test.assertEqual((gap[3] as Array)[3], 0);
     Test.assertEqual((gap[3] as Array)[4], 15);
+    var params = weatherProviderBuildOpenMeteoParams([48.0f, 2.0f]);
+    Test.assertEqual(params.get("hourly"), "weather_code,precipitation_probability,uv_index");
     return true;
 }
 
@@ -125,15 +127,20 @@ function weatherSnapshotDailyRangeAndFallback(logger as Test.Logger) as Boolean 
         "utc_offset_seconds" => 7200,
         "timezone" => "Europe/Paris",
         "current" => {"time" => now, "weather_code" => 61, "apparent_temperature" => 20.0f},
-        "hourly" => {"time" => [22 * 3600, 23 * 3600, 24 * 3600], "weather_code" => [61, 63, 95]},
+        "hourly" => {"time" => [22 * 3600, 23 * 3600, 24 * 3600], "weather_code" => [61, 63, 95],
+            "uv_index" => [1.0f, 2.0f, 3.0f], "precipitation_probability" => [70, 80, 90]},
         "daily" => {
             "time" => [-7200, 79200, 165600],
             "apparent_temperature_min" => [-5.0f, -1.0f, 2.0f],
             "apparent_temperature_max" => [10.0f, 8.0f, 14.0f]
         }
     };
-    var snapshot = weatherProviderBuildSnapshotFromOpenMeteoResponse(data, [48.0f, 2.0f], now) as Dictionary;
-    var range = (snapshot.get("current") as Dictionary).get("dailyFeelsLike") as Array;
+    var encoded = weatherProviderBuildEncodedOpenMeteoSnapshot(data, [48.0f, 2.0f], now) as Dictionary;
+    var snapshot = weatherProviderDecodeBackgroundSnapshot(encoded) as Dictionary;
+    var current = snapshot.get("current") as Dictionary;
+    Test.assertEqual(current.get("uvIndex"), 1.0f);
+    Test.assertEqual(current.get("precipitationChance"), 70);
+    var range = current.get("dailyFeelsLike") as Array;
     Test.assertEqual(range[0], -1.0f);
     Test.assertEqual(range[1], 8.0f);
     Test.assertEqual(range[2], 86400);
@@ -141,13 +148,51 @@ function weatherSnapshotDailyRangeAndFallback(logger as Test.Logger) as Boolean 
     var columns = snapshot.get("hourlyColumns") as Array;
     Test.assertEqual(columns[0], 22 * 3600);
     Test.assertEqual(columns[1], 3);
-    var encoded = weatherProviderEncodeBackgroundSnapshotWithHourlyLimit(snapshot, 1) as Dictionary;
+    encoded["q"] = weatherProviderLimitHourlyColumns(columns, 1);
     var decoded = weatherProviderDecodeBackgroundSnapshot(encoded) as Dictionary;
     Test.assertEqual((decoded.get("hourlyColumns") as Array)[1], 1);
     Test.assertEqual(((decoded.get("current") as Dictionary).get("dailyFeelsLike") as Array)[1], 8.0f);
-    var currentOnly = weatherProviderDecodeBackgroundSnapshot(weatherProviderEncodeBackgroundSnapshotWithHourlyLimit(snapshot, 0)) as Dictionary;
+    encoded["q"] = [];
+    var currentOnly = weatherProviderDecodeBackgroundSnapshot(encoded) as Dictionary;
     Test.assertEqual((currentOnly.get("hourly") as Array).size(), 0);
     Test.assertEqual(((currentOnly.get("current") as Dictionary).get("dailyFeelsLike") as Array)[0], -1.0f);
+    var invalidHourly = data.get("hourly") as Dictionary;
+    invalidHourly["time"] = "invalid";
+    Test.assert(weatherProviderBuildEncodedOpenMeteoSnapshot(data, [48.0f, 2.0f], now) == null);
+    return true;
+}
+
+(:test)
+function weatherBackgroundKeepsLastGoodSnapshot(logger as Test.Logger) as Boolean {
+    var savedSnapshot = Application.Storage.getValue(WEATHER_SNAPSHOT_KEY);
+    var savedState = Application.Storage.getValue(WEATHER_PROVIDER_STATE_KEY);
+    var now = Time.now().value();
+    try {
+        var snapshot = {
+            "t" => now, "l" => [48.0f, 2.0f], "o" => 7200,
+            "c" => [3], "q" => [now, 3, 0, [3, 3, 6], []]
+        };
+        var success = weatherProviderBuildBackgroundSuccessPayloadFromEncodedSnapshot(
+            snapshot, now, now + 1, WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE
+        );
+        Test.assert(weatherProviderApplyBackgroundPayload(success));
+        Test.assertEqual(weatherProviderLoadOpenMeteoState().get("lastSuccessAt"), now + 1);
+        Test.assertEqual(weatherProviderLoadSnapshot().get("fetchedAt"), now);
+
+        var failure = weatherProviderBuildBackgroundFailurePayload(
+            WEATHER_PROVIDER_BACKGROUND_RESULT_REQUEST_FAILED, now + 2, -403, WEATHER_PROVIDER_LOCATION_SOURCE_DEVICE
+        );
+        Test.assert(!weatherProviderApplyBackgroundPayload(failure));
+        var state = weatherProviderLoadOpenMeteoState();
+        Test.assertEqual(state.get("lastSuccessAt"), now + 1);
+        Test.assertEqual(state.get("lastErrorCode"), -403);
+        Test.assertEqual(weatherProviderLoadSnapshot().get("fetchedAt"), now);
+    } finally {
+        if (savedSnapshot == null) { weatherProviderDeleteSnapshot(); }
+        else { Application.Storage.setValue(WEATHER_SNAPSHOT_KEY, savedSnapshot); }
+        if (savedState == null) { weatherProviderDeleteState(); }
+        else { Application.Storage.setValue(WEATHER_PROVIDER_STATE_KEY, savedState); }
+    }
     return true;
 }
 
@@ -229,5 +274,41 @@ function weatherColdStartAndReinstall(logger as Test.Logger) as Boolean {
     Test.assert(weatherProviderIsSnapshotFresh(100, 100));
     Test.assert(!weatherProviderIsSnapshotFresh(100, 99));
     Test.assert(!weatherProviderIsSnapshotFresh(100, 100 + WEATHER_PROVIDER_STALE_AFTER_S));
+    return true;
+}
+
+(:test, :AMOLED)
+function watchFaceOptionalGraphicsFollowSettings(logger as Test.Logger) as Boolean {
+    var savedStyle = Application.Properties.getValue("aodStyle");
+    var savedOutline = Application.Properties.getValue("clockOutlineStyle");
+    try {
+        Application.Properties.setValue("aodStyle", 0);
+        Application.Properties.setValue("clockOutlineStyle", 0);
+        var view = new Segment34View();
+        var settings = System.getDeviceSettings();
+        var options = {:width => settings.screenWidth, :height => 48};
+        var bitmap = Graphics has :createBufferedBitmap ? Graphics.createBufferedBitmap(options).get()
+            : new Graphics.BufferedBitmap(options);
+        var dc = bitmap.getDc();
+        view.onShow();
+        view.onUpdate(dc);
+
+        Application.Properties.setValue("aodStyle", 1);
+        Application.Properties.setValue("clockOutlineStyle", 1);
+        view.onSettingsChanged();
+        view.onEnterSleep();
+        view.onUpdate(dc);
+
+        Application.Properties.setValue("aodStyle", 0);
+        Application.Properties.setValue("clockOutlineStyle", 0);
+        view.onSettingsChanged();
+        view.onUpdate(dc);
+        view.onExitSleep();
+        view.onUpdate(dc);
+        view.onHide();
+    } finally {
+        Application.Properties.setValue("aodStyle", savedStyle);
+        Application.Properties.setValue("clockOutlineStyle", savedOutline);
+    }
     return true;
 }

@@ -27,10 +27,12 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
 
         if (location == null) {
             // Give a new install one quick retry while the watch acquires a location.
-            var registration = Background.getTemporalEventRegisteredTime();
-            var interval = registration instanceof Time.Duration
-                ? WEATHER_PROVIDER_FETCH_INTERVAL_S
-                : WEATHER_PROVIDER_IMMEDIATE_GUARD_S;
+            var interval = WEATHER_PROVIDER_FETCH_INTERVAL_S;
+            try {
+                if (!(Background.getTemporalEventRegisteredTime() instanceof Time.Duration)) {
+                    interval = WEATHER_PROVIDER_IMMEDIATE_GUARD_S;
+                }
+            } catch (e) {}
             weatherProviderScheduleNextRefresh(interval);
             exitBackgroundPayload(weatherProviderBuildBackgroundFailurePayload(
                 WEATHER_PROVIDER_BACKGROUND_RESULT_LOCATION_UNAVAILABLE,
@@ -95,11 +97,12 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
 
         if (responseCode == 200 && data instanceof Dictionary) {
             try {
-                var snapshot = weatherProviderBuildSnapshotFromOpenMeteoResponse(
+                var snapshot = weatherProviderBuildEncodedOpenMeteoSnapshot(
                     data as Dictionary,
                     location,
                     lastAttemptAt
                 );
+                data = null;
                 if (snapshot != null && exitBackgroundSuccessPayloadWithHourlyFallbacks(
                     snapshot,
                     lastAttemptAt,
@@ -130,35 +133,23 @@ class Segment34WeatherServiceDelegate extends System.ServiceDelegate {
     }
 
     hidden function exitBackgroundSuccessPayloadWithHourlyFallbacks(snapshot as Dictionary, lastAttemptAt as Number, successAt as Number, locationSource as String?) as Boolean {
+        var fullColumns = snapshot.get("q") as Array;
         var hourlyLimit = weatherProviderGetHourlyForecastLimit();
         while (hourlyLimit >= WEATHER_PROVIDER_BACKGROUND_MIN_HOURLY_LIMIT) {
-            if (tryExitBackgroundSuccessPayload(
-                snapshot,
-                lastAttemptAt,
-                successAt,
-                locationSource,
-                hourlyLimit
-            )) {
-                return true;
-            }
+            snapshot["q"] = weatherProviderLimitHourlyColumns(fullColumns, hourlyLimit);
+            if (tryExitBackgroundSuccessPayload(snapshot, lastAttemptAt, successAt, locationSource)) { return true; }
             hourlyLimit = hourlyLimit >> 1;
         }
-        return tryExitBackgroundSuccessPayload(
-            snapshot,
-            lastAttemptAt,
-            successAt,
-            locationSource,
-            0
-        );
+        snapshot["q"] = [];
+        return tryExitBackgroundSuccessPayload(snapshot, lastAttemptAt, successAt, locationSource);
     }
 
-    hidden function tryExitBackgroundSuccessPayload(snapshot as Dictionary, lastAttemptAt as Number, successAt as Number, locationSource as String?, hourlyLimit as Number) as Boolean {
-        var payload = weatherProviderBuildBackgroundSuccessPayloadWithHourlyLimit(
+    hidden function tryExitBackgroundSuccessPayload(snapshot as Dictionary, lastAttemptAt as Number, successAt as Number, locationSource as String?) as Boolean {
+        var payload = weatherProviderBuildBackgroundSuccessPayloadFromEncodedSnapshot(
             snapshot,
             lastAttemptAt,
             successAt,
-            locationSource,
-            hourlyLimit
+            locationSource
         );
         if (payload == null) {
             return false;
