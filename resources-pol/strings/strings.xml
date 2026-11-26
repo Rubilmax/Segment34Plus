@@ -422,5 +422,8 @@
     <string id="settings_cgm_glucose_trend" scope="settings">CGM Glukoza + Tendencja</string>
     <string id="settings_cgm_age" scope="settings">CGM Wiek (minuty)</string>
     <string id="WEATHER_STORM">BURZA</string>
+    <string id="HAZARD_SANDSTORM">B. PIASKOWA</string>
+    <string id="HAZARD_VOLCANIC_ASH">POPIÓŁ WULK.</string>
+    <string id="HAZARD_TROPICAL_STORM">B. TROPIK.</string>
     <string id="settings_wind_precipitation_uv_humidity" scope="settings">Wiatr, dzienna odczuwalna min-maks, UV, wilgotność</string>
 </strings>

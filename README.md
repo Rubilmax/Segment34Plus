@@ -74,7 +74,7 @@ The default weather combo shows today's full-day feels-like minimum and maximum 
 
 The cycling forecast shows rain/drizzle, storms, snow/mix, ice, hail, fog, wind and airborne hazards reported by the provider. Ordinary weather, haze, mist and unknown conditions do not get cycle slots. Matching hazard families merge across a single hour of ordinary weather; missing data and longer gaps keep windows separate.
 
-Each hazard window appears for four seconds as `RAIN 10-15H`, with 24-hour local times without leading zeros. Overnight windows stay together, such as `RAIN 22-3H`. The starting day sets the color: white today, light peach tomorrow, peach the following day, then peach-orange. The line is blank when no hazards are forecast.
+Each forecast row appears for four seconds. It shows up to three consecutive intervals of the same hazard starting on the same day, depending on how much fits the watch's row. Future rows start with a localized weekday abbreviation, such as `SAT: RAIN 3-4H 6-9H`. Times use the local 24-hour clock without leading zeros. Overnight windows stay together, such as `RAIN 22-3H`. The starting day sets the color: white today, light peach tomorrow, peach the following day, then peach-orange. The line is blank when no hazards are forecast.
 
 Open-Meteo retains up to 72 rolling hours of weather conditions on devices with larger memory budgets, including the fēnix 8 and fēnix 9. Watches with a 32 KB background heap or a 96 KB watch face budget retain up to 36 hours. Both profiles keep the same current and daily fields, and background payload limits can shorten either forecast window. Garmin Weather uses the hourly forecast it supplies. Wind hazards rely on condition codes, without additional speed thresholds.
 

@@ -422,5 +422,8 @@
     <string id="settings_cgm_glucose_trend" scope="settings">CGM Glycémie + Tendance</string>
     <string id="settings_cgm_age" scope="settings">CGM Âge (minutes)</string>
     <string id="WEATHER_STORM">ORAGE</string>
+    <string id="HAZARD_SANDSTORM">TEMP. SABLE</string>
+    <string id="HAZARD_VOLCANIC_ASH">CENDRES VOLC.</string>
+    <string id="HAZARD_TROPICAL_STORM">TEMP. TROP.</string>
     <string id="settings_wind_precipitation_uv_humidity" scope="settings">Vent, ressenti min-max du jour, UV, humidité</string>
 </strings>

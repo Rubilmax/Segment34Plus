@@ -65,6 +65,51 @@ function hazardHoursAndColors(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+class HazardForecastTestView extends Segment34View {
+    function initialize() {
+        Segment34View.initialize();
+    }
+
+    function checkDefaultWeatherRows() as Void {
+        var metrics = getWind() + " " + getDailyFeelsLike() + " " + getUVIndex() + " " + getHumidity();
+        Test.assertEqual(cachedValues[:dataAboveLine1] as String, metrics);
+        Test.assert(cachedValues.hasKey(:lowerWeatherLayout));
+    }
+
+    function checkPacking(dc as Graphics.Dc) as Void {
+        var rain = Application.loadResource(Rez.Strings.WEATHER_3) as String;
+        var storm = Application.loadResource(Rez.Strings.WEATHER_STORM) as String;
+        var friday = Application.loadResource(Rez.Strings.DAY_OF_WEEK_FRI) as String;
+        var windows = [3, 3600, 7200, 3, 14400, 25200, 3, 28800, 32400,
+            3, 72000, 75600, 3, 79200, 82800, 6, 93600, 97200, 3, 104400, 108000];
+        var pair = rain + " 3-4H 6-9H";
+        var pairWidth = dc.getTextWidthInPixels(pair, fontSmallData);
+        var narrow = buildHazardForecastPages(dc, pairWidth - 1, 0, 7200, windows);
+        Test.assertEqual(narrow[1], WEATHER_HAZARD_WINDOW_WIDTH);
+        var medium = buildHazardForecastPages(dc, pairWidth, 0, 7200, windows);
+        Test.assertEqual(medium[1], 2 * WEATHER_HAZARD_WINDOW_WIDTH);
+
+        var wide = buildHazardForecastPages(dc, 600, 0, 7200, windows);
+        var expected = [pair + " 10-11H", rain + " 22-23H", friday + ": " + rain + " 0-1H",
+            friday + ": " + storm + " 4-5H", friday + ": " + rain + " 7-8H"];
+        Test.assertEqual(wide.size(), expected.size() + 1);
+        for (var i = 0; i < expected.size(); i++) {
+            Test.assertEqual(formatHazardForecastPage(windows, wide[i], wide[i + 1], 0, 7200), expected[i]);
+        }
+    }
+}
+
+(:test)
+function hazardForecastFitsCompleteIntervals(logger as Test.Logger) as Boolean {
+    var options = {:width => 64, :height => 24};
+    var bitmap = Graphics has :createBufferedBitmap ? Graphics.createBufferedBitmap(options).get()
+        : new Graphics.BufferedBitmap(options);
+    var view = new HazardForecastTestView();
+    view.checkPacking(bitmap.getDc());
+    return true;
+}
+
+(:test)
 function dailyFeelsLikeRange(logger as Test.Logger) as Boolean {
     Test.assertEqual(weatherFormatDailyFeelsLike([7.4f, 16.6f, 0], 3600, 0, "C"), "\uE0007-17\u00B0");
     Test.assertEqual(weatherFormatDailyFeelsLike([0.0f, 10.0f, 0], 3600, 0, "F"), "\uE00032-50\u00B0");
@@ -217,7 +262,7 @@ function weatherViewRendersForecast(logger as Test.Logger) as Boolean {
                 "dailyFeelsLike" => [-40.0f, 40.0f, weatherProviderGetLocalDayStart(now, 7200)]},
             "hourlyColumns" => [now - now % 3600, 3, 0, [3, 3, 6], [], [], [], [], [], [], []]
         });
-        var view = new Segment34View();
+        var view = new HazardForecastTestView();
         var settings = System.getDeviceSettings();
         // A short native-color buffer fits older watch heaps and supports anti-aliased fonts.
         var options = {:width => settings.screenWidth, :height => 48};
@@ -226,6 +271,7 @@ function weatherViewRendersForecast(logger as Test.Logger) as Boolean {
         view.onShow();
         view.onUpdate(bitmap.getDc());
         view.onUpdate(bitmap.getDc());
+        view.checkDefaultWeatherRows();
         view.onHide();
         logger.debug("Forecast rendered; free memory: " + System.getSystemStats().freeMemory);
     } finally {

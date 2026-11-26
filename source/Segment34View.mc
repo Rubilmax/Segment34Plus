@@ -92,8 +92,7 @@ class Segment34View extends WatchUi.WatchFace {
 
     // runtimeBitmap: visible[0], cachedStressDataValid[1], cachedBBDataValid[2], canBurnIn[3],
     // isSleeping[4], isWeatherRequired[5], isLowMem[6], legacyStorageCleaned[7],
-    // reserved[8], touchAlternativeActive[9], clockBgCompact[10],
-    // lastWeatherPhasePlusOne[11:30]
+    // reserved[8], touchAlternativeActive[9], clockBgCompact[10]
     hidden var runtimeBitmap as Number = 1;
     // layoutBitmap: reserved[0:4], barBottomAdj[5:9], bottomFiveAdj[10:14],
     // textSideAdj[15:19], iconYAdjPlus16[20:24], patternRows[25:29], dualBottomFields[30]
@@ -734,12 +733,17 @@ class Segment34View extends WatchUi.WatchFace {
                 break;
             }
         }
+        runtimeBitmap &= ~0x6;
+        if (!minimalAod && cachedHazardWindows.size() > 0) {
+            // Read native history before allocating the frame alongside a loaded forecast.
+            if (propLeftBarShows == 1 || propRightBarShows == 1) { getStressData(); }
+            if (propLeftBarShows == 2 || propRightBarShows == 2) { getBBData(); }
+        }
 
         var sysStats = System.getSystemStats();
         cachedBatteryLevel = sysStats.battery;
         refreshCache = {};
         cachedTempUnit = getTempUnit();
-        runtimeBitmap &= ~0x6;
         values[:dataClock] = getClockData(now);
 
         var needsActivityInfo = anyComplicationNeedsActivityInfo(displayTypes)
@@ -770,12 +774,12 @@ class Segment34View extends WatchUi.WatchFace {
         var fieldWidths = cachedFieldWidths;
         values[:dataTopLeft] = getDisplayValueByType(propSunriseFieldShows, 5, now, actInfo, sysStats);
         values[:dataTopRight] = getDisplayValueByType(propSunsetFieldShows, 5, now, actInfo, sysStats);
-        var aboveLine1 = getWeatherLineDisplayState(propWeatherLine1Shows, 10, now, actInfo, sysStats);
-        values[:dataAboveLine1] = aboveLine1[0];
-        values[:dataAboveLine1Color] = aboveLine1[1];
-        var aboveLine2 = getWeatherLineDisplayState(propWeatherLine2Shows, 10, now, actInfo, sysStats);
-        values[:dataAboveLine2] = aboveLine2[0];
-        values[:dataAboveLine2Color] = aboveLine2[1];
+        if (propWeatherLine1Shows != 79) {
+            values[:dataAboveLine1] = getWeatherLineText(propWeatherLine1Shows, now, actInfo, sysStats);
+        }
+        if (propWeatherLine2Shows != 79) {
+            values[:dataAboveLine2] = getWeatherLineText(propWeatherLine2Shows, now, actInfo, sysStats);
+        }
         values[:dataBelow] = getValueByTypeWithUnit(propDateFieldShows, 10, now, actInfo, sysStats);
         values[:dataNotificationsValue] = getValueByTypeWithUnit(propNotificationCountShows, 2, now, actInfo, sysStats);
         values[:dataNotificationsSuffix] = getNotificationSuffix(propNotificationCountShows, values[:dataNotificationsValue]);
@@ -814,7 +818,7 @@ class Segment34View extends WatchUi.WatchFace {
     // Restore the state of this View and prepare it to be shown.
     // This includes loading resources into memory.
     function onShow() as Void {
-        runtimeBitmap = (runtimeBitmap & 0x7FF) | 0x1;
+        runtimeBitmap |= 0x1;
         lastUpdate = null;
         lastSlowUpdate = null;
         wakeTimestamp = Time.now().value();
@@ -831,7 +835,6 @@ class Segment34View extends WatchUi.WatchFace {
         var unix_timestamp = moment.value();
         var isSleeping = ((runtimeBitmap >> 4) & 0x1) == 1;
         var canBurnIn = ((runtimeBitmap >> 3) & 0x1) == 1;
-        var lastWeatherPhase = ((runtimeBitmap >> 11) & 0xFFFFF) - 1;
 
         var minute = unix_timestamp / fullUpdateIntervalS;
         var refreshWeather = lastSlowUpdate != minute;
@@ -843,34 +846,12 @@ class Segment34View extends WatchUi.WatchFace {
             updateWeather(unix_timestamp, false);
         }
 
-        var phaseBucket = getWeatherPhaseBucket(unix_timestamp);
         if (refreshDisplay) {
             lastUpdate = minute;
             updateDisplayValues(now);
             refreshCache = {};
-            runtimeBitmap = (runtimeBitmap & 0x7FF) | ((phaseBucket + 1) << 11);
         } else {
             cachedValues[:dataSeconds] = isSleeping ? "" : now.sec.format("%02d");
-
-            // Hazard lines share the same four-second rotation.
-            var showForecast = !isSleeping || !canBurnIn || ((propBitmapA >> 15) & 0x3) == 2;
-            var refreshLine1 = showForecast && shouldRefreshWeatherLine(propWeatherLine1Shows);
-            var refreshLine2 = showForecast && shouldRefreshWeatherLine(propWeatherLine2Shows);
-            if ((refreshLine1 || refreshLine2) && phaseBucket != lastWeatherPhase) {
-                runtimeBitmap = (runtimeBitmap & 0x7FF) | ((phaseBucket + 1) << 11);
-
-                var aboveLine = getWeatherCycleState();
-                if (refreshLine1) {
-                    cachedValues[:dataAboveLine1] = aboveLine[0];
-                    cachedValues[:dataAboveLine1Color] = aboveLine[1];
-                }
-
-                if (refreshLine2) {
-                    cachedValues[:dataAboveLine2] = aboveLine[0];
-                    cachedValues[:dataAboveLine2Color] = aboveLine[1];
-                }
-            }
-
         }
 
         if(isSleeping and canBurnIn) {
@@ -914,7 +895,7 @@ class Segment34View extends WatchUi.WatchFace {
     function onExitSleep() as Void {
         wakeTimestamp = Time.now().value();
         lastUpdate = null;
-        runtimeBitmap &= 0x7EF;
+        runtimeBitmap &= ~0x10;
         if (cachedValues.hasKey(:dataAODLeft)) { cachedValues = {}; }
         hrResetState();
         WatchUi.requestUpdate();
@@ -923,7 +904,7 @@ class Segment34View extends WatchUi.WatchFace {
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() as Void {
         lastUpdate = null;
-        runtimeBitmap = (runtimeBitmap & 0x7FF) | 0x10;
+        runtimeBitmap |= 0x10;
         if ((runtimeBitmap & 0x8) != 0 && ((propBitmapA >> 15) & 0x3) != 2) {
             cachedValues = {};
         }
@@ -2564,21 +2545,13 @@ class Segment34View extends WatchUi.WatchFace {
         return getDisplayValueByType(complicationType, width, now, activityInfo, sysStats) + unit;
     }
 
-    hidden function shouldRefreshWeatherLine(complicationType as Number) as Boolean {
-        if (complicationType == 79) { return cachedHazardWindows.size() > WEATHER_HAZARD_WINDOW_WIDTH; }
-        return false;
-    }
-
-    hidden function getWeatherLineDisplayState(complicationType as Number, width as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as Array {
-        if (complicationType == 79) {
-            return getWeatherCycleState();
-        }
+    hidden function getWeatherLineText(complicationType as Number, now as Gregorian.Info, activityInfo, sysStats as System.Stats) as String {
         // Keep the daily weather line off the deep complication path on older watches.
         if (complicationType == 78) {
-            return [getDailyWeatherLine(), themeColors[dataVal]];
+            return getDailyWeatherLine();
         }
 
-        return [getValueByTypeWithUnit(complicationType, width, now, activityInfo, sysStats), themeColors[dataVal]];
+        return getValueByTypeWithUnit(complicationType, 10, now, activityInfo, sysStats);
     }
 
     hidden function getUnitByType(complicationType) as String {
@@ -3073,8 +3046,6 @@ class Segment34View extends WatchUi.WatchFace {
             val = getCgmAge();
         } else if(complicationType == 73) { // Weather condition, Feels like
             val = formatWeatherConditionFeelsLike(getActiveWeatherCondition());
-        } else if(complicationType == 79) { // Hazard forecast, start and end hours
-            val = getWeatherCycleState()[0] as String;
         } else if(complicationType == 74) { // Feels like
             val = getFeelsLike(false);
         } else if(complicationType == 75) { // Hours to next sun event
@@ -3308,32 +3279,58 @@ class Segment34View extends WatchUi.WatchFace {
         }
     }
 
-    hidden function getWeatherPhaseBucket(now as Number) as Number {
-        var elapsed = now - wakeTimestamp;
-        if (elapsed < 0) {
-            wakeTimestamp = now;
-            return 0;
-        }
-        var bucket = elapsed / weatherCycleIntervalS;
-        return bucket < 1048575 ? bucket : 1048574;
-    }
-
     hidden function getForecastUtcOffset() as Number {
         return forecastUtcOffsetSeconds != null ? forecastUtcOffsetSeconds as Number : System.getClockTime().timeZoneOffset;
     }
 
-    hidden function getWeatherCycleState() as Array {
-        if (cachedHazardWindows.size() == 0) { return ["", themeColors[dataVal]]; }
-        var count = cachedHazardWindows.size() / WEATHER_HAZARD_WINDOW_WIDTH;
-        var start = (getWeatherPhaseBucket(Time.now().value()) % count) * WEATHER_HAZARD_WINDOW_WIDTH;
-        var family = cachedHazardWindows[start] as Number;
-        var startTime = cachedHazardWindows[start + 1] as Number;
-        var endTime = cachedHazardWindows[start + 2] as Number;
-        var label = family == 6 ? Application.loadResource(Rez.Strings.WEATHER_STORM)
-            : Application.loadResource(cachedWeatherResIds[family]);
-        var offset = getForecastUtcOffset();
-        return [label + " " + weatherFormatHazardHours(startTime, endTime, offset),
-            weatherHazardDayColor(startTime, Time.now().value(), offset)];
+    hidden function hazardForecastLabel(family as Number) as String {
+        switch (family) {
+            case 6: return Application.loadResource(Rez.Strings.WEATHER_STORM) as String;
+            case 37: return Application.loadResource(Rez.Strings.HAZARD_SANDSTORM) as String;
+            case 38: return Application.loadResource(Rez.Strings.HAZARD_VOLCANIC_ASH) as String;
+            case 42: return Application.loadResource(Rez.Strings.HAZARD_TROPICAL_STORM) as String;
+        }
+        return Application.loadResource(cachedWeatherResIds[family] as ResourceId) as String;
+    }
+
+    hidden function formatHazardForecastPage(windows as Array, index as Number, end as Number, now as Number, offset as Number) as String {
+        var start = windows[index + 1] as Number;
+        var day = weatherProviderGetLocalDayStart(start, offset);
+        var text = hazardForecastLabel(windows[index] as Number);
+        if (day != weatherProviderGetLocalDayStart(now, offset)) {
+            var weekday = Gregorian.utcInfo(new Time.Moment(day), Time.FORMAT_SHORT).day_of_week as Number;
+            text = dayName(weekday) + ": " + text;
+        }
+        for (var i = index; i < end; i += WEATHER_HAZARD_WINDOW_WIDTH) {
+            text += " " + weatherFormatHazardHours(windows[i + 1] as Number, windows[i + 2] as Number, offset);
+        }
+        return text;
+    }
+
+    hidden function buildHazardForecastPages(dc as Dc, width as Number, now as Number, offset as Number, windows as Array) as Array<Number> {
+        // Retain only window offsets so a full forecast fits on older watch heaps.
+        var pages = [] as Array<Number>;
+        var index = 0;
+        while (index < windows.size()) {
+            pages.add(index);
+            var family = windows[index] as Number;
+            var day = weatherProviderGetLocalDayStart(windows[index + 1] as Number, offset);
+            var next = index + WEATHER_HAZARD_WINDOW_WIDTH;
+            var text = null as String?;
+            // Reserve the smaller fallback fonts for intervals that need them.
+            for (var count = 1; count < 3 && next < windows.size(); count++) {
+                var nextStart = windows[next + 1] as Number;
+                if (windows[next] != family || weatherProviderGetLocalDayStart(nextStart, offset) != day) { break; }
+                if (text == null) { text = formatHazardForecastPage(windows, index, next, now, offset); }
+                var candidate = text + " " + weatherFormatHazardHours(nextStart, windows[next + 2] as Number, offset);
+                if (dc.getTextWidthInPixels(candidate, fontSmallData) > width) { break; }
+                text = candidate;
+                next += WEATHER_HAZARD_WINDOW_WIDTH;
+            }
+            index = next;
+        }
+        pages.add(index);
+        return pages;
     }
 
     hidden function updateForecastChanges() as Void {
@@ -3357,8 +3354,58 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function drawWeatherLines(dc as Dc, upperY as Number, lowerY as Number, values as Dictionary) as Void {
-        drawWeatherLine(dc, upperY, values[:dataAboveLine1], values[:dataAboveLine1Color], propWeatherLine1Shows == 78, :upperWeatherLayout);
-        drawWeatherLine(dc, lowerY, values[:dataAboveLine2], values[:dataAboveLine2Color], propWeatherLine2Shows == 78, :lowerWeatherLayout);
+        if (propWeatherLine1Shows == 79) {
+            drawHazardForecast(dc, upperY, :upperWeatherLayout);
+        } else {
+            drawWeatherLine(dc, upperY, values[:dataAboveLine1], themeColors[dataVal], propWeatherLine1Shows == 78, :upperWeatherLayout);
+        }
+        if (propWeatherLine2Shows == 79) {
+            drawHazardForecast(dc, lowerY, :lowerWeatherLayout);
+        } else {
+            drawWeatherLine(dc, lowerY, values[:dataAboveLine2], themeColors[dataVal], propWeatherLine2Shows == 78, :lowerWeatherLayout);
+        }
+    }
+
+    hidden function drawHazardForecast(dc as Dc, y as Number, key as Symbol) as Void {
+        var windows = cachedHazardWindows;
+        if (windows.size() == 0) { return; }
+        var now = Time.now().value();
+        var state = cachedValues.get(key) as Array?;
+        if (state == null) {
+            var width = 2 * weatherLineHalfWidth(y);
+            var starts = buildHazardForecastPages(dc, width, now, getForecastUtcOffset(), windows);
+            var windowCount = windows.size() / WEATHER_HAZARD_WINDOW_WIDTH;
+            // When every window needs its own page, its position is already known.
+            state = [starts.size() == windowCount + 1 ? null : starts, -1, null, y, "", themeColors[dataVal]];
+            cachedValues[key] = state;
+        }
+        if (now < wakeTimestamp) { wakeTimestamp = now; }
+        var phase = (now - wakeTimestamp) / weatherCycleIntervalS;
+        var pages = state[0] as Array<Number>?;
+        var page = phase % (pages == null ? windows.size() / WEATHER_HAZARD_WINDOW_WIDTH : pages.size() - 1);
+        var font = state[2] as FontResource?;
+        if (state[1] != page) {
+            var start = pages == null ? page * WEATHER_HAZARD_WINDOW_WIDTH : pages[page];
+            var end = pages == null ? start + WEATHER_HAZARD_WINDOW_WIDTH : pages[page + 1];
+            var offset = getForecastUtcOffset();
+            var text = formatHazardForecastPage(windows, start, end, now, offset);
+            var width = 2 * weatherLineHalfWidth(y);
+            font = fontForWidth(dc, fontSmallData, text, width, 0);
+            state[1] = page;
+            state[2] = cacheWeatherFont(font);
+            state[3] = y + (dc.getFontHeight(fontSmallData) - dc.getFontHeight(font)) / 2;
+            state[4] = dc.getTextWidthInPixels(text, font) <= width ? text : shortenText(dc, font, text, width);
+            state[5] = weatherHazardDayColor(windows[start + 1] as Number, now, offset);
+        }
+        var content = state[4] as String;
+        if (content.length() == 0) { return; }
+        if (font == null) { font = getCompactFont(); }
+        dc.setColor(state[5] as Graphics.ColorType, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(centerX, state[3] as Number, font, content, Graphics.TEXT_JUSTIFY_CENTER);
+    }
+
+    hidden function weatherLineHalfWidth(y as Number) as Number {
+        return rowHalfWidth(y, smallDataHeight) - marginX / 2;
     }
 
     hidden function drawWeatherLine(dc as Dc, y as Number, value as String, color as Graphics.ColorType, dailyMetrics as Boolean, key as Symbol) as Void {
@@ -3385,7 +3432,7 @@ class Segment34View extends WatchUi.WatchFace {
     }
 
     hidden function prepareWeatherLine(dc as Dc, y as Number, value as String, dailyMetrics as Boolean) as Array {
-        var halfWidth = rowHalfWidth(y, smallDataHeight) - marginX / 2;
+        var halfWidth = weatherLineHalfWidth(y);
         var daily = dailyMetrics ? prepareDailyMetrics(dc, y, value, halfWidth) : null;
         if (daily != null) { return daily; }
 

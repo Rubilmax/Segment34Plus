@@ -458,4 +458,7 @@
     <string id="settings_cgm_glucose_trend" scope="settings">CGM Glucose + Trend</string>
     <string id="settings_cgm_age" scope="settings">CGM Age (minutes)</string>
     <string id="WEATHER_STORM">STORM</string>
+    <string id="HAZARD_SANDSTORM">SANDSTORM</string>
+    <string id="HAZARD_VOLCANIC_ASH">VOLC. ASH</string>
+    <string id="HAZARD_TROPICAL_STORM">TROP. STORM</string>
 </strings>

@@ -423,5 +423,8 @@
     <string id="settings_cgm_glucose_trend" scope="settings">CGM Glukos + Trend</string>
     <string id="settings_cgm_age" scope="settings">CGM Ålder (minuter)</string>
     <string id="WEATHER_STORM">OVÄDER</string>
+    <string id="HAZARD_SANDSTORM">SANDSTORM</string>
+    <string id="HAZARD_VOLCANIC_ASH">VULKANASKA</string>
+    <string id="HAZARD_TROPICAL_STORM">TROP. STORM</string>
     <string id="settings_wind_precipitation_uv_humidity" scope="settings">Vind, dagens känns som min-max, UV, luftfuktighet</string>
 </strings>
