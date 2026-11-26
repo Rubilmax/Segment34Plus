@@ -1168,8 +1168,14 @@ class Segment34View extends WatchUi.WatchFace {
         var dataRoom = rowHalfWidth(dataY, smallDataHeight) - offsetX - 2;
         var leftData = values[:dataTopLeft] as String;
         var rightData = values[:dataTopRight] as String;
+        // Wide layouts can promote solar times, as can 260/280px layouts with the moon hidden.
+        var wideSolarRow = screenWidth >= 416 || (!showMoon && (screenWidth == 260 || screenWidth == 280));
+        var compactSolarRow = wideSolarRow && (
+            propSunriseFieldShows == 39 || propSunriseFieldShows == 40 ||
+            propSunsetFieldShows == 39 || propSunsetFieldShows == 40
+        );
         var dataFont = fontSmallData;
-        if (dc.getTextWidthInPixels(leftData, dataFont) > dataRoom ||
+        if (compactSolarRow || dc.getTextWidthInPixels(leftData, dataFont) > dataRoom ||
             dc.getTextWidthInPixels(rightData, dataFont) > dataRoom) {
             dataFont = fontTinyData;
         }
